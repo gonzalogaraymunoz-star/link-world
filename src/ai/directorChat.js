@@ -41,7 +41,7 @@ function setOpen(open){
   s.open=open;
   $('#lw-panel').classList.toggle('hidden',!open);
   $('#ai-toggle').setAttribute('aria-expanded',String(open));
-  if(open){if(!isKeyPresent()&&!s.settings)setSettings(true);scrollChat();$('#lw-composer').focus();}
+  if(open){scrollChat();$('#lw-composer').focus();}
 }
 function feedback(text,error=false){
   const bar=$('#lw-feedback');
