@@ -1,84 +1,36 @@
-# LINK DIRECTOR — MANUAL DE USO v1.1 · OPENROUTER
+# LINK DIRECTOR · manual de uso v2
 
-Origen: Manual Maestro LINK WORLD v1. No sustituye el documento original de
-la tesis ni acredita operación real con otras células.
+## Entra en la app
 
-## Inicio sencillo: SÓLO API KEY
+Abre https://link-world-delta.vercel.app/ y pulsa «✦ Director IA».
 
-LINK WORLD → **Director IA** → **URL · MODEL · API**.
+1. **Conexión**: URL fija https://openrouter.ai/api/v1/chat/completions, modelo openrouter/free. Pega tu clave OpenRouter sk-or-… y pulsa «Comprobar conexión». LINK valida la clave con el endpoint /api/v1/key sin generar texto. El panel muestra «Clave conectada · modelo por probar». La disponibilidad del modelo se confirma con su primera respuesta, no con el check.
+2. **Conversar**: escribe tu pregunta en hasta 3500 caracteres y pulsa «Consultar al Director». Respuestas de hasta 1100 tokens, con estructura adaptable a lo que preguntaste. Puedes consultar sin un límite diario adicional de LINK, pero OpenRouter conserva la cuota de su plan gratuito.
+3. **Investigar LINK**: activa explícitamente «Incluir datos propios de LINK». Esto requiere iniciar sesión como miembro autorizado en el panel ↔ LINK WORLD; la app lee de Supabase al momento un resumen de negocios, solicitudes, relaciones y actividad. Puedes seleccionar hasta tres negocios o un resumen del organismo. La muestra está acotada y, si se recorta, se señala. Se envía solo al proveedor OpenRouter cuando eliges esa opción.
+4. **Google**: «Buscar manualmente en Google Maps» te lleva al buscador visible. El Director no ejecuta búsquedas automáticas, no rastrea zonas completas, no convierte fichas Google en negocio LINK ni envía Places a OpenRouter por defecto.
+5. **Registro**: puedes guardar preguntas y respuestas localmente mediante la casilla (desactivada inicialmente), anotar solicitudes sin IA y exportar o borrar JSON. Este registro no es el registro compartido de ↔ LINK WORLD.
 
-| Campo | Ya preparado |
-| --- | --- |
-| URL | `https://openrouter.ai/api/v1/chat/completions` |
-| MODEL | `openrouter/free` |
-| API | **Pega solamente tu clave OpenRouter sk-or-…** |
+## Estado de conexión
 
-La URL y el modelo son visibles/editables, pero la URL distinta de OpenRouter
-se bloquea y sólo se admite `openrouter/free` o un slug específico
-terminado en `:free`. No usar `openrouter/auto`, Claude o un slug de
-pago para este modo. No hay fallback a pago.
+- «Sin verificar»: aún no hay clave validada en esta pestaña.
+- «Comprobando clave»: se está validando la clave sin gastar tokens de generación.
+- «Clave conectada · modelo por probar»: OpenRouter aceptó la clave; el modelo está pendiente de su primera respuesta.
+- «Conectado · [modelo]»: una respuesta del modelo se recibió correctamente.
+- Mensaje de error: se muestra si OpenRouter rechaza la clave, el modelo, la cuota o si no está disponible; no hay reintentos automáticos ni fallback pagado.
 
-Después, escribe tu objetivo en **Director** y pulsa «Consultar». La respuesta
-es una propuesta: no envía mensajes, cobra, actualiza Supabase ni registra
-ventas. Puedes activar la casilla de registro local o dejarla desmarcada.
+La API key no se guarda en localStorage, GitHub ni registros. Sale cifrada mediante HTTPS al proxy Vercel y desde allí a OpenRouter. La URL/modelo no son secretos. Si recargas, vuelve a pegar la clave.
 
-[Crear una API key en OpenRouter](https://openrouter.ai/settings/keys) ·
-[Router de modelos gratuitos](https://openrouter.ai/openrouter/free) ·
-[API Chat Completions](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request)
+## Modelo, consulta libre y costo
 
-## Protocolo para Claude Code (distinto de LINK WORLD web)
+Solo se admiten openrouter/free e identificadores que terminen en :free. No se permite openrouter/auto ni modelos pagados. LINK no impone el antiguo límite artificial de 5 preguntas; OpenRouter aplica sus límites Free y el sistema se detiene cuando devuelve 429. No existe garantía global de costo cero en cuentas externas.
 
-Si en otro momento deseas usar el comando `claude` con OpenRouter en
-terminal, su protocolo compatible con Anthropic utiliza:
+Para Google Places: solo consulta tras pulsación humana; máximo 8 búsquedas por sesión y 12 por día en este navegador, máximo 20 resultados por búsqueda, radius 1800 m para Nearby, sin búsquedas silenciosas. Son barreras de interfaz, **no topes de facturación de Google Cloud**. Google Maps y Vercel tienen costos/cuotas independientes.
 
-```bash
-export OPENROUTER_API_KEY="<PEGA_TU_CLAVE_OPENROUTER_LOCALMENTE>"
-export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
-export ANTHROPIC_AUTH_TOKEN="$OPENROUTER_API_KEY"
-export ANTHROPIC_API_KEY=""
-claude --model openrouter/free
-```
+## Alcance real
 
-Revisa compatibilidad y nombres de modelos según
-[las instrucciones oficiales para Claude Code](https://openrouter.ai/docs/guides/coding-agents/claude-code-integration).
-**El comando de Claude Code no se ejecuta dentro de LINK WORLD ni se necesita
-para conectar la app.** Nunca compartir la clave o guardar un archivo
-`.env` en GitHub.
+La lectura privada usa tablas link_world_businesses, link_world_requests, link_world_relations y link_world_activity, mediante Supabase Auth/RLS. No tiene acceso a pagos, CRM externo, reservas reales ni otras bases de datos. Las cinco células y misión inicial son DEMO claramente etiquetada y pueden analizarse sin acceso privado; nunca equivalen a hechos comerciales. La IA solo propone, no escribe cambios operativos.
 
-## Seguridad y cero gasto
+La habilidad principal para trabajar desde ChatGPT sigue siendo LINK WORLD:
+https://github.com/gonzalogaraymunoz-star/link-world/blob/main/.agents/skills/link-world/SKILL.md
 
-- Router gratuito `openrouter/free` o variantes `:free` exclusivamente.
-  OpenRouter publica precio de cero tokens para su router Free; el catálogo
-  y las cuotas pueden cambiar.
-- Cinco intentos diarios por **navegador**, incluidos errores; 1800
-  caracteres de pregunta; máximo 700 tokens de respuesta; timeout 13 s.
-- La clave permanece sólo en el campo de esta pestaña. El navegador la envía
-  vía HTTPS a una función LINK/Vercel que la reenvía a OpenRouter. El proxy
-  no persiste claves, conversaciones o respuestas; el registro optativo se
-  almacena en el navegador.
-- Los límites de navegador no son un tope servidor global ni impiden que la
-  misma clave se utilice fuera de LINK. Mantener auto-recarga de créditos
-  deshabilitada y, si está disponible, límite $0 a la clave/cuenta; no
-  habilitar rutas de pago. Si el proveedor agota cuota, el sistema debe
-  detenerse y no cambiar a modelos facturables.
-- OpenRouter, Google Maps/Places y Vercel tienen políticas/costos
-  independientes. Ninguna interfaz puede garantizar US$0 total si otra
-  cuenta/sistema permite facturación.
-
-## Registro de solicitudes
-
-La pestaña Registro permite anotar solicitudes manuales **sin IA** y
-consultar las que elegiste conservar. Hasta 80 registros **locales por
-navegador**, con fecha, fuente y estado; exportar JSON o borrar. No se
-sincronizan chats ni equipos, no contienen API keys y desaparecen si se
-borra almacenamiento local sin exportación.
-
-## Habilidad transversal
-
-Usar:
-https://github.com/gonzalogaraymunoz-star/link-world/blob/main/.agents/skills/link-director/SKILL.md
-
-`@LINK Director` es un nombre de invocación humano; para que otro
-chat/entorno use el archivo deberá tenerlo disponible e invocarlo por URL
-o instalarlo según la plataforma. Instrucción canónica que usa la API:
-`api/LINK_DIRECTOR_SYSTEM.md`. Para geografía, consultar `link-geo`.
+La política ejecutada por el modelo está en api/LINK_DIRECTOR_SYSTEM.md y la habilidad secundaria en .agents/skills/link-director/SKILL.md.
