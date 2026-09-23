@@ -222,3 +222,5 @@ a { color:inherit; text-decoration:none; }
 .forget-key { display:inline; padding:0; background:none; border:0; font-size:inherit; color:#b5ebe1; text-decoration:underline; }
 .google-map-active + .map-shade { display:none; } /* Keep Google's logo/copyright unobscured. */
 .google-map-active ~ .notice { display:none; }
+
+.google-disconnect { margin:8px 0 4px; padding:5px; border:0; background:transparent; color:#8ccfc0; text-decoration:underline; font-size:10px; }
