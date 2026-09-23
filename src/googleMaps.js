@@ -1,4 +1,7 @@
 // LINK WORLD Google Maps adapter.
+// Reference: googlemaps/agent-skills; official JS API loader and Places API (New).
+// Docs: https://developers.google.com/maps/documentation/javascript/advanced-markers/start?utm_campaign=gmp_git_agentskills_v1
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 // Browser API keys are public credentials: restrict this key by HTTP referrer and API in Google Cloud.
 // For a zero-deployment setup, a user may store the restricted browser key in this browser only.
 const LOCAL_KEY = 'linkworld_google_maps_browser_key';
@@ -22,7 +25,10 @@ let infoWindow = null;
 let activeCategory = 'lodging';
 let searchBusy = false;
 let scriptPromise = null;
-let ready = false;
+let AdvancedMarkerElement = null;
+let PinElement = null;
+let requestsThisSession = 0;
+const MAX_REQUESTS_PER_SESSION = 40; // UX guardrail, not a Google Cloud billing cap.
 let onReadyCallback = null;
 
 function el(tag, className, value) {
@@ -48,32 +54,15 @@ function getKey() {
     return (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '').trim();
   }
 }
-function loadGoogle(key) {
-  if (window.google?.maps?.Map) return Promise.resolve();
+async function loadGoogle(key) {
+  if (window.google?.maps?.Map) return;
   if (scriptPromise) return scriptPromise;
-  scriptPromise = new Promise((resolve, reject) => {
-    const callback = '__linkWorldGoogleReady';
-    let settled = false;
-    const fail = (message) => {
-      if (settled) return;
-      settled = true;
-      delete window[callback];
-      reject(new Error(message));
-    };
-    window[callback] = () => {
-      if (settled) return;
-      settled = true;
-      delete window[callback];
-      resolve();
-    };
-    window.gm_authFailure = () => fail('Google rechazó la clave. Verifica que autoriza este dominio y Maps JavaScript API.');
-    const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) +
-      '&v=weekly&loading=async&callback=' + callback;
-    script.async = true;
-    script.onerror = () => fail('No fue posible cargar Google Maps. Comprueba la conexión y la clave.');
-    document.head.append(script);
-  }).catch(error => { scriptPromise = null; throw error; });
+  // Official loader v2; no dynamic REST calls to places.googleapis.com from browser.
+  setOptions({ key, v: 'weekly', language: 'es', region: 'CL' });
+  scriptPromise = importLibrary('maps').catch((error) => {
+    scriptPromise = null;
+    throw new Error('No se pudo cargar Google Maps. Revisa la clave, facturación y dominio autorizado.');
+  });
   return scriptPromise;
 }
 
@@ -82,7 +71,7 @@ function buildControls() {
   const panel = el('section', 'google-search-panel hidden');
   panel.id = 'google-search-panel';
   panel.innerHTML = '<div class="google-search-title"><span>EXPLORAR NEGOCIOS DE GOOGLE</span><span class="google-powered">Google Maps</span></div>' +
-    '<div class="google-category-wrap"></div><button type="button" class="google-search-btn" id="google-search-btn">⌖ Buscar negocios en esta zona</button>' +
+    '<div class="google-category-wrap"></div><form id="google-text-form" class="google-text-form"><label for="google-text-query">BUSCAR POR NOMBRE O ACTIVIDAD</label><div class="google-text-fields"><input id="google-text-query" maxlength="100" autocomplete="off" placeholder="Hotel, restaurante, agencia…" /><button type="submit" aria-label="Buscar por nombre">Buscar</button></div></form><button type="button" class="google-search-btn" id="google-search-btn">⌖ Buscar negocios en esta zona</button>' +
     '<div id="google-feedback" class="google-feedback">Los datos se consultan solo cuando lo solicitas.</div>' +
     '<div id="google-results" class="google-results"></div>';
   workspace.append(panel);
@@ -97,7 +86,12 @@ function buildControls() {
     });
     wrap.append(button);
   });
-  panel.querySelector('#google-search-btn').addEventListener('click', searchPlaces);
+  panel.querySelector('#google-search-btn').addEventListener('click', () => searchPlaces());
+  panel.querySelector('#google-text-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const text = panel.querySelector('#google-text-query').value.trim();
+    if (text) searchPlaces(text);
+  });
 }
 
 function showSetup() {
@@ -110,8 +104,12 @@ function showSetup() {
     '<input id="google-api-key" type="password" spellcheck="false" autocomplete="off" placeholder="AIza…" required />' +
     '<button type="submit">Conectar Google Maps ↗</button></form>' +
     '<div id="google-setup-feedback" role="status"></div>' +
-    '<small>Se guarda solamente en este navegador, no en GitHub. Restringe la clave al dominio de esta web y a las APIs necesarias.</small>';
+    '<small>Una clave web es visible técnicamente en el navegador. Se conserva solo en este navegador, no en GitHub. Restringe sus dominios y APIs. <button type="button" class="forget-key" id="forget-google-key">Olvidar clave guardada</button></small>';
   workspace.append(setup);
+  setup.querySelector('#forget-google-key').addEventListener('click', () => {
+    try { localStorage.removeItem(LOCAL_KEY); } catch { /* private browsing */ }
+    setup.querySelector('#google-setup-feedback').textContent = 'Clave local eliminada. Recarga si Google ya se intentó cargar con otra clave.';
+  });
   setup.querySelector('form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const key = setup.querySelector('input').value.trim();
@@ -133,15 +131,19 @@ function showSetup() {
 async function initializeMap(key) {
   setStatus('Conectando Google Maps…');
   await loadGoogle(key);
+  const [{ Map, InfoWindow }, { AdvancedMarkerElement: Advanced, PinElement: Pin }] = await Promise.all([
+    importLibrary('maps'), importLibrary('marker')
+  ]);
+  AdvancedMarkerElement = Advanced;
+  PinElement = Pin;
   const holder = document.getElementById('cesiumContainer');
   holder.innerHTML = '';
-  map = new google.maps.Map(holder, {
-    center: DEFAULT_CITY, zoom: 15, mapTypeId: 'hybrid', mapTypeControl: true,
+  map = new Map(holder, {
+    center: DEFAULT_CITY, zoom: 15, mapTypeId: 'hybrid', mapId: import.meta.env.VITE_GOOGLE_MAP_ID || 'DEMO_MAP_ID', mapTypeControl: true,
     streetViewControl: false, fullscreenControl: true, gestureHandling: 'greedy',
     clickableIcons: true, controlSize: 30
   });
-  infoWindow = new google.maps.InfoWindow();
-  ready = true;
+  infoWindow = new InfoWindow();
   holder.classList.add('google-map-active');
   document.getElementById('google-search-panel')?.classList.remove('hidden');
   const notice = document.querySelector('.notice');
@@ -154,7 +156,7 @@ async function initializeMap(key) {
 }
 
 function clearMarkers() {
-  markerList.forEach((marker) => marker.setMap(null));
+  markerList.forEach((marker) => { marker.map = null; });
   markerList = [];
   if (infoWindow) infoWindow.close();
 }
@@ -167,10 +169,9 @@ function renderResults(places) {
   places.forEach((place) => {
     if (!place.location) return;
     const name = place.displayName || 'Negocio sin nombre';
-    const marker = new google.maps.Marker({
-      map, position: place.location, title: name,
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#6ad4bc', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 }
-    });
+    const pin = new PinElement({ background: '#64c7af', borderColor: '#ffffff', glyphColor: '#0a2730', scale: 1.0 });
+    const marker = new AdvancedMarkerElement({ map, position: place.location, title: name });
+    marker.append(pin);
     markerList.push(marker);
     const row = el('button', 'google-result');
     row.type = 'button';
@@ -181,34 +182,40 @@ function renderResults(places) {
       const card = el('div', 'google-place-info');
       card.append(el('strong', '', name), el('p', '', place.formattedAddress || ''));
       const link = el('a', '', 'Ver ficha en Google Maps ↗');
-      link.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(name) +
-        (place.id ? '&query_place_id=' + encodeURIComponent(place.id) : '');
+      link.href = place.googleMapsURI || ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(name) +
+        (place.id ? '&query_place_id=' + encodeURIComponent(place.id) : ''));
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       card.append(link);
       infoWindow.setContent(card);
-      infoWindow.open(map, marker);
+      infoWindow.open({ map, anchor: marker });
     };
     row.addEventListener('click', focus);
     marker.addListener('click', focus);
     results.append(row);
   });
 }
-async function searchPlaces() {
+async function searchPlaces(textQuery = '') {
   if (!map || searchBusy) return;
+  if (requestsThisSession >= MAX_REQUESTS_PER_SESSION) {
+    showFeedback('Límite de exploración alcanzado en esta sesión (40 búsquedas). Es una pausa de la interfaz, no un límite de facturación de Google.', true);
+    return;
+  }
   searchBusy = true;
   const button = document.getElementById('google-search-btn');
+  const textButton = document.querySelector('#google-text-form button');
   if (button) { button.disabled = true; button.textContent = 'Buscando en Google…'; }
+  if (textButton) textButton.disabled = true;
   showFeedback('Consultando negocios en esta zona…');
   try {
-    const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
-    const { places } = await Place.searchNearby({
-      fields: ['id', 'displayName', 'location', 'formattedAddress'],
-      locationRestriction: { center: map.getCenter(), radius: 1800 },
-      includedTypes: [activeCategory],
-      maxResultCount: 20,
-      rankPreference: SearchNearbyRankPreference.POPULARITY
-    });
+    const { Place, SearchNearbyRankPreference } = await importLibrary('places');
+    requestsThisSession += 1;
+    // Intentional minimal field list: no ratings/reviews/phone/photo until explicitly requested.
+    const fields = ['id', 'displayName', 'location', 'formattedAddress', 'googleMapsURI'];
+    const request = { fields, maxResultCount: 20, internalUsageAttributionIds: ['gmp_git_agentskills_v1'] };
+    const { places } = textQuery
+      ? await Place.searchByText({ ...request, textQuery, locationBias: { center: map.getCenter(), radius: 2800 }, language: 'es', region: 'CL' })
+      : await Place.searchNearby({ ...request, locationRestriction: { center: map.getCenter(), radius: 1800 }, includedTypes: [activeCategory], rankPreference: SearchNearbyRankPreference.POPULARITY });
     clearMarkers();
     renderResults(places || []);
     document.getElementById('places-status').textContent = 'Google Places · conectado';
@@ -221,6 +228,7 @@ async function searchPlaces() {
   } finally {
     searchBusy = false;
     if (button) { button.disabled = false; button.textContent = '⌖ Buscar negocios en esta zona'; }
+    if (textButton) textButton.disabled = false;
   }
 }
 export function flyGoogle(where) {
