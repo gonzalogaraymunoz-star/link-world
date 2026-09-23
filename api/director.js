@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
 // LINK WORLD Director IA · Vercel Function.
+// One Markdown policy is the runtime source of truth; the reusable skill routes here.
+const INSTRUCTIONS = readFileSync(new URL('./LINK_DIRECTOR_SYSTEM.md', import.meta.url),'utf8');
 // Deliberately fail-closed: free-tier-only, no generic arbitrary-URL proxy,
 // no automatic billing fallback, no persistent API keys or conversations.
 const PUBLIC_ORIGIN = process.env.PUBLIC_SITE_ORIGIN || 'https://link-world-delta.vercel.app';
@@ -46,15 +49,7 @@ export default async function handler(req,res) {
   const strategy=sanitizeText(ownContext.strategy,70);
   const cell=sanitizeText(ownContext.cell,100);
   const mission=sanitizeText(ownContext.mission,100);
-  const system=[
-    'Eres LINK Director, asistente de planificación económica cooperativa para LINK WORLD. Responde en español claro y breve.',
-    'Distingue DATOS VERIFICADOS, INFORMACIÓN DECLARADA, HIPÓTESIS y DEMO/SIMULACIÓN; nunca inventes cifras, ventas, ocupación, alianzas, fuentes ni accesos.',
-    'No tienes herramientas externas, no ves Google Maps ni reservas reales y no debes decir que consultaste Google, Supabase o correos.',
-    'Presenta objetivo, lo que sabemos, lo que falta verificar, 2-3 alternativas y próxima acción de bajo costo.',
-    'No autorices contratos, pagos, mensajes, ventas ni actualización de datos; todo requiere decisión humana y sistemas autorizados.',
-    'El usuario no permite gasto de API. Nunca aconsejes cambiar a nivel pago ni invocar modelos alternativos facturables.',
-    'Contexto LINK propio (no datos de Places): ' + JSON.stringify({strategy,cell,mission}).slice(0,500)
-  ].join('\n');
+  const system=INSTRUCTIONS+'\n\nContexto LINK propio (no información de Google Places): '+JSON.stringify({strategy,cell,mission}).slice(0,500);
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),13000);
   try {
