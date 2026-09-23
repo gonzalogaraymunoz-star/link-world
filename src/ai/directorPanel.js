@@ -159,7 +159,7 @@ function render(){
     '<nav class="ai-tabs"><button class="active" type="button" data-ai-tab="director">Conversar</button><button type="button" data-ai-tab="config">Conexión</button><button type="button" data-ai-tab="log">Registro</button></nav>',
     '<div class="ai-page" data-ai-page="director"><span class="ai-tag">DIRECTOR / MODELOS GRATUITOS</span><p class="ai-caption">Pregunta libremente. El Director estructura su respuesta y puede consultar la información privada LINK únicamente si la autorizas. No ejecuta acciones ni consultas Google por su cuenta.</p>',
     '<label for="ai-prompt">¿QUÉ NECESITAS INVESTIGAR O CONSTRUIR?</label><textarea id="ai-prompt" maxlength="3500" rows="6" placeholder="Ej.: ¿Qué sabemos de los negocios de LINK y cómo podríamos conectar sus capacidades? Señala lo que falta verificar."></textarea>',
-    '<div class="ai-research-box"><label class="ai-check-label"><input id="ai-research" type="checkbox" /> Incluir datos propios de LINK (requiere sesión y envía el contexto seleccionado a OpenRouter)</label><label for="ai-scope">ALCANCE DE INVESTIGACIÓN</label><select id="ai-scope"><option value="selected">Hasta 3 negocios seleccionados; si no hay selección, resumen</option><option value="all">Resumen del organismo (hasta 15 negocios)</option></select><small>Lee al momento negocios, relaciones, solicitudes y actividad autorizados. No copia ni envía fichas de Google.</small></div>',
+    '<div class="ai-research-box"><label class="ai-check-label"><input id="ai-research" type="checkbox" /> Incluir datos propios de LINK (requiere sesión y envía el contexto seleccionado a OpenRouter)</label><label for="ai-scope">ALCANCE DE INVESTIGACIÓN</label><select id="ai-scope"><option value="selected">Hasta 3 negocios seleccionados; si no hay selección, resumen</option><option value="all">Resumen del organismo (hasta 15 negocios)</option></select><small>Lee al momento negocios, relaciones, solicitudes y actividad autorizados. No copia ni envía fichas de Google.</small><button type="button" id="ai-connect-link" class="ai-quiet">Conectar / revisar mi acceso a ↔ LINK WORLD</button></div>',
     '<label class="ai-check-label"><input id="ai-register" type="checkbox" /> Guardar esta consulta en el registro local (opcional)</label>',
     '<div class="ai-limit"><strong>Sin límite diario adicional de LINK</strong><span>OpenRouter conserva su cuota Free · 3500 caracteres · 1100 tokens por respuesta</span></div>',
     '<button id="ai-send" class="ai-primary" type="button">Consultar al Director ↗</button><button id="ai-google" class="ai-quiet" type="button">Buscar manualmente en Google Maps ↗</button>',
@@ -189,6 +189,7 @@ function render(){
   add.addEventListener('click',()=>visibility(!state.open));
   document.querySelectorAll('[data-ai-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.aiTab)));
   $('#ai-send').addEventListener('click',queryAI);
+  $('#ai-connect-link').addEventListener('click',()=>{visibility(false);$('#bridge-toggle')?.click();});
   $('#ai-google').addEventListener('click',()=>{
     visibility(false);const input=$('#google-text-query');
     if(input){input.focus();input.scrollIntoView({block:'nearest'});}
