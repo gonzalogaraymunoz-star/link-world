@@ -72,6 +72,7 @@ export default async function handler(req,res){
   const context={
     strategy:short(input.strategy,80),cell:short(input.cell,120),
     mission:short(input.mission,140),
+    demoSnapshot:short(input.demoSnapshot,3200),
     appDataStatus:short(input.appDataStatus,120),
     approvedAppSnapshot:short(input.approvedAppSnapshot,MAX_CONTEXT_CHARS+1)
   };
