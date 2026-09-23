@@ -173,7 +173,7 @@ function renderResults(places) {
   if (!results) return;
   results.replaceChildren();
   if (!places.length) { showFeedback('Google no devolvió negocios de esta categoría en esta zona. Prueba otra o desplaza el mapa.'); return; }
-  showFeedback(places.length + ' resultados de Google en esta consulta. No es un censo completo.');
+  showFeedback(places.length + ' resultados. Google Places: '+requestsThisSession+'/'+MAX_REQUESTS_PER_SESSION+' esta sesión · '+dailyCalls()+'/'+DAY_LIMIT+' hoy en este navegador. No es un censo completo ni un límite global de facturación.');
   places.forEach((place) => {
     if (!place.location) return;
     const name = place.displayName || 'Negocio sin nombre';
