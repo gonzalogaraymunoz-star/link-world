@@ -130,6 +130,7 @@ function setMode(next){
 function renderAll(){renderContext();renderMission();renderActivity();if(view!=='world')renderMode();}
 function toggleContext(open){contextOpen=open;document.body.classList.toggle('context-collapsed',!open);$('#context-toggle').setAttribute('aria-expanded',String(open));}
 renderStrategies();renderAll();
+if (window.matchMedia('(max-width:850px)').matches) toggleContext(false);
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>{
   setMode('world');flyGoogle(b.dataset.location);
