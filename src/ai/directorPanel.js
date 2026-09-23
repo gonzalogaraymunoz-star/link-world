@@ -3,7 +3,7 @@
 const LOG_KEY='linkworld_local_requests_v1';
 const USE_KEY='linkworld_ai_attempts_v1';
 const SETTINGS_KEY='linkworld_ai_public_config_v1';
-const FREE_URL='https://api.groq.com/openai/v1/chat/completions';
+const FREE_URL='https://openrouter.ai/api/v1/chat/completions';
 const DAILY_LIMIT=5, MAX_LOG=80;
 const $=(s,root=document)=>root.querySelector(s);
 const safe=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,7 +25,7 @@ function addLog(entry){
   const record={id:crypto.randomUUID(),at:new Date().toISOString(),source:'LINK WORLD',...entry};
   return write(LOG_KEY,[record,...log].slice(0,MAX_LOG));
 }
-const state={open:false,tab:'director',busy:false,key:'',answer:null,config:read(SETTINGS_KEY,{url:FREE_URL,model:'openai/gpt-oss-20b'}),notices:''};
+const state={open:false,tab:'director',busy:false,key:'',answer:null,config:read(SETTINGS_KEY,{url:FREE_URL,model:'openrouter/free'}),notices:''};
 let getContext=()=>({});
 function wrap(text){return safe(text).replace(/\n/g,'<br>');}
 const emptyLabel='No hay solicitudes registradas en este navegador.';
@@ -80,16 +80,16 @@ function render(){
     '<div class="ai-check"><label><input type="checkbox" id="ai-register" checked /> Registrar solicitud y respuesta en este navegador</label></div>',
     '<div class="ai-limit"><strong id="ai-usage">0 / 5 intentos hoy</strong><span>Hasta 1.800 caracteres · 700 tokens de respuesta · sin reintentos</span></div>',
     '<button type="button" id="ai-send" class="ai-primary">Consultar al Director ↗</button><div id="ai-notice" role="status"></div><div id="ai-result" class="ai-result"></div>',
-    '<p class="ai-caption">Sin cuenta Free confirmada, clave o cuota disponible, no se envía nada. Este tope local NO es un control de facturación global.</p></div>',
+    '<p class="ai-caption">Modelo gratuito obligatorio; si se agota la cuota, se detiene. El tope local no sustituye cuotas globales ni controla Google Maps o Vercel.</p></div>',
     '<div class="ai-page hidden" data-ai-page="log"><span class="ai-tag">BITÁCORA LOCAL</span><p class="ai-caption">Incluye solicitudes manuales y las consultas de IA que autorices registrar. Visible sólo en este navegador; no sincronizado con Supabase ni otros chats.</p>',
     '<label for="ai-manual">REGISTRAR SOLICITUD SIN IA</label><textarea id="ai-manual" maxlength="1200" rows="3" placeholder="Ej.: Verificar disponibilidad de un operador para Hotel Experience."></textarea>',
     '<button type="button" id="ai-save-manual" class="ai-primary">Guardar solicitud ↗</button><div class="ai-log-actions"><button type="button" id="ai-export">Exportar JSON</button><button type="button" id="ai-clear-log">Borrar registro local</button></div><div id="ai-log"></div></div>',
-    '<div class="ai-page hidden" data-ai-page="config"><span class="ai-tag">SIN GASTO AUTOMÁTICO</span><p class="ai-caption">Modo seguro: únicamente endpoint de Groq Free. Puedes editar URL y MODEL, pero LINK no llamará a otro host mientras estemos en modo $0. Modelos y cuotas dependen de tu cuenta.</p>',
+    '<div class="ai-page hidden" data-ai-page="config"><span class="ai-tag">OPENROUTER · MODELOS GRATUITOS</span><p class="ai-caption">URL y modelo ya configurados para OpenRouter. Sólo pega tu clave sk-or-… El modelo openrouter/free elige un modelo gratuito disponible. No se permiten modelos facturables ni otro host.</p>',
     '<label for="ai-url">URL DEL ENDPOINT / OPENAI-COMPATIBLE</label><input type="url" id="ai-url" spellcheck="false" placeholder="https://…/chat/completions" />',
-    '<label for="ai-model">MODEL / ID DEL MODELO</label><input type="text" id="ai-model" spellcheck="false" maxlength="100" />',
-    '<label for="ai-key">API KEY / ESTA PESTAÑA SOLAMENTE</label><input type="password" id="ai-key" spellcheck="false" autocomplete="new-password" placeholder="Clave de proveedor Free" />',
-    '<div class="ai-check"><label><input type="checkbox" id="ai-free-confirm" /> Confirmo que mi cuenta es Free, no tiene facturación de pago habilitada y el modelo admite consultas gratuitas.</label></div>',
-    '<button type="button" class="ai-primary" id="ai-save-config">Guardar URL y modelo</button><button type="button" class="ai-quiet" id="ai-forget">Borrar API de esta pestaña</button>',
+    '<label for="ai-model">MODEL / gratuito (por defecto: openrouter/free)</label><input type="text" id="ai-model" spellcheck="false" maxlength="100" />',
+    '<label for="ai-key">OPENROUTER API KEY · ESTA PESTAÑA</label><input type="password" id="ai-key" spellcheck="false" autocomplete="new-password" placeholder="sk-or-v1-…" />',
+    '<p class="ai-caption">No necesitas rellenar URL ni MODEL. El proxy sólo admite openrouter/free o IDs terminados en :free; puedes cambiar el modelo gratuito si lo deseas.</p>',
+    '<button type="button" class="ai-primary" id="ai-save-config">Usar esta configuración ↗</button><button type="button" class="ai-quiet" id="ai-forget">Borrar API de esta pestaña</button>',
     '<p class="ai-caption">La clave no se guarda en GitHub, localStorage, ni en Vercel: viaja en cada petición al proxy LINK por HTTPS y desde allí al proveedor. No la envíes por chat ni la confundas con tu clave de Google Maps.</p>',
     '<a href="https://github.com/gonzalogaraymunoz-star/link-world/blob/main/.agents/skills/link-director/SKILL.md" target="_blank" rel="noopener noreferrer">Abrir habilidad LINK Director ↗</a><button id="ai-copy-skill" type="button" class="ai-quiet">Copiar instrucción para invocarla en otro chat</button>',
     '</div>'
@@ -98,17 +98,17 @@ function render(){
   const addButton=document.createElement('button');addButton.id='ai-toggle';addButton.type='button';addButton.textContent='✦ Director IA';addButton.className='header-button ai-header-btn';addButton.setAttribute('aria-expanded','false');
   const heading=document.querySelector('.header-actions');
   heading.insertBefore(addButton,heading.firstChild);
-  $('#ai-url').value=state.config.url||FREE_URL;
-  $('#ai-model').value=state.config.model||'openai/gpt-oss-20b';
+  $('#ai-url').value=FREE_URL;
+  $('#ai-model').value=(state.config.model==='openrouter/free'||state.config.model?.endsWith(':free'))?state.config.model:'openrouter/free';
   $('#ai-close').addEventListener('click',()=>{state.open=false;syncVisibility();});
   addButton.addEventListener('click',()=>{state.open=!state.open;syncVisibility();});
   document.querySelectorAll('[data-ai-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.aiTab)));
   $('#ai-save-config').addEventListener('click',()=>{
     savePublicSettings();
-    showNotice('URL y modelo guardados en este navegador. La API key permanece sólo en esta pestaña.');
+    showNotice('OpenRouter configurado. La API key permanece sólo en esta pestaña; escribe tu solicitud en Director.');
     setTab('director');
   });
-  $('#ai-forget').addEventListener('click',()=>{$('#ai-key').value='';$('#ai-free-confirm').checked=false;showNotice('Clave borrada de esta pestaña.');});
+  $('#ai-forget').addEventListener('click',()=>{$('#ai-key').value='';showNotice('Clave borrada de esta pestaña.');});
   $('#ai-send').addEventListener('click',queryAI);
   $('#ai-save-manual').addEventListener('click',()=>{
     const p=$('#ai-manual').value.trim();
@@ -136,24 +136,23 @@ async function queryAI(){
   if(state.busy)return;
   const prompt=$('#ai-prompt').value.trim();
   if(prompt.length<3){showNotice('Escribe una solicitud de al menos 3 caracteres.',true);return;}
-  if(!$('#ai-free-confirm').checked){setTab('config');showNotice('Antes de consultar, confirma que tu cuenta sigue en el plan Free sin facturación de pago.',true);return;}
   const key=$('#ai-key').value.trim();
-  if(!key){setTab('config');showNotice('Falta la API key de tu proveedor Free.',true);return;}
+  if(!key){setTab('config');showNotice('Pega tu clave de OpenRouter (sk-or-…).',true);return;}
   const url=$('#ai-url').value.trim().replace(/\/$/,'');
   const model=$('#ai-model').value.trim();
-  if(url!==FREE_URL){setTab('config');showNotice('Modo $0: URL no autorizada. Por seguridad sólo se permite Groq Free; no se envió nada.',true);return;}
-  if(!model){setTab('config');showNotice('Introduce el ID del modelo.',true);return;}
+  if(url!==FREE_URL){setTab('config');showNotice('Modo $0: la URL debe ser la oficial de OpenRouter. No se envió nada.',true);return;}
+  if(!(model==='openrouter/free'||model.endsWith(':free'))){setTab('config');showNotice('Sólo se admiten openrouter/free o modelos terminados en :free.',true);return;}
   if(currentUsage()>=DAILY_LIMIT){showNotice('Límite de 5 intentos alcanzado en este navegador hoy. Sin reintentos ni fallback de pago.',true);return;}
   if(!debitAttempt()){showNotice('No se pudo registrar el consumo local. Por seguridad, se bloqueó la consulta.',true);return;}
   savePublicSettings();renderUsage();
   const track=$('#ai-register').checked;
   state.busy=true;$('#ai-send').disabled=true;
-  showNotice('Consultando una vez al modelo Free…');
+  showNotice('Consultando una vez a OpenRouter (modelo gratuito)…');
   state.answer=null;renderResult();
   try{
     const context=getContext();
     const response=await fetch('/api/director',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      url,model,apiKey:key,prompt,mode:'strict-zero',freeAccountConfirmed:true,
+      url,model,apiKey:key,prompt,mode:'strict-zero',
       context:{strategy:context.strategy||'',cell:context.cell||'',mission:context.mission||''}
     })});
     const data=await response.json().catch(()=>({error:'Respuesta no interpretable del servidor.'}));
