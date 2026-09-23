@@ -20,3 +20,24 @@ Antes de modificar IA, registro de solicitudes, límites o prompts, leer:
 4. Si está disponible, el `LINK_WORLD_MANUAL_MAESTRO_JUEGO_v1(1).md` aportado por el usuario; la síntesis no lo sustituye.
 
 No crear fallback pagado, URLs API arbitrarias, claves en código/localStorage, ni afirmar límite global de costo si sólo existe uno local. `npm test` y `npm run build` antes de publicar.
+
+## Habilidad primaria: LINK WORLD · puente bidireccional
+
+Antes de consultas o cambios de negocios, solicitudes o relaciones desde
+ChatGPT o la app, leer:
+- .agents/skills/link-world/SKILL.md
+- docs/LINK_WORLD_BRIDGE_PROTOCOL.md
+
+LINK WORLD es la habilidad maestra. LINK Director es una subhabilidad para
+el modelo OpenRouter dentro de la web; LINK Geo es subhabilidad geográfica.
+No llamar «LINK Director» a la habilidad maestra.
+
+Los negocios, solicitudes, relaciones y eventos compartidos residen en
+Supabase proyecto LINK CONTROL CENTRAL, tablas public.link_world_* con RLS
+de membresía. El único cliente de web usa una clave publishable. Jamás
+insertar service_role en GitHub. Un negocio seleccionado en Google no es
+un cliente ni un registro propio hasta que el usuario valida y autoriza.
+
+ChatGPT sólo escribe mediante el conector Supabase autorizado y después de
+aprobar el borrador. La app debe volver a leer por el mismo UUID tras
+sincronizar. No afirmar que el .md instala un comando universal en Chats.
