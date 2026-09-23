@@ -72,7 +72,7 @@ function buildControls() {
   panel.id = 'google-search-panel';
   panel.innerHTML = '<div class="google-search-title"><span>EXPLORAR NEGOCIOS DE GOOGLE</span><span class="google-powered">Google Maps</span></div>' +
     '<div class="google-category-wrap"></div><form id="google-text-form" class="google-text-form"><label for="google-text-query">BUSCAR POR NOMBRE O ACTIVIDAD</label><div class="google-text-fields"><input id="google-text-query" maxlength="100" autocomplete="off" placeholder="Hotel, restaurante, agencia…" /><button type="submit" aria-label="Buscar por nombre">Buscar</button></div></form><button type="button" class="google-search-btn" id="google-search-btn">⌖ Buscar negocios en esta zona</button>' +
-    '<div id="google-feedback" class="google-feedback">Los datos se consultan solo cuando lo solicitas.</div>' +
+    '<div id="google-feedback" class="google-feedback">Los datos se consultan solo cuando lo solicitas.</div><button type="button" class="google-disconnect">Olvidar clave de este navegador</button>' +
     '<div id="google-results" class="google-results"></div>';
   workspace.append(panel);
   const wrap = panel.querySelector('.google-category-wrap');
@@ -85,6 +85,10 @@ function buildControls() {
       showFeedback('Pulsa «Buscar negocios en esta zona» para consultar Google.');
     });
     wrap.append(button);
+  });
+  panel.querySelector('.google-disconnect').addEventListener('click', () => {
+    try { localStorage.removeItem(LOCAL_KEY); } catch { /* private browsing */ }
+    location.reload();
   });
   panel.querySelector('#google-search-btn').addEventListener('click', () => searchPlaces());
   panel.querySelector('#google-text-form').addEventListener('submit', event => {
