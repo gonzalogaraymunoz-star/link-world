@@ -154,3 +154,60 @@ a { color:inherit; text-decoration:none; }
  .network-cell strong { font-size:9px; }
  .network-cell span { width:38px; height:38px; }
 }
+
+
+/* LINK WORLD v0.2 — Google Maps embedded directly in the world viewport. */
+#cesiumContainer.google-map-active { background: #182b33; }
+#cesiumContainer.google-map-active > div { width:100%; height:100%; }
+.google-setup {
+  position:absolute; z-index:9; left:50%; top:50%; transform:translate(-50%,-48%);
+  width:min(425px,calc(100% - 35px)); border:1px solid #82cbb963;
+  border-radius:19px; padding:28px; background:#0b1a2bef;
+  box-shadow:0 20px 75px #020814e8; backdrop-filter:blur(18px);
+}
+.google-setup h2 { font-family:'Space Grotesk',sans-serif; letter-spacing:-.035em; font-size:28px; margin:15px 0 8px; }
+.google-setup p { font-size:13px; color:#c0d3d9; line-height:1.55; margin:0 0 20px; }
+.google-setup form { display:grid; gap:9px; }
+.google-setup label { font-size:10px; letter-spacing:.14em; color:#a8c8cc; font-weight:700; }
+.google-setup input { width:100%; min-width:0; border-radius:10px; background:#132536; border:1px solid #719aa566; padding:13px 12px; color:#eef7f9; font:inherit; }
+.google-setup form button,.google-search-btn { border:1px solid #7ec5b3; background:#76c7ae; color:#10232c; padding:12px; border-radius:10px; font:inherit; font-size:12px; font-weight:700; }
+.google-setup form button:hover,.google-search-btn:hover { background:#a6e0d1; }
+.google-setup button:disabled,.google-search-btn:disabled { opacity:.55; cursor:wait; }
+.google-setup small { display:block; font-size:10px; line-height:1.5; color:#98aeb9; margin-top:13px; }
+#google-setup-feedback { font-size:12px; color:#f2ae91; line-height:1.5; margin-top:10px; }
+#google-setup-feedback:empty { display:none; }
+.google-search-panel {
+  z-index:6; position:absolute; top:170px; left:42px;
+  width:315px; max-height:calc(100% - 255px); overflow:auto;
+  border:1px solid #8cb1bc6e; border-radius:14px; padding:14px;
+  background:#0a1726eb; box-shadow:0 12px 50px #01091691; backdrop-filter:blur(13px);
+}
+.google-search-title { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#bfe1df; letter-spacing:.09em; font-size:10px; font-weight:700; margin-bottom:12px; }
+.google-powered { white-space:nowrap; font-size:9px; letter-spacing:0; color:#bcced7; }
+.google-category-wrap { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.google-category { border:1px solid #ffffff24; color:#b5cbd5; background:#152b39; border-radius:15px; padding:6px 9px; font-size:10px; }
+.google-category:hover,.google-category.active { color:#11302d; border-color:#7bd7c0; background:#a5e6d3; }
+.google-search-btn { width:100%; padding:10px 7px; }
+.google-feedback { font-size:10px; line-height:1.5; color:#9eb5bd; margin:10px 2px; }
+.google-feedback.error { color:#ffba9d; }
+.google-results { display:grid; gap:5px; max-height:210px; overflow:auto; }
+.google-result { width:100%; border:1px solid #ffffff1c; background:#152938; padding:10px; text-align:left; color:#e7f5f6; border-radius:9px; }
+.google-result:hover { border-color:#80c5b1; }
+.google-result strong { display:block; font-size:11px; }
+.google-result small { display:block; margin-top:4px; font-size:10px; color:#a3b9c1; line-height:1.4; }
+.google-place-info { color:#23343a; font-size:12px; max-width:230px; }
+.google-place-info strong { font-size:14px; }
+.google-place-info a { color:#156caa; text-decoration:underline; }
+.google-map-active + .map-shade { background:linear-gradient(90deg,#0b162973 0%,transparent 41%),linear-gradient(0deg,#07111f8c 0%,transparent 24%,transparent 75%,#07111f45 100%); }
+@media(max-width:1150px) { .google-search-panel { left:27px; top:173px; width:280px; max-height:calc(100% - 250px); } }
+@media(max-width:820px) {
+ .google-setup { top:46%; padding:19px; }
+ .google-setup h2 { font-size:23px; }
+ .google-search-panel { left:10px; top:194px; width:min(295px,calc(100% - 20px)); max-height:calc(100% - 380px); padding:10px; }
+ .google-search-title { font-size:9px; }
+ .google-results { max-height:110px; }
+ .view-controls { z-index:7; }
+ .cells-dock { max-height:27%; }
+ .world-caption { bottom:calc(27% + 59px); }
+ .cell-detail { bottom:calc(27% + 52px); }
+}
