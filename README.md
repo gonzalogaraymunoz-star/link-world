@@ -49,6 +49,31 @@ temporalmente en pruebas).
 **Nunca pegar aquí ni en GitHub la clave privada de backend.** No almacenar en
 GitHub credenciales ni archivos `.env`.
 
+## Director IA · OpenRouter con sólo tu clave
+
+Abre la aplicación → **✦ Director IA** → **URL · MODEL · API**:
+
+| Campo | Valor preconfigurado |
+| --- | --- |
+| URL | `https://openrouter.ai/api/v1/chat/completions` |
+| MODEL | `openrouter/free` |
+| API | tu clave privada `sk-or-…` de OpenRouter |
+
+El proxy `/api/director` **rechaza modelos pagados**, `openrouter/auto`,
+URLs externas y modelos no terminados en `:free` salvo `openrouter/free`.
+No hay fallback ni reintentos. Se permiten 5 intentos/día por navegador,
+1800 caracteres por solicitud y 700 tokens como máximo de respuesta.
+**No es límite global de gasto ni cubre Google Maps/Vercel**.
+
+La clave no queda en GitHub, Vercel ni localStorage por este formulario;
+viaja por HTTPS al proxy de LINK y después a OpenRouter. Las solicitudes se
+registran **sólo si el usuario lo elige**, localmente en su navegador
+(hasta 80, exportables como JSON); también admite registro manual sin IA.
+
+- [Skill reutilizable LINK Director](.agents/skills/link-director/SKILL.md)
+- [Manual de OpenRouter y registro](docs/LINK_DIRECTOR_MANUAL.md)
+- [Contrato de instrucciones de ejecución](api/LINK_DIRECTOR_SYSTEM.md)
+
 ## Desarrollo sin instalar nada en el Mac antiguo
 
 Vercel construye Vite; GitHub Actions ejecuta la misma compilación con Node 24.
