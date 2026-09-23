@@ -4,7 +4,7 @@
 
 [Aplicación en Vercel](https://link-world-delta.vercel.app/) · [Skill de Google Maps](.agents/skills/google-maps-platform/SKILL.md) · [Skill LINK Geo](.agents/skills/link-geo/SKILL.md)
 
-## Estado v0.4
+## Estado v0.6
 
 **Este es un prototipo navegable y una Demo de estrategia, NO un sistema comercial sincronizado.**
 
@@ -48,6 +48,38 @@ temporalmente en pruebas).
 
 **Nunca pegar aquí ni en GitHub la clave privada de backend.** No almacenar en
 GitHub credenciales ni archivos `.env`.
+
+## LINK WORLD · conversación real entre ChatGPT y la web
+
+**Habilidad primaria:** [LINK WORLD](.agents/skills/link-world/SKILL.md).
+[Protocolo de doble vía](docs/LINK_WORLD_BRIDGE_PROTOCOL.md).
+
+Botón **↔ LINK WORLD** en la app, distinto del Director IA: inicia sesión
+con usuario miembro de LINK CONTROL CENTRAL, lee fichas empresariales propias,
+elige hasta 3 y copia su consulta (UUIDs) para continuar desde ChatGPT.
+Registra solicitudes compartidas en Supabase y las muestra al sincronizar.
+
+Esta conversación utiliza el conector Supabase del usuario (proyecto
+LINK CONTROL CENTRAL) para leer la misma información y, sólo con
+confirmación, agregar negocios, relaciones o solicitudes. No se requiere
+OpenRouter para el puente.
+
+Tablas aisladas y privadas por RLS:
+- public.link_world_businesses
+- public.link_world_requests
+- public.link_world_relations
+- public.link_world_activity
+
+Ninguna empresa fue importada automáticamente desde Google. Las cinco células
+del tablero DEMO no se convirtieron en negocios verificados. Sólo se guardan
+hechos propios/independientemente comprobados y Place IDs, no una copia de
+Google Places. El registro anterior del Director IA continúa local;
+los registros compartidos son otra sección.
+
+La pantalla web exige acceso de un miembro activo de LINK CONTROL CENTRAL
+mediante Supabase Auth. Si el usuario utiliza otra autenticación, hay que
+configurarla antes de prometer acceso. La habilidad en GitHub no instala
+por sí sola un comando @ global.
 
 ## Director IA · OpenRouter con sólo tu clave
 
