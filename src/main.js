@@ -152,7 +152,12 @@ document.addEventListener('linkworld:place-selected',event=>{
 mountDirector(() => ({
   strategy: STRATEGIES.find(s=>s.id===strategy)?.name || '',
   cell: cellById(selectedCell)?.name || '',
-  mission: demoProjection(state).mission+' (DEMO, no comprobada)'
+  mission: demoProjection(state).mission+' (DEMO, no comprobada)',
+  demoSnapshot: JSON.stringify({
+    source:'DEMO FICTICIA · NO SON FICHAS EMPRESARIALES',
+    cells:DEMO_CELLS.map(({id,name,sector,purpose,genes,organelles})=>({id,name,sector,purpose,genes,organelles})),
+    mission:demoProjection(state),note:'No equivale a reservas, acuerdos, datos verificados ni estado de Supabase.'
+  }).slice(0,3200)
 }));
 mountWorldBridge();
 startGoogleWorld(()=>flyGoogle('atacama'));
