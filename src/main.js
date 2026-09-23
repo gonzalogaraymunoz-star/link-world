@@ -6,6 +6,7 @@ import './ai/chat.css';
 import { DEMO_CELLS, DEMO_STEPS, STRATEGIES, createDemoEngine, demoProjection } from './domain/demoWorld.js';
 import './style.css';
 import './world-ui.css';
+import './responsive.css';
 
 const $ = selector => document.querySelector(selector);
 const cellById = id => DEMO_CELLS.find(cell => cell.id === id);
@@ -134,7 +135,11 @@ function setMode(next){
 function renderAll(){renderContext();renderMission();renderActivity();if(view!=='world')renderMode();}
 function toggleContext(open){contextOpen=open;document.body.classList.toggle('context-collapsed',!open);$('#context-toggle').setAttribute('aria-expanded',String(open));}
 renderStrategies();renderAll();
-if (window.matchMedia('(max-width:850px)').matches) toggleContext(false);
+const mobileLayout=window.matchMedia('(max-width:900px)');
+if (mobileLayout.matches) toggleContext(false);
+mobileLayout.addEventListener?.('change',event=>{
+  if(event.matches) toggleContext(false);
+});
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>{
   setMode('world');flyGoogle(b.dataset.location);
