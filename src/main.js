@@ -57,7 +57,7 @@ root.innerHTML = [
   '  <button class="place" data-location="saopaulo"><span class="place-pin">⌖</span><span>São Paulo<small>Brasil · mercado objetivo</small></span><span>↗</span></button>',
   '  <button class="place" data-location="earth"><span class="place-pin">◎</span><span>Ver planeta<small>Alejar cámara</small></span><span>↗</span></button>',
   '  <div class="sidebar-grow"></div>',
-  '  <div class="status-panel"><span class="status-title">FUENTES CONECTADAS</span><div class="status-row"><span class="status-light ok"></span> LINK WORLD · interfaz</div><div class="status-row"><span class="status-light" id="imagery-light"></span> <span id="imagery-status">Google Maps · comprobando…</span></div><div class="status-row"><span class="status-light off"></span> Google Places · pendiente</div><div class="status-row"><span class="status-light off"></span> Supabase · pendiente</div></div>',
+  '  <div class="status-panel"><span class="status-title">FUENTES CONECTADAS</span><div class="status-row"><span class="status-light ok"></span> LINK WORLD · interfaz</div><div class="status-row"><span class="status-light" id="imagery-light"></span> <span id="imagery-status">Google Maps · comprobando…</span></div><div class="status-row"><span id="places-light" class="status-light off"></span> <span id="places-status">Google Places · listo para consultar</span></div><div class="status-row"><span class="status-light off"></span> Supabase · pendiente</div></div>',
   '  <div class="sidebar-foot">REALIDAD EXTERNA <span>→</span> INTELIGENCIA LINK</div>',
   ' </aside>',
   ' <main class="workspace">',
