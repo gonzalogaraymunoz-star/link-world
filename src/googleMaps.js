@@ -211,7 +211,11 @@ async function searchPlaces() {
     });
     clearMarkers();
     renderResults(places || []);
+    document.getElementById('places-status').textContent = 'Google Places · conectado';
+    document.getElementById('places-light').className = 'status-light ok';
   } catch (error) {
+    document.getElementById('places-status').textContent = 'Google Places · revisar acceso';
+    document.getElementById('places-light').className = 'status-light off';
     showFeedback('No se pudo consultar Places. Comprueba que Places API (New) esté habilitada y permitida en esta clave. Google Maps puede seguir funcionando sin Places.', true);
     console.warn('LINK WORLD Places: consulta no disponible.', error?.message || '');
   } finally {
