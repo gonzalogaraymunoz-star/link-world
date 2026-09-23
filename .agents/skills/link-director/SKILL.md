@@ -1,7 +1,7 @@
 ---
 name: link-director
 description: Habilidad compartida para diseñar, auditar y evolucionar el Director IA de cualquier célula LINK; enruta a la tesis, las siete estrategias, el registro y la política de gasto cero.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # LINK Director · habilidad maestra reutilizable
@@ -69,14 +69,27 @@ la API key se escribe en un campo de contraseña y no se persiste. El proxy
 `api/director.js` restringe URL y modelo antes de llamar al proveedor y lee
 el prompt desde `api/LINK_DIRECTOR_SYSTEM.md`.
 
-**Fase estricta $0:** sólo endpoint de Groq Free
-`https://api.groq.com/openai/v1/chat/completions`, clave propia de una cuenta
-confirmada Free **sin facturación de pago**, hasta 5 intentos/día/navegador,
-entrada hasta 1800 caracteres, salida hasta 700 tokens, sin reintentos ni
-fallback. Otros endpoints, aunque tengan campos URL/MODEL/API, no están
-autorizados por el proxy $0. Añadir otro proveedor requiere auditar
-facturación, seguridad, CORS, reglas de API, protección SSRF y claves; nunca
-habilitar hosts arbitrarios.
+**Fase estricta $0 / OpenRouter:** URL preconfigurada
+`https://openrouter.ai/api/v1/chat/completions`, modelo inicial
+`openrouter/free`, o ID alternativo que termine exactamente en `:free`.
+El usuario **solamente necesita pegar su API key de OpenRouter**. No pedir
+ANTHROPIC_BASE_URL en la web: esa variable corresponde a Claude Code,
+no a la aplicación web que usa Chat Completions.
+
+Proxy: `api/director.js` sólo acepta la URL oficial OpenRouter indicada,
+`openrouter/free` o `:free`, clave con formato `sk-or-`, hasta cinco
+intentos/día/navegador, entrada de 1800 caracteres y salida de 700 tokens.
+Sin modelo pagado, `openrouter/auto`, URLs externas, reintento automático ni
+fallback hacia un modelo pagado. Si se agota cuota gratuita, detenerse.
+No prometer gasto cero global de OpenRouter, Google Maps o Vercel.
+
+**Protocolo CLI distinto de la web:** OpenRouter también admite un
+endpoint compatible con Anthropic para Claude Code. Allí se usa
+`ANTHROPIC_BASE_URL=https://openrouter.ai/api` y
+`ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY` con
+`ANTHROPIC_API_KEY=""`, siguiendo documentación oficial. Ese método no
+se necesita para usar Director IA en LINK WORLD.
+
 
 **Importante:** el contador del navegador no es cuota global, no controla
 otras apps, ni garantiza matemáticamente coste cero en una cuenta externa que
@@ -99,7 +112,7 @@ tablas o dar acceso multiempresa.
 ## Criterios de aceptación por proyecto
 
 1. Modelo/API configurables sin claves en GitHub.
-2. Sin clave, sin cuenta Free confirmada, URL prohibida o cuota local agotada:
+2. Sin clave, modelo no gratuito, URL prohibida o cuota local agotada:
    no se envía la solicitud.
 3. Un fallo no activa servicio de pago ni reintento automático.
 4. La casilla Registrar controla si se persiste pregunta/respuesta;
