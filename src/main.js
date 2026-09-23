@@ -1,8 +1,8 @@
 import { flyGoogle, startGoogleWorld } from './googleMaps.js';
 import { mountWorldBridge } from './world/bridge.js';
 import './world/bridge.css';
-import { mountDirector } from './ai/directorPanel.js';
-import './ai/director.css';
+import { mountDirector } from './ai/directorChat.js';
+import './ai/chat.css';
 import { DEMO_CELLS, DEMO_STEPS, STRATEGIES, createDemoEngine, demoProjection } from './domain/demoWorld.js';
 import './style.css';
 import './world-ui.css';
