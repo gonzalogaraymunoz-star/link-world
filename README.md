@@ -4,8 +4,14 @@
 
 [Aplicación en Vercel](https://link-world-delta.vercel.app/) · [Skill de Google Maps](.agents/skills/google-maps-platform/SKILL.md) · [Skill LINK Geo](.agents/skills/link-geo/SKILL.md)
 
-## Estado v0.3
+## Estado v0.4
 
+**Este es un prototipo navegable y una Demo de estrategia, NO un sistema comercial sincronizado.**
+
+- **Interfaz editorial de estrategia:** mapa central, panel contextual plegable, siete estrategias, perspectivas Mundo/Organismo/Constelación, modo día/noche y diseño móvil.
+- **Demo jugable aislada:** oportunidad ficticia → decisión → sinapsis simulada → ejercicio simulado → aprendizaje; alternativas de bloqueo, reprogramación o rechazo. No toca operaciones reales.
+- **Memoria de demostración:** eventos tipados y proyecciones coherentes de misión/relación/evidencia. Tests en `npm test`.
+- [Auditoría y wireframe del Manual Maestro](docs/INTERFAZ_ESTRATEGICA_V0.4.md).
 - Google Maps dentro de la web: San Pedro de Atacama y São Paulo.
 - Consulta **bajo demanda** de hoteles, restaurantes, turismo, transporte,
   wellness y comercios cercanos (Places API (New)).
@@ -50,6 +56,7 @@ El navegador Chrome solo necesita abrir la URL.
 
 ```sh
 npm install
+npm test
 npm run build
 ```
 
