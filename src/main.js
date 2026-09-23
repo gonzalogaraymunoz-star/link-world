@@ -1,4 +1,6 @@
 import { flyGoogle, startGoogleWorld } from './googleMaps.js';
+import { mountDirector } from './ai/directorPanel.js';
+import './ai/director.css';
 import { DEMO_CELLS, DEMO_STEPS, STRATEGIES, createDemoEngine, demoProjection } from './domain/demoWorld.js';
 import './style.css';
 import './world-ui.css';
@@ -145,4 +147,9 @@ document.addEventListener('linkworld:place-selected',event=>{
   const detail=event.detail||{};selectedPlace={name:detail.name||'Lugar de Google',address:detail.address||'',uri:detail.uri||''};
   selectedCell=null;toggleContext(true);renderContext();
 });
+mountDirector(() => ({
+  strategy: STRATEGIES.find(s=>s.id===strategy)?.name || '',
+  cell: cellById(selectedCell)?.name || '',
+  mission: demoProjection(state).mission+' (DEMO, no comprobada)'
+}));
 startGoogleWorld(()=>flyGoogle('atacama'));
