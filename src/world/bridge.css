@@ -1,0 +1,71 @@
+/* LINK WORLD private bridge. No overlays on the Google map itself. */
+.bridge-header-btn{font-family:'DM Sans',sans-serif!important;font-size:10px!important;font-weight:700;background:#f0f3ea!important;color:#466448!important;padding:7px 11px!important;white-space:nowrap;}
+.bridge-header-btn:hover{background:#dce8d8!important;}
+.bridge-panel{position:fixed;z-index:95;top:70px;right:10px;bottom:10px;width:min(520px,calc(100vw - 20px));background:var(--white,#fffefa);color:var(--ink,#273c2b);border:1px solid var(--line,#d6dfd3);border-radius:16px;box-shadow:0 16px 70px #1b322975;display:flex;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;}
+.bridge-panel.hidden{display:none;}
+.bridge-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 14px;border-bottom:1px solid #dce4d7;}
+.bridge-head .eyebrow{font-size:10px;letter-spacing:.1em;color:#7f9978;}
+.bridge-head h2{font:600 21px/1.15 'Space Grotesk',sans-serif;letter-spacing:-.035em;margin:7px 0;color:inherit;}
+.bridge-head small{font-size:10px;color:#6e8a70;}
+#bridge-close{font-size:24px;color:#71826d;border:1px solid #d7e0d3;background:transparent;border-radius:8px;width:32px;height:32px;}
+.bridge-status{border-bottom:1px solid #e3e8de;font-size:11px;line-height:1.4;padding:11px 20px;color:#5b795e;background:#f1f5ee;}
+.bridge-status.error{color:#a1553c;background:#f9ede5;}
+.bridge-login{padding:22px;overflow:auto;font-size:12px;line-height:1.6;color:#586e59;}
+.bridge-login p{margin:0 0 17px;}
+#bridge-login-form{display:grid;gap:10px;}
+#bridge-login-form label{font-size:10px;font-weight:700;letter-spacing:.07em;}
+.bridge-panel input:not([type=checkbox]),.bridge-panel textarea{border:1px solid #cddccc;border-radius:9px;background:#fffefa;color:#2a3e2f;padding:11px;width:100%;font:inherit;font-size:12px;min-width:0;resize:vertical;}
+.bridge-panel input:focus,.bridge-panel textarea:focus{outline:2px solid #91b58d;outline-offset:1px;}
+.bridge-primary{display:block;background:#597855;border:1px solid #597855;color:white;border-radius:9px;padding:12px;font-size:12px;font-weight:700;cursor:pointer;}
+.bridge-primary:hover{background:#405c3b;}
+.bridge-primary:disabled{opacity:.5;cursor:not-allowed;}
+.bridge-data{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden;}
+.bridge-data.hidden{display:none;}
+.bridge-tabs{display:flex;gap:4px;overflow-x:auto;flex:0 0 auto;border-bottom:1px solid #e1e7dc;padding:9px 12px;}
+.bridge-tabs button{white-space:nowrap;padding:9px 11px;border:1px solid transparent;background:transparent;color:#82927e;border-radius:8px;font:700 11px 'DM Sans',sans-serif;}
+.bridge-tabs button.active{background:#e6eee2;color:#456843;border-color:#d3e0d0;}
+.bridge-toolbar{padding:8px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #e1e7dd;gap:7px;}
+.bridge-toolbar button{background:transparent;border:0;color:#63805f;text-decoration:underline;font-size:11px;cursor:pointer;}
+.bridge-page{padding:15px 18px 25px;overflow:auto;min-height:0;flex:1;}
+.bridge-page.hidden{display:none;}
+.bridge-muted{color:#758a75;font-size:11px;line-height:1.6;margin:2px 0 13px;}
+#bridge-business-list{display:grid;gap:8px;margin:13px 0;}
+.bridge-business{border:1px solid #dce7d9;border-radius:10px;padding:11px;background:#f8faf4;display:grid;gap:7px;}
+.bridge-business label{display:flex;align-items:flex-start;gap:9px;cursor:pointer;}
+.bridge-business input{accent-color:#598152;flex-shrink:0;margin-top:3px;}
+.bridge-business label span{flex:1;display:grid;gap:4px;min-width:0;}
+.bridge-business strong{font-size:12px;overflow-wrap:anywhere;}
+.bridge-business small{font-size:10px;color:#7b9279;}
+.bridge-badge{font-size:9px;color:#577256;background:#e3efde;padding:4px 7px;border-radius:20px;justify-self:start;}
+.bridge-inspect{border:0;background:transparent;text-decoration:underline;color:#51744f;font-size:10px;justify-self:start;padding:0;}
+.bridge-selection{position:sticky;bottom:0;border:1px solid #d6e2d2;background:#f4f7ef;border-radius:11px;padding:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0;}
+.bridge-selection strong{font-size:10px;color:#587255;white-space:nowrap;}
+.bridge-selection button{border:1px solid #557550;border-radius:8px;color:white;background:#5b7853;padding:9px;font-weight:700;font-size:10px;}
+.bridge-selection button:disabled{opacity:.4;cursor:not-allowed;}
+.bridge-inspector{border:1px solid #cdddc8;background:#eef5e8;border-radius:11px;padding:12px;margin:9px 0;font-size:11px;overflow-wrap:anywhere;}
+.bridge-inspector.hidden{display:none;}
+.bridge-inspector-head{display:flex;justify-content:space-between;gap:12px;}
+.bridge-inspector-head button{border:0;background:transparent;font-size:18px;color:#57704d;}
+.bridge-inspector p{line-height:1.5;color:#607460;}
+.bridge-inspector a{color:#4b754d;text-decoration:underline;display:block;margin:10px 0;}
+.bridge-fact{display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;padding:7px 0;border-bottom:1px solid #dae6d7;}
+.bridge-fact b{color:#668266;}
+.bridge-stack{display:grid;gap:9px;margin:14px 0 0;}
+.bridge-stack label{display:grid;gap:5px;color:#667f64;font-size:11px;font-weight:700;}
+.bridge-stack > strong{font-size:12px;}
+.bridge-request{padding:12px 5px;border-bottom:1px solid #e1e7dd;display:grid;gap:7px;}
+.bridge-request strong{font-size:12px;color:inherit;}
+.bridge-request small{font-size:10px;color:#7c917a;}
+.bridge-request p{font-size:10px;color:#718870;line-height:1.5;}
+.bridge-activity-line{display:grid;gap:4px;padding:10px 4px;border-bottom:1px solid #e2e7dc;font-size:11px;}
+.bridge-activity-line span{font-size:10px;color:#7a9079;}
+body.link-dark .bridge-panel{background:#1c2b21;color:#edf4eb;border-color:#405942;}
+body.link-dark .bridge-status,body.link-dark .bridge-business,body.link-dark .bridge-selection,body.link-dark .bridge-inspector{background:#2a3d2d;color:#dce9d9;border-color:#486448;}
+body.link-dark .bridge-panel input:not([type=checkbox]),body.link-dark .bridge-panel textarea{background:#263a2c;color:#ecf4ea;border-color:#50694e;}
+@media(max-width:850px){
+ .bridge-panel{top:59px;left:4px;right:4px;bottom:4px;width:auto;border-radius:12px;}
+ .bridge-head{padding:12px 14px;}
+ .bridge-head h2{font-size:17px;}
+ .bridge-page{padding:12px;}
+ .bridge-header-btn{padding:5px!important;font-size:9px!important;}
+}
