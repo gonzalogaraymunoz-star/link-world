@@ -131,7 +131,7 @@ async function queryAI(){
       const scope=$('#ai-scope').value;
       status('Leyendo datos propios y solicitudes autorizadas de LINK…');
       const research=await readDirectorAppContext(scope);
-      context.appDataStatus='Supabase autorizado, '+research.count+' negocios; '+research.scope;
+      context.appDataStatus='Supabase autorizado, '+research.count+' negocios; '+research.scope+(research.truncated?' · contexto recortado expresamente por límite de seguridad':'');
       context.approvedAppSnapshot=research.snapshot;
       status('Contexto LINK cargado. Consultando el modelo gratuito una sola vez…');
     }else context.appDataStatus='Sin contexto privado: el usuario no autorizó compartir datos LINK con OpenRouter.';
