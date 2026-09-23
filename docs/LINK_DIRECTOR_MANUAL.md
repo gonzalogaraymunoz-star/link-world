@@ -1,99 +1,84 @@
-# LINK DIRECTOR — MANUAL DE USO E INTEGRACIÓN v1.0
+# LINK DIRECTOR — MANUAL DE USO v1.1 · OPENROUTER
 
-**Origen:** Manual Maestro LINK WORLD v1 del usuario, septiembre de 2026.
-Esta síntesis de módulo no reemplaza el archivo completo
-`LINK_WORLD_MANUAL_MAESTRO_JUEGO_v1(1).md` que originó la arquitectura.
-Conserva el mismo principio: transformar una interfaz decorativa en una
-capacidad para comprender y coordinar el organismo sin convertir simulaciones
-en ventas.
+Origen: Manual Maestro LINK WORLD v1. No sustituye el documento original de
+la tesis ni acredita operación real con otras células.
 
-## 1. Tres superficies, una instrucción común
+## Inicio sencillo: SÓLO API KEY
 
-| Superficie | Ubicación | Responsabilidad |
-| --- | --- | --- |
-| App web | `src/ai/directorPanel.js` | URL / MODEL / API, consulta y casilla de registro |
-| Prompt real del modelo | `api/LINK_DIRECTOR_SYSTEM.md` | Contrato del Director leído por el servidor |
-| Agentes en otros proyectos/chats | `.agents/skills/link-director/SKILL.md` | Rutas y reglas reutilizables |
-| Estado económico / geográfico | `src/domain/demoWorld.js` y `src/googleMaps.js` | Mapa y Demo permanecen separados |
+LINK WORLD → **Director IA** → **URL · MODEL · API**.
 
-La app **no obtiene acceso a tus conversaciones de ChatGPT** por copiar una
-Skill; tampoco invoca modelos sin clave configurada y confirmación del usuario.
+| Campo | Ya preparado |
+| --- | --- |
+| URL | `https://openrouter.ai/api/v1/chat/completions` |
+| MODEL | `openrouter/free` |
+| API | **Pega solamente tu clave OpenRouter sk-or-…** |
 
-## 2. Uso dentro de LINK WORLD
+La URL y el modelo son visibles/editables, pero la URL distinta de OpenRouter
+se bloquea y sólo se admite `openrouter/free` o un slug específico
+terminado en `:free`. No usar `openrouter/auto`, Claude o un slug de
+pago para este modo. No hay fallback a pago.
 
-1. Abrir la web y tocar **Director IA**.
-2. En **URL · MODEL · API**, introducir la URL de un endpoint compatible con
-   chat completions, el ID de un modelo abierto disponible en el proveedor y
-   la API key del proveedor. En la primera etapa sólo funciona Groq Free;
-   URLs distintas se bloquean deliberadamente.
-3. Confirmar en la casilla que la **cuenta externa sigue siendo Free y sin
-   facturación de pago**. No añadir tarjeta ni activar upgrade automático.
-4. Volver a **Director** y escribir objetivo; marcar **Registrar solicitud y
-   respuesta** si quieres archivarla localmente.
-5. Revisar propuesta, fuentes faltantes y alternativas; la respuesta no
-   ejecuta nada sobre células ni envía mensajes.
+Después, escribe tu objetivo en **Director** y pulsa «Consultar». La respuesta
+es una propuesta: no envía mensajes, cobra, actualiza Supabase ni registra
+ventas. Puedes activar la casilla de registro local o dejarla desmarcada.
 
-Configuración inicial sugerida (verificar disponibilidad actual del modelo
-en tu cuenta):
+[Crear una API key en OpenRouter](https://openrouter.ai/settings/keys) ·
+[Router de modelos gratuitos](https://openrouter.ai/openrouter/free) ·
+[API Chat Completions](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request)
 
-```text
-URL   https://api.groq.com/openai/v1/chat/completions
-MODEL openai/gpt-oss-20b
-API   [tu propia clave de cuenta Free; NO la pongas en el chat]
+## Protocolo para Claude Code (distinto de LINK WORLD web)
+
+Si en otro momento deseas usar el comando `claude` con OpenRouter en
+terminal, su protocolo compatible con Anthropic utiliza:
+
+```bash
+export OPENROUTER_API_KEY="<PEGA_TU_CLAVE_OPENROUTER_LOCALMENTE>"
+export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
+export ANTHROPIC_AUTH_TOKEN="$OPENROUTER_API_KEY"
+export ANTHROPIC_API_KEY=""
+claude --model openrouter/free
 ```
 
-## 3. Registro de solicitudes
+Revisa compatibilidad y nombres de modelos según
+[las instrucciones oficiales para Claude Code](https://openrouter.ai/docs/guides/coding-agents/claude-code-integration).
+**El comando de Claude Code no se ejecuta dentro de LINK WORLD ni se necesita
+para conectar la app.** Nunca compartir la clave o guardar un archivo
+`.env` en GitHub.
 
-En **Registro**: anotar peticiones pendientes sin IA, consultar los
-resultados cuyo almacenamiento autorizaste, exportar JSON y borrar todo.
-Cada evento incluye fecha, tipo, estado y fuente. La API key no se guarda
-en JSON. Capacidad actual: hasta 80 registros, por navegador, con límite
-de almacenamiento; si el navegador se borra, se pierde el historial no
-exportado. **No hay sincronización con Supabase ni otros chats todavía**.
+## Seguridad y cero gasto
 
-## 4. Presupuesto y seguridad
+- Router gratuito `openrouter/free` o variantes `:free` exclusivamente.
+  OpenRouter publica precio de cero tokens para su router Free; el catálogo
+  y las cuotas pueden cambiar.
+- Cinco intentos diarios por **navegador**, incluidos errores; 1800
+  caracteres de pregunta; máximo 700 tokens de respuesta; timeout 13 s.
+- La clave permanece sólo en el campo de esta pestaña. El navegador la envía
+  vía HTTPS a una función LINK/Vercel que la reenvía a OpenRouter. El proxy
+  no persiste claves, conversaciones o respuestas; el registro optativo se
+  almacena en el navegador.
+- Los límites de navegador no son un tope servidor global ni impiden que la
+  misma clave se utilice fuera de LINK. Mantener auto-recarga de créditos
+  deshabilitada y, si está disponible, límite $0 a la clave/cuenta; no
+  habilitar rutas de pago. Si el proveedor agota cuota, el sistema debe
+  detenerse y no cambiar a modelos facturables.
+- OpenRouter, Google Maps/Places y Vercel tienen políticas/costos
+  independientes. Ninguna interfaz puede garantizar US$0 total si otra
+  cuenta/sistema permite facturación.
 
-- **AI externo apagado hasta introducir clave y confirmar Free.**
-- Proxy del servidor sólo admite la URL Groq Free exacta y rechaza las demás
-  sin enviar solicitud; sin fallback y sin reintentos.
-- Máximo **5 intentos por día y navegador**, incluyendo los fallidos,
-  **1.800 caracteres de entrada de usuario** y **700 tokens de salida**;
-  límite de tiempo 13 s. No es límite global resistente a usuarios maliciosos.
-- La clave viaja en cada petición cifrada por HTTPS al proxy de Vercel,
-  que la reenvía a Groq. No se guarda en GitHub ni localStorage. Es
-  una clave privada y no debe publicarse.
-- La cuenta externa debe permanecer Free, sin facturación o upgrades. Si
-  cambia, **los límites de la UI no garantizan que no te cobren**.
-- Google Maps/Places y Vercel tienen **facturación independiente**; el
-  Director no puede prometer US$0 por ellos.
-- No utilizar URL arbitrarias como proxy abierto; la casilla URL existe
-  para preparar futuros proveedores, previa auditoría del host, SSRF,
-  cumplimiento y garantías de gasto.
+## Registro de solicitudes
 
-## 5. Reutilización de la habilidad
+La pestaña Registro permite anotar solicitudes manuales **sin IA** y
+consultar las que elegiste conservar. Hasta 80 registros **locales por
+navegador**, con fecha, fuente y estado; exportar JSON o borrar. No se
+sincronizan chats ni equipos, no contienen API keys y desaparecen si se
+borra almacenamiento local sin exportación.
 
-Abrir o incorporar:
+## Habilidad transversal
 
+Usar:
 https://github.com/gonzalogaraymunoz-star/link-world/blob/main/.agents/skills/link-director/SKILL.md
 
-Solicitar a otro agente:
-
-```text
-Usa LINK Director y lee SKILL.md del repositorio link-world.
-Sigue su enrutamiento al Manual Maestro, al contrato del sistema
-y a la habilidad LINK Geo cuando corresponda. Conserva la autonomía
-de cada célula, registra solicitudes y mantén gasto externo $0.
-```
-
-**Invocación por nombre no equivale a instalación universal.**
-Para que funcione por `@LINK Director` en cada entorno, esa plataforma
-debe registrar/instalar la Skill por su mecanismo propio. El .md deja
-el contrato portable y accesible por URL.
-
-## 6. Siguiente evolución autorizable
-
-Cuando el usuario seleccione proyecto Supabase real y se auditen schemas/
-RLS, integrar solicitudes compartidas con identidad, permisos, auditoría,
-trazabilidad entre chats/proyectos y límite global server-side real.
-Hasta entonces, no afirmar que la app tiene memoria transversal ni que
-el Director ejecuta acciones en negocios.
+`@LINK Director` es un nombre de invocación humano; para que otro
+chat/entorno use el archivo deberá tenerlo disponible e invocarlo por URL
+o instalarlo según la plataforma. Instrucción canónica que usa la API:
+`api/LINK_DIRECTOR_SYSTEM.md`. Para geografía, consultar `link-geo`.
