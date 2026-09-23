@@ -1,0 +1,374 @@
+/* LINK WORLD · responsive foundation v0.8
+   Imported LAST. Goals: no horizontal overflow, one primary task per mobile viewport,
+   safe-area support, map-first mobile, full-screen Director/Bridge, tablet balance. */
+
+html,body,#app{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  height:100%;
+  min-height:100%;
+  margin:0;
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+body{touch-action:manipulation;}
+img,svg,canvas{max-width:100%;}
+button,input,textarea,select{max-width:100%;}
+.new-shell,.new-shell>*{min-width:0;}
+.header-actions{min-width:0;}
+.workspace{min-width:0;}
+
+/* Laptop/tablet: preserve the editorial system but prevent fixed columns from squeezing map. */
+@media (min-width:901px) and (max-width:1279px){
+  .new-shell{
+    grid-template-columns:clamp(164px,17vw,196px) minmax(380px,1fr) clamp(238px,25vw,286px);
+    grid-template-rows:62px minmax(0,1fr) 150px;
+    height:100dvh;
+  }
+  .new-shell .topbar{height:62px;padding:0 14px;gap:10px;}
+  .new-shell .brand{min-width:150px;}
+  .new-shell .brand small{display:none;}
+  .header-territory{display:none;}
+  .new-shell .sidebar{padding:14px 8px 12px;}
+  .new-shell .mode{padding:8px 7px;gap:7px;}
+  .new-shell .mode-icon{width:31px;height:31px;}
+  .strategy{padding:6px 7px;gap:7px;}
+  .strategy small{font-size:8px;}
+  .context-head{padding:14px 14px 11px;}
+  .context-content{padding:14px;}
+  .mission-bar{padding:12px 16px 7px;}
+  .new-shell .google-search-panel{left:12px;top:128px;width:min(260px,34vw);max-height:calc(100% - 150px);}
+  .new-shell .world-heading{left:14px;top:14px;max-width:300px;}
+  .new-shell .view-controls{right:12px;top:14px;}
+}
+
+/* Phones and small tablets: one canvas, compact horizontal navigation, bottom mission.
+   Context becomes an overlay sheet rather than a fourth column/row. */
+@media (max-width:900px){
+  :root{--mobile-top:56px;--mobile-nav:88px;--mobile-mission:126px;}
+
+  .new-shell{
+    width:100vw;
+    max-width:100vw;
+    height:100dvh;
+    min-height:100dvh;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:var(--mobile-top) var(--mobile-nav) minmax(0,1fr) var(--mobile-mission)!important;
+  }
+
+  /* Header: only the product, bridge, Director and menu remain visible. */
+  .new-shell .topbar{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:100%;
+    max-width:100vw;
+    height:var(--mobile-top)!important;
+    min-height:var(--mobile-top);
+    padding:0 max(8px,env(safe-area-inset-left)) 0 max(8px,env(safe-area-inset-left));
+    gap:6px;
+    overflow:hidden;
+  }
+  .new-shell .brand{
+    min-width:0!important;
+    width:auto;
+    flex:0 0 auto;
+    gap:6px;
+  }
+  .new-shell .brandmark{width:32px;height:32px;border-radius:9px;font-size:18px;}
+  .new-shell .brand>span:last-child{display:none;}
+  .header-territory,.state-pill,.new-shell .repo-link,#theme-switch,#context-toggle{display:none!important;}
+  .new-shell .header-actions{
+    margin-left:auto;
+    flex:1 1 auto;
+    justify-content:flex-end;
+    gap:5px!important;
+    min-width:0;
+    overflow:hidden;
+  }
+  .new-shell .header-actions .bridge-header-btn,
+  .new-shell .header-actions .lw-header-button{
+    flex:0 1 auto;
+    min-width:0!important;
+    height:36px;
+    padding:0 9px!important;
+    font-size:9px!important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    border-radius:9px!important;
+  }
+  .new-shell .header-actions .bridge-header-btn{max-width:116px;}
+  .new-shell .header-actions .lw-header-button{max-width:116px;}
+
+  /* Top navigation: two clean horizontal rails, never a wide desktop sidebar. */
+  .new-shell .sidebar{
+    grid-column:1!important;
+    grid-row:2!important;
+    width:100%;
+    max-width:100vw;
+    min-height:0;
+    padding:5px 7px!important;
+    overflow:hidden!important;
+    display:grid!important;
+    grid-template-rows:38px 38px;
+    gap:5px!important;
+    background:#fbfaf5;
+    border-right:0!important;
+    border-bottom:1px solid var(--line);
+  }
+  .new-shell .sidebar .side-label,
+  .new-shell .side-rule,
+  .new-shell .sidebar-grow,
+  .new-shell .status-panel,
+  .new-shell .sidebar-foot,
+  .new-shell .territory-list{display:none!important;}
+  .new-shell .mode-menu,
+  .new-shell .strategy-list{
+    display:flex!important;
+    flex-direction:row!important;
+    gap:5px!important;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+  }
+  .new-shell .mode-menu::-webkit-scrollbar,
+  .new-shell .strategy-list::-webkit-scrollbar{display:none;}
+  .new-shell .mode{
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-width:104px!important;
+    height:38px;
+    padding:4px 8px!important;
+    gap:6px!important;
+    scroll-snap-align:start;
+  }
+  .new-shell .mode-icon{width:28px!important;height:28px!important;font-size:15px!important;border-radius:8px;}
+  .new-shell .mode>span:nth-child(2){font-size:10px!important;}
+  .new-shell .mode small,.new-shell .mode-key{display:none!important;}
+  .new-shell .strategy{
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-width:max-content!important;
+    height:38px;
+    padding:5px 9px!important;
+    gap:6px!important;
+    scroll-snap-align:start;
+    background:#f0f0e9;
+    border-radius:9px;
+  }
+  .strategy-num{width:22px!important;height:22px!important;flex-basis:22px!important;}
+  .strategy strong{font-size:10px!important;}
+  .strategy small,.strategy-arrow{display:none!important;}
+
+  /* Map receives all remaining space. */
+  .new-shell .workspace{
+    grid-column:1!important;
+    grid-row:3!important;
+    width:100%;
+    max-width:100vw;
+    height:auto;
+    min-height:0;
+    overflow:hidden;
+  }
+  .new-shell #cesiumContainer{inset:0!important;}
+  .new-shell .world-heading{
+    top:8px!important;
+    left:8px!important;
+    right:auto!important;
+    width:min(215px,60vw)!important;
+    max-width:none!important;
+    padding:8px 10px!important;
+    border-radius:10px!important;
+  }
+  .new-shell .world-heading .eyebrow{font-size:7px!important;}
+  .new-shell .world-heading h1{font-size:15px!important;margin:3px 0!important;line-height:1.15!important;}
+  .new-shell .world-heading p{display:none!important;}
+  .new-shell .view-controls{
+    top:8px!important;
+    right:8px!important;
+    display:flex!important;
+    gap:5px!important;
+  }
+  .new-shell .view-controls button{padding:7px 8px!important;font-size:7px!important;}
+
+  /* Places becomes a compact floating tool, not a second page layered over map. */
+  .new-shell .google-search-panel{
+    top:70px!important;
+    left:8px!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:min(270px,72vw)!important;
+    max-width:calc(100vw - 16px)!important;
+    max-height:min(270px,48dvh)!important;
+    padding:10px!important;
+    border-radius:12px!important;
+    overflow:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  .new-shell .google-category-wrap{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    gap:5px!important;
+    scrollbar-width:none;
+  }
+  .new-shell .google-category{flex:0 0 auto!important;padding:6px 8px!important;font-size:9px!important;}
+  .new-shell .google-search-title,.new-shell .google-powered{font-size:8px!important;}
+  .new-shell .google-text-form{gap:4px!important;}
+  .new-shell .google-text-fields input{padding:8px!important;font-size:10px!important;}
+  .new-shell .google-text-fields button{padding:0 9px!important;font-size:9px!important;}
+  .new-shell .google-search-btn{padding:9px!important;font-size:9px!important;}
+  .new-shell .google-feedback{font-size:8px!important;line-height:1.35!important;}
+  .new-shell .google-results{max-height:90px!important;}
+  .new-shell .google-result{padding:7px!important;}
+  .new-shell .google-result strong{font-size:9px!important;}
+  .new-shell .google-result small{font-size:8px!important;}
+  .new-shell .google-disconnect{font-size:8px!important;margin:4px 0!important;}
+  .new-shell .google-setup{
+    position:absolute!important;
+    top:50%!important;
+    left:50%!important;
+    transform:translate(-50%,-50%)!important;
+    width:min(390px,calc(100vw - 24px))!important;
+    max-height:calc(100dvh - 100px)!important;
+    overflow:auto!important;
+    padding:15px!important;
+  }
+
+  /* Organism/constellation views fit the same canvas. */
+  .new-shell .mode-layer{inset:0!important;padding:14px!important;overflow-y:auto!important;}
+  .editorial-board h2{font-size:24px!important;}
+  .editorial-board>p{font-size:11px!important;}
+  .cell-board{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin-top:13px!important;}
+  .board-cell{min-height:96px!important;padding:10px!important;}
+  .board-monogram{width:30px!important;height:30px!important;margin-bottom:5px!important;}
+  .connections-board{margin-top:12px!important;gap:6px!important;}
+  .connection-row{padding:8px!important;}
+
+  /* Context: mobile bottom sheet only when explicitly opened. */
+  .context-pane{
+    position:fixed!important;
+    z-index:70!important;
+    left:6px!important;
+    right:6px!important;
+    bottom:max(6px,env(safe-area-inset-bottom))!important;
+    top:auto!important;
+    width:auto!important;
+    height:min(58dvh,520px)!important;
+    max-height:calc(100dvh - 70px)!important;
+    display:flex;
+    border:1px solid var(--line)!important;
+    border-radius:16px!important;
+    box-shadow:0 18px 60px #14251d59;
+    overflow:hidden!important;
+  }
+  .context-collapsed .context-pane{display:none!important;}
+  .context-head{padding:11px 13px!important;}
+  .context-head h2{font-size:16px!important;}
+  .context-content{padding:11px 13px!important;}
+  .context-footer{display:none!important;}
+
+  /* Mission stays compact and always readable at the bottom. */
+  .mission-bar{
+    grid-column:1!important;
+    grid-row:4!important;
+    width:100%;
+    max-width:100vw;
+    min-height:0;
+    padding:8px 10px calc(7px + env(safe-area-inset-bottom))!important;
+    gap:4px!important;
+    overflow:hidden!important;
+  }
+  .mission-overline{font-size:7px!important;}
+  .mission-row{display:flex!important;align-items:center!important;gap:8px!important;}
+  .mission-intro{flex:1 1 auto;min-width:0;}
+  .mission-intro h2{font-size:13px!important;line-height:1.15!important;margin:0 0 2px!important;}
+  .mission-intro p{
+    font-size:8px!important;
+    line-height:1.3!important;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .mission-controls{flex:0 0 auto!important;margin:0!important;display:flex!important;align-items:center!important;}
+  .mission-actions{display:flex!important;flex-wrap:nowrap!important;gap:4px!important;max-width:48vw!important;overflow-x:auto!important;scrollbar-width:none;}
+  .mission-action,.secondary-action{padding:6px 7px!important;font-size:8px!important;white-space:nowrap!important;}
+  .mission-progress{gap:3px!important;overflow:hidden!important;}
+  .step{min-width:0!important;flex:1!important;gap:2px!important;font-size:7px!important;}
+  .step i{width:15px!important;height:15px!important;font-size:7px!important;}
+  .mission-note{font-size:7px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .activity-panel{
+    position:fixed!important;
+    z-index:75!important;
+    left:6px!important;right:6px!important;
+    bottom:calc(var(--mobile-mission) + 8px)!important;
+    width:auto!important;
+    max-height:45dvh!important;
+  }
+
+  /* Full-screen workspaces: on mobile these are experiences, never side panels. */
+  .lw-chat,.bridge-panel{
+    position:fixed!important;
+    z-index:120!important;
+    inset:0!important;
+    width:100vw!important;
+    max-width:100vw!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    border-radius:0!important;
+    border:0!important;
+    box-shadow:none!important;
+    padding-top:env(safe-area-inset-top)!important;
+    padding-bottom:env(safe-area-inset-bottom)!important;
+  }
+  .lw-chat .lw-top{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+  .lw-transcript{-webkit-overflow-scrolling:touch;}
+  .lw-compose{padding-bottom:max(10px,env(safe-area-inset-bottom))!important;}
+  .bridge-head{padding-left:max(14px,env(safe-area-inset-left))!important;padding-right:max(14px,env(safe-area-inset-right))!important;}
+
+  /* No accidental width expansion from long text/URLs. */
+  .lw-chat *, .bridge-panel *, .context-pane *{min-width:0;}
+  .lw-bubble,.bridge-muted,.context-content{overflow-wrap:anywhere;}
+}
+
+/* Narrow phones: prioritize navigation and map, remove secondary labels entirely. */
+@media (max-width:430px){
+  :root{--mobile-top:54px;--mobile-nav:82px;--mobile-mission:116px;}
+  .new-shell .header-actions .bridge-header-btn{max-width:104px;}
+  .new-shell .header-actions .lw-header-button{max-width:104px;}
+  .new-shell .mode{min-width:96px!important;}
+  .new-shell .google-search-panel{width:min(248px,70vw)!important;max-height:245px!important;}
+  .new-shell .world-heading{width:min(175px,47vw)!important;}
+  .new-shell .view-controls button:first-child{display:none!important;}
+  .mission-intro p{display:none!important;}
+  .mission-progress .step>span{display:none!important;}
+  .mission-note{display:none!important;}
+  .mission-controls{max-width:50vw!important;}
+  .lw-identity small{display:none!important;}
+}
+
+/* Small-height landscape: map first; reduce vertical chrome. */
+@media (max-width:900px) and (max-height:550px){
+  :root{--mobile-top:48px;--mobile-nav:42px;--mobile-mission:84px;}
+  .new-shell .sidebar{grid-template-rows:34px!important;padding:4px 6px!important;}
+  .new-shell .strategy-list{display:none!important;}
+  .new-shell .mode{height:34px!important;}
+  .new-shell .world-heading{display:none!important;}
+  .new-shell .google-search-panel{top:8px!important;max-height:62dvh!important;}
+  .mission-overline,.mission-progress,.mission-note{display:none!important;}
+  .mission-bar{justify-content:center!important;}
+}
+
+/* Touch target baseline without growing the whole interface. */
+@media (pointer:coarse){
+  .new-shell button,.lw-chat button,.bridge-panel button{touch-action:manipulation;}
+}
