@@ -218,7 +218,6 @@ function initWorld() {
           fillColor: Color.WHITE,
           showBackground: true,
           backgroundColor: Color.fromCssColorString('#101825'),
-          pixelOffset: new Cartesian3(0, 0, 0),
           verticalOrigin: VerticalOrigin.BOTTOM
         }
       });
