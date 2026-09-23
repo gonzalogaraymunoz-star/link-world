@@ -181,6 +181,9 @@ function renderResults(places) {
     row.type = 'button';
     row.append(el('strong', '', name), el('small', '', place.formattedAddress || 'Ubicación registrada en Google'));
     const focus = () => {
+      document.dispatchEvent(new CustomEvent('linkworld:place-selected', { detail: {
+        name, address: place.formattedAddress || '', uri: place.googleMapsURI || ''
+      }}));
       map.panTo(place.location);
       map.setZoom(Math.max(map.getZoom(), 16));
       const card = el('div', 'google-place-info');
