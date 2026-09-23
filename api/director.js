@@ -5,7 +5,7 @@ const INSTRUCTIONS = readFileSync(new URL('./LINK_DIRECTOR_SYSTEM.md', import.me
 // Deliberately fail-closed: free-tier-only, no generic arbitrary-URL proxy,
 // no automatic billing fallback, no persistent API keys or conversations.
 const PUBLIC_ORIGIN = process.env.PUBLIC_SITE_ORIGIN || 'https://link-world-delta.vercel.app';
-const FREE_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+const FREE_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 const MAX_INPUT_CHARS = 1800;
 const MAX_OUTPUT_TOKENS = 700;
 
@@ -21,7 +21,7 @@ function sanitizeText(value, max) {
 }
 export default async function handler(req,res) {
   if (req.method==='GET') return send(res,200,{
-    enabled:true,mode:'free-account-only',requestsPerBrowserDay:5,outputTokenCap:MAX_OUTPUT_TOKENS,
+    enabled:true,mode:'free-models-only',requestsPerBrowserDay:5,outputTokenCap:MAX_OUTPUT_TOKENS,
     inputCharCap:MAX_INPUT_CHARS,endpoints:[FREE_ENDPOINT],serverGlobalHardCap:false
   });
   if(req.method!=='POST') return send(res,405,{error:'Método no permitido.'});
@@ -33,16 +33,15 @@ export default async function handler(req,res) {
     try {raw=JSON.parse(raw);}catch{return send(res,400,{error:'JSON inválido.'});}
   }
   if(!raw || typeof raw!=='object' || JSON.stringify(raw).length>16000) return send(res,413,{error:'Solicitud demasiado extensa.'});
-  if(raw.freeAccountConfirmed!==true) return send(res,403,{error:'Confirma que tu cuenta está en el plan Free y sin facturación de pago.'});
-  if(raw.mode!=='strict-zero') return send(res,403,{error:'Sólo está disponible el modo $0.'});
+    if(raw.mode!=='strict-zero') return send(res,403,{error:'Sólo está disponible el modo $0.'});
   const url=sanitizeText(raw.url,250).replace(/\/$/,'');
   if(url!==FREE_ENDPOINT) return send(res,403,{
-    error:'Modo $0: este servidor sólo permite Groq Free. URL personalizada requiere revisión y autorización explícita; no se envió ninguna solicitud.'
+    error:'Modo $0: sólo se permite la URL oficial de OpenRouter Chat Completions. No se envió nada.'
   });
   const key=sanitizeText(raw.apiKey,256);
-  if(key.length<15 || /[\s\x00-\x1f]/.test(key)) return send(res,400,{error:'Clave inválida. No se ha enviado nada.'});
+  if(!/^sk-or-[A-Za-z0-9_-]{12,}$/.test(key)) return send(res,400,{error:'Pega una clave de OpenRouter válida (sk-or-…). No se ha enviado nada.'});
   const model=sanitizeText(raw.model,100);
-  if(!/^[a-zA-Z0-9._/-]{3,100}$/.test(model)) return send(res,400,{error:'Nombre de modelo inválido.'});
+  if(!/^[a-zA-Z0-9._/-]{3,100}$/.test(model) || !(model==='openrouter/free' || model.endsWith(':free'))) return send(res,403,{error:'Sólo se permiten openrouter/free o identificadores que terminen en :free. No se ha enviado nada.'});
   const userPrompt=sanitizeText(raw.prompt,MAX_INPUT_CHARS+1);
   if(userPrompt.length<3 || userPrompt.length>MAX_INPUT_CHARS) return send(res,400,{error:'La solicitud debe tener entre 3 y 1800 caracteres.'});
   const ownContext=raw.context && typeof raw.context==='object' ? raw.context : {};
@@ -55,15 +54,16 @@ export default async function handler(req,res) {
   try {
     const response=await fetch(FREE_ENDPOINT,{
       method:'POST',redirect:'manual',signal:controller.signal,
-      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json',
+        'HTTP-Referer':PUBLIC_ORIGIN,'X-OpenRouter-Title':'LINK WORLD'},
       body:JSON.stringify({
         model,messages:[{role:'system',content:system},{role:'user',content:userPrompt}],
-        temperature:0.3,max_completion_tokens:MAX_OUTPUT_TOKENS,stream:false
+        temperature:0.3,max_tokens:MAX_OUTPUT_TOKENS,stream:false
       })
     });
-    if(response.status===429) return send(res,429,{error:'El proveedor alcanzó su cuota gratuita. LINK no reintenta ni cambia a pago.'});
-    if(response.status===401||response.status===403) return send(res,401,{error:'Proveedor rechazó la clave o el acceso al modelo. No se cobró nada desde LINK.'});
-    if(!response.ok) return send(res,502,{error:'El proveedor no aceptó la solicitud. Revisa plan Free, URL, modelo y cuota; no hay cambio a pago.'});
+    if(response.status===429) return send(res,429,{error:'OpenRouter alcanzó el límite de modelos gratuitos. LINK no reintenta ni cambia a pago.'});
+    if(response.status===401||response.status===403) return send(res,401,{error:'OpenRouter rechazó la clave o el acceso al modelo. No se intentó un modelo de pago.'});
+    if(!response.ok) return send(res,502,{error:'OpenRouter rechazó la solicitud. Revisa la clave, el modelo gratuito y su cuota. No hay cambio a pago.'});
     const result=await response.json();
     const answer=result?.choices?.[0]?.message?.content;
     if(typeof answer!=='string'||!answer.trim()) return send(res,502,{error:'No se recibió una respuesta de texto.'});
