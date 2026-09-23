@@ -28,7 +28,11 @@ let scriptPromise = null;
 let AdvancedMarkerElement = null;
 let PinElement = null;
 let requestsThisSession = 0;
-const MAX_REQUESTS_PER_SESSION = 40; // UX guardrail, not a Google Cloud billing cap.
+const MAX_REQUESTS_PER_SESSION = 8; // Conservative UX guardrail, not a Google Cloud billing cap.
+const DAY_LIMIT = 12; // Local browser-only guardrail; NOT a global Cloud quota.
+const GOOGLE_DAY_KEY='linkworld_places_daily_calls_v1';
+function dailyCalls(){try{const s=JSON.parse(localStorage.getItem(GOOGLE_DAY_KEY)||'null');return s?.day===new Date().toISOString().slice(0,10)?Math.max(0,Number(s.count)||0):0;}catch{return 0;}}
+function markDailyCall(){try{localStorage.setItem(GOOGLE_DAY_KEY,JSON.stringify({day:new Date().toISOString().slice(0,10),count:dailyCalls()+1}));return true;}catch{return false;}}
 let onReadyCallback = null;
 
 function el(tag, className, value) {
@@ -72,7 +76,7 @@ function buildControls() {
   panel.id = 'google-search-panel';
   panel.innerHTML = '<div class="google-search-title"><span>EXPLORAR NEGOCIOS DE GOOGLE</span><span class="google-powered">Google Maps</span></div>' +
     '<div class="google-category-wrap"></div><form id="google-text-form" class="google-text-form"><label for="google-text-query">BUSCAR POR NOMBRE O ACTIVIDAD</label><div class="google-text-fields"><input id="google-text-query" maxlength="100" autocomplete="off" placeholder="Hotel, restaurante, agencia…" /><button type="submit" aria-label="Buscar por nombre">Buscar</button></div></form><button type="button" class="google-search-btn" id="google-search-btn">⌖ Buscar negocios en esta zona</button>' +
-    '<div id="google-feedback" class="google-feedback">Los datos se consultan solo cuando lo solicitas.</div><button type="button" class="google-disconnect">Olvidar clave de este navegador</button>' +
+    '<div id="google-feedback" class="google-feedback">Solo búsquedas manuales: 8 por sesión, 12 por día y máximo 20 fichas por búsqueda. No son topes de facturación.</div><button type="button" class="google-disconnect">Olvidar clave de este navegador</button>' +
     '<div id="google-results" class="google-results"></div>';
   workspace.append(panel);
   const wrap = panel.querySelector('.google-category-wrap');
@@ -204,8 +208,12 @@ function renderResults(places) {
 }
 async function searchPlaces(textQuery = '') {
   if (!map || searchBusy) return;
-  if (requestsThisSession >= MAX_REQUESTS_PER_SESSION) {
-    showFeedback('Límite de exploración alcanzado en esta sesión (40 búsquedas). Es una pausa de la interfaz, no un límite de facturación de Google.', true);
+  if (requestsThisSession >= MAX_REQUESTS_PER_SESSION || dailyCalls() >= DAY_LIMIT) {
+    showFeedback('Pausa de Google Places: máximo 8 búsquedas por sesión y 12 por día en este navegador. No es un tope global de Google Cloud.', true);
+    return;
+  }
+  if (!markDailyCall()) {
+    showFeedback('No se pudo registrar el uso en este navegador: se evita esta consulta.', true);
     return;
   }
   searchBusy = true;
@@ -250,7 +258,7 @@ export function flyGoogle(where) {
     clearMarkers();
     const results = document.getElementById('google-results');
     if (results) results.replaceChildren();
-    showFeedback('Selecciona una categoría y pulsa «Buscar negocios en esta zona».');
+    showFeedback('Selecciona una categoría y pulsa Buscar. Google solo se consulta si tú lo solicitas.');
   }
 }
 export async function startGoogleWorld(onReady) {
