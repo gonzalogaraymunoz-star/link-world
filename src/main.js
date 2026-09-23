@@ -1,19 +1,5 @@
-import {
-  ArcGisMapServerImageryProvider,
-  Cartesian3,
-  Color,
-  EllipsoidTerrainProvider,
-  Math as CesiumMath,
-  VerticalOrigin,
-  Viewer
-} from 'cesium';
-import 'cesium/Build/Cesium/Widgets/widgets.css';
+import { flyGoogle, startGoogleWorld } from './googleMaps.js';
 import './style.css';
-
-const CITIES = {
-  atacama: { name: 'San Pedro de Atacama', longitude: -68.2011, latitude: -22.9087, height: 16500 },
-  saopaulo: { name: 'São Paulo', longitude: -46.6333, latitude: -23.5505, height: 36000 }
-};
 
 const CELLS = [
   { id: 'lama', name: 'Lama Travelers', type: 'Turismo', monogram: 'LT', accent: '#79d2c5',
@@ -55,7 +41,7 @@ root.innerHTML = [
   '<div class="shell">',
   ' <header class="topbar">',
   '   <a class="brand" href="/" aria-label="LINK WORLD"><span class="brandmark">L<span class="brand-dot">•</span></span><span><strong>LINK WORLD</strong><small>CONTROL CENTRAL / OBSERVATORIO</small></span></a>',
-  '   <div class="topbar-mid"><span class="live-dot"></span> ORGANISMO EN CONSTRUCCIÓN <span class="mid-separator">/</span> v0.1</div>',
+  '   <div class="topbar-mid"><span class="live-dot"></span> ORGANISMO EN CONSTRUCCIÓN <span class="mid-separator">/</span> v0.2</div>',
   '   <a class="repo-link" href="https://github.com/gonzalogaraymunoz-star/link-world" target="_blank" rel="noopener noreferrer">REPOSITORIO ↗</a>',
   ' </header>',
   ' <aside class="sidebar">',
@@ -71,7 +57,7 @@ root.innerHTML = [
   '  <button class="place" data-location="saopaulo"><span class="place-pin">⌖</span><span>São Paulo<small>Brasil · mercado objetivo</small></span><span>↗</span></button>',
   '  <button class="place" data-location="earth"><span class="place-pin">◎</span><span>Ver planeta<small>Alejar cámara</small></span><span>↗</span></button>',
   '  <div class="sidebar-grow"></div>',
-  '  <div class="status-panel"><span class="status-title">FUENTES CONECTADAS</span><div class="status-row"><span class="status-light ok"></span> CesiumJS · motor espacial</div><div class="status-row"><span class="status-light" id="imagery-light"></span> <span id="imagery-status">Cargando satélite…</span></div><div class="status-row"><span class="status-light off"></span> Google Places · pendiente</div><div class="status-row"><span class="status-light off"></span> Supabase · pendiente</div></div>',
+  '  <div class="status-panel"><span class="status-title">FUENTES CONECTADAS</span><div class="status-row"><span class="status-light ok"></span> LINK WORLD · interfaz</div><div class="status-row"><span class="status-light" id="imagery-light"></span> <span id="imagery-status">Google Maps · comprobando…</span></div><div class="status-row"><span class="status-light off"></span> Google Places · pendiente</div><div class="status-row"><span class="status-light off"></span> Supabase · pendiente</div></div>',
   '  <div class="sidebar-foot">REALIDAD EXTERNA <span>→</span> INTELIGENCIA LINK</div>',
   ' </aside>',
   ' <main class="workspace">',
@@ -83,16 +69,14 @@ root.innerHTML = [
   '  <section id="mode-layer" class="mode-layer hidden" aria-live="polite"></section>',
   '  <aside class="cells-dock" aria-label="Células de demostración"><div class="dock-head"><span>CÉLULAS LINK</span><span>05 / DEMO</span></div><div id="cell-list" class="cell-list"></div><p class="dock-foot">Capacidades de referencia. Sin conexión a datos operativos todavía.</p></aside>',
   '  <section id="cell-detail" class="cell-detail hidden" aria-live="polite"></section>',
-  '  <div class="notice">PROTOTIPO · Sin datos comerciales de Google ni posiciones verificadas de negocios. Mapa satelital: Esri, sujeto a disponibilidad y términos del proveedor.</div>',
+  '  <div class="notice">LINK WORLD v0.2 · Mapa comercial Google bajo demanda. Células y sinapsis: demostración, no datos operativos.</div>',
   ' </main>',
   '</div>'
 ].join('');
 
 const $ = (selector) => document.querySelector(selector);
-let viewer;
 let mode = 'world';
 let chosenCell = null;
-let chosenCity = 'atacama';
 
 function cellMarkup(cell) {
   return '<button class="cell-item ' + (chosenCell === cell.id ? 'selected' : '') + '" data-cell="' + cell.id + '">' +
@@ -174,72 +158,9 @@ function setMode(nextMode) {
   renderModeLayer();
 }
 
-function flyToLocation(which) {
-  if (!viewer) return;
-  chosenCity = which;
-  document.querySelectorAll('[data-location]').forEach((button) => button.classList.toggle('active', button.dataset.location === which));
-  if (which === 'earth') {
-    $('#city-label').textContent = 'PLANETA TIERRA · VISTA GLOBAL';
-    viewer.camera.flyTo({ destination: Cartesian3.fromDegrees(-65, -15, 22000000), duration: 2.1 });
-    return;
-  }
-  const place = CITIES[which];
-  if (!place) return;
-  $('#city-label').textContent = place.name.toUpperCase() + (which === 'atacama' ? ' · CHILE' : ' · BRASIL');
-  viewer.camera.flyTo({
-    destination: Cartesian3.fromDegrees(place.longitude, place.latitude, place.height),
-    orientation: { heading: 0, pitch: CesiumMath.toRadians(-52), roll: 0 },
-    duration: 2.1
-  });
-}
-
-function initWorld() {
-  try {
-    viewer = new Viewer('cesiumContainer', {
-      animation: false, timeline: false, baseLayerPicker: false, geocoder: false,
-      homeButton: false, navigationHelpButton: false, sceneModePicker: false,
-      fullscreenButton: false, selectionIndicator: false, infoBox: false,
-      baseLayer: false, terrainProvider: new EllipsoidTerrainProvider()
-    });
-    viewer.resolutionScale = Math.min(1, 0.85 / (window.devicePixelRatio || 1) * 1.5);
-    viewer.scene.globe.baseColor = Color.fromCssColorString('#1d3043');
-    viewer.scene.globe.enableLighting = false;
-    viewer.scene.backgroundColor = Color.fromCssColorString('#090f19');
-    viewer.scene.requestRenderMode = true;
-    viewer.scene.maximumRenderTimeChange = Infinity;
-
-    Object.values(CITIES).forEach((place) => {
-      viewer.entities.add({
-        position: Cartesian3.fromDegrees(place.longitude, place.latitude),
-        point: { pixelSize: 7, color: Color.fromCssColorString('#8fdacb'), outlineColor: Color.WHITE, outlineWidth: 1 },
-        label: {
-          text: place.name.toUpperCase(),
-          font: '12px sans-serif',
-          fillColor: Color.WHITE,
-          showBackground: true,
-          backgroundColor: Color.fromCssColorString('#101825'),
-          verticalOrigin: VerticalOrigin.BOTTOM
-        }
-      });
-    });
-    flyToLocation('atacama');
-    ArcGisMapServerImageryProvider.fromUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer')
-      .then((provider) => {
-        viewer.imageryLayers.addImageryProvider(provider);
-        $('#imagery-status').textContent = 'Esri · satélite disponible';
-        $('#imagery-light').classList.add('ok');
-        viewer.scene.requestRender();
-      })
-      .catch(() => { $('#imagery-status').textContent = 'Satélite no disponible'; $('#imagery-light').classList.add('off'); });
-  } catch (error) {
-    $('#imagery-status').textContent = 'Mapa 3D no disponible';
-    $('#imagery-light').classList.add('off');
-    $('#cesiumContainer').innerHTML = '<div class="map-fallback"><strong>Este navegador no pudo iniciar el globo 3D.</strong><p>Prueba otro navegador o comprueba WebGL. Las vistas Organismo y Constelación siguen disponibles.</p></div>';
-    console.error('Cesium init error:', error);
-  }
-}
+function flyToLocation(which) { flyGoogle(which); }
 
 renderCells();
 document.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => setMode(button.dataset.mode)));
 document.querySelectorAll('[data-location]').forEach((button) => button.addEventListener('click', () => flyToLocation(button.dataset.location)));
-initWorld();
+startGoogleWorld(() => flyToLocation("atacama"));
