@@ -211,3 +211,14 @@ a { color:inherit; text-decoration:none; }
  .world-caption { bottom:calc(27% + 59px); }
  .cell-detail { bottom:calc(27% + 52px); }
 }
+
+/* LINK Geo v0.3: on-demand text discovery without collecting personal location. */
+.google-text-form { margin-bottom:10px; display:grid; gap:5px; }
+.google-text-form label { font-size:9px; letter-spacing:.10em; color:#abc7ce; font-weight:700; }
+.google-text-fields { display:flex; gap:5px; }
+.google-text-fields input { min-width:0; flex:1; padding:10px; color:#edf7f8; background:#162b39; border:1px solid #63859385; border-radius:8px; font:inherit; font-size:11px; }
+.google-text-fields button { color:#0a2930; background:#92daca; border:0; border-radius:8px; padding:0 10px; font-size:10px; font-weight:700; }
+.google-text-fields button:disabled { opacity:.5; cursor:wait; }
+.forget-key { display:inline; padding:0; background:none; border:0; font-size:inherit; color:#b5ebe1; text-decoration:underline; }
+.google-map-active + .map-shade { display:none; } /* Keep Google's logo/copyright unobscured. */
+.google-map-active ~ .notice { display:none; }
