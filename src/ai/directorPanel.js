@@ -13,7 +13,7 @@ const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));re
 const day=()=>new Date().toISOString().slice(0,10);
 const saved=read(SETTINGS_KEY,{});
 const state={open:false,tab:'director',busy:false,checking:false,verified:false,modelVerified:false,
-  validatedModel:'',serverOk:false,answer:null,showError:'',model:saved.model||'openrouter/free',
+  validatedModel:'',serverOk:false,answer:null,showError:'',model:saved.model||'nvidia/nemotron-3-ultra-550b-a55b:free',
   lastModel:'',pendingResearch:false};
 let getContext=()=>({});
 function freeModel(model){return model==='openrouter/free'||/^[A-Za-z0-9._/-]+:free$/.test(model);}
@@ -167,7 +167,7 @@ function render(){
     '<p class="ai-caption">Google: búsquedas solo cuando pulses Buscar sobre el mapa, con límites independientes. Si el modelo gratuito llega a su cuota, no habrá reintentos ni cambio a pago.</p></div>',
     '<div class="ai-page hidden" data-ai-page="config"><span class="ai-tag">ESTADO REAL DE CONEXIÓN</span><p class="ai-caption">1. Pega tu clave de OpenRouter. 2. Comprueba la conexión. 3. Vuelve a Conversar. La clave permanece únicamente en esta pestaña.</p>',
     '<label for="ai-url">URL / OPENROUTER</label><input type="url" id="ai-url" spellcheck="false" readonly />',
-    '<label for="ai-model">MODEL / gratuito</label><input id="ai-model" type="text" maxlength="100" spellcheck="false" /><small>openrouter/free selecciona un modelo gratuito. También puedes usar un ID específico terminado en :free.</small>',
+    '<label for="ai-model">MODEL / gratuito</label><input id="ai-model" type="text" maxlength="100" spellcheck="false" /><small>Modelo predeterminado: NVIDIA Nemotron 3 Ultra (free). También puedes usar openrouter/free u otro ID terminado en :free.</small>',
     '<label for="ai-key">API KEY / TU CLAVE PRIVADA</label><input type="password" id="ai-key" spellcheck="false" autocomplete="new-password" placeholder="sk-or-v1-…" />',
     '<button type="button" id="ai-test" class="ai-primary">Comprobar conexión ↗</button><button id="ai-forget" type="button" class="ai-quiet">Borrar clave de esta pestaña</button>',
     '<p class="ai-caption">Comprobar conexión verifica la clave sin generar texto. No prueba que el modelo esté disponible hasta la primera respuesta. La facturación de tu cuenta no depende de este botón.</p>',
@@ -180,7 +180,7 @@ function render(){
   const add=document.createElement('button');add.id='ai-toggle';add.type='button';
   add.textContent='✦ Director IA';add.className='header-button ai-header-btn';
   add.setAttribute('aria-expanded','false');$('.header-actions').insertBefore(add,$('.header-actions').firstChild);
-  $('#ai-url').value=FREE_URL;$('#ai-model').value=freeModel(state.model)?state.model:'openrouter/free';
+  $('#ai-url').value=FREE_URL;$('#ai-model').value=freeModel(state.model)?state.model:'nvidia/nemotron-3-ultra-550b-a55b:free';
   $('#ai-key').addEventListener('input',connectionInvalid);
   $('#ai-model').addEventListener('input',()=>{connectionInvalid();write(SETTINGS_KEY,{model:currentModel()});});
   $('#ai-test').addEventListener('click',()=>checkKey());
