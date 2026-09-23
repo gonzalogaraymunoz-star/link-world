@@ -1,36 +1,28 @@
-# LINK DIRECTOR · manual de uso v2
+# LINK WORLD · Director IA conversacional v3
 
-## Entra en la app
+El Director ahora es un **chat real** dentro de la web, no una pantalla de formularios. Código activo: `src/ai/directorChat.js` y `src/ai/chat.css`. El antiguo `directorPanel.js` queda fuera de la compilación.
 
-Abre https://link-world-delta.vercel.app/ y pulsa «✦ Director IA».
+## Empezar
 
-1. **Conexión**: URL fija https://openrouter.ai/api/v1/chat/completions, modelo openrouter/free. Pega tu clave OpenRouter sk-or-… y pulsa «Comprobar conexión». LINK valida la clave con el endpoint /api/v1/key sin generar texto. El panel muestra «Clave conectada · modelo por probar». La disponibilidad del modelo se confirma con su primera respuesta, no con el check.
-2. **Conversar**: escribe tu pregunta en hasta 3500 caracteres y pulsa «Consultar al Director». Respuestas de hasta 1100 tokens, con estructura adaptable a lo que preguntaste. Puedes consultar sin un límite diario adicional de LINK, pero OpenRouter conserva la cuota de su plan gratuito.
-3. **Investigar LINK**: activa explícitamente «Incluir datos propios de LINK». Esto requiere iniciar sesión como miembro autorizado en el panel ↔ LINK WORLD; la app lee de Supabase al momento un resumen de negocios, solicitudes, relaciones y actividad. Puedes seleccionar hasta tres negocios o un resumen del organismo. La muestra está acotada y, si se recorta, se señala. Se envía solo al proveedor OpenRouter cuando eliges esa opción.
-4. **Google**: «Buscar manualmente en Google Maps» te lleva al buscador visible. El Director no ejecuta búsquedas automáticas, no rastrea zonas completas, no convierte fichas Google en negocio LINK ni envía Places a OpenRouter por defecto.
-5. **Registro**: puedes guardar preguntas y respuestas localmente mediante la casilla (desactivada inicialmente), anotar solicitudes sin IA y exportar o borrar JSON. Este registro no es el registro compartido de ↔ LINK WORLD.
+1. Abre https://link-world-delta.vercel.app/ → **✦ Director IA**. Entras directamente al chat con bienvenida, ejemplos y campo de mensaje.
+2. Pulsa **Conexión / Modelo**, pega tu clave de OpenRouter y verifica, si quieres, mediante **Comprobar clave**. La comprobación consulta `/api/v1/key` sin generar texto. Si esa verificación de cuenta no funciona, **puedes enviar un mensaje igualmente**; el chat te dará el error real de generación.
+3. El modelo predeterminado es `nvidia/nemotron-3-ultra-550b-a55b:free`. Puedes introducir otro identificador `:free` o `openrouter/free`; la API rechaza automáticamente modelos de pago. La clave NO se persiste en localStorage, GitHub ni el registro.
+4. Escribe en el chat. **Enter** envía, **Mayús+Enter** añade línea. Verás tu mensaje, estado «Pensando», luego una burbuja de respuesta o un error visible con el motivo. Si hubo error, tu consulta se recupera en el campo para editarla. No hay reintentos automáticos.
+5. El chat mantiene contexto de hasta 12 mensajes anteriores, recortados a 1100 caracteres por mensaje, **solamente en memoria de esta pestaña**. Puedes exportarlo en JSON o abrir una conversación nueva. Recargar borra la conversación no exportada. El registro opcional está separado y nunca guarda la clave.
+6. Para autorizar una investigación de datos propios, marca «Incluir datos privados de LINK» antes de enviar. La app intenta leer una muestra actual de Supabase con tu sesión válida en ↔ LINK WORLD y comparte ese resumen con OpenRouter **solo porque lo marcaste**. Los negocios DEMO se identifican como simulación; no hay acceso automático a otras bases de datos.
+7. «Google manual» lleva al buscador sobre el mapa. El modelo no ejecuta búsquedas de Places sin interacción humana ni guarda fichas de Google. Máximo 8 búsquedas por sesión y 12 por día en este navegador, no un tope global de Google Cloud.
 
-## Estado de conexión
+## Estados comprensibles
 
-- «Sin verificar»: aún no hay clave validada en esta pestaña.
-- «Comprobando clave»: se está validando la clave sin gastar tokens de generación.
-- «Clave conectada · modelo por probar»: OpenRouter aceptó la clave; el modelo está pendiente de su primera respuesta.
-- «Conectado · [modelo]»: una respuesta del modelo se recibió correctamente.
-- Mensaje de error: se muestra si OpenRouter rechaza la clave, el modelo, la cuota o si no está disponible; no hay reintentos automáticos ni fallback pagado.
+- Sin conectar: clave no introducida en esta pestaña.
+- Comprobando clave: verificando cuenta sin generar texto.
+- Clave verificada · modelo por probar: OpenRouter aceptó la clave, pero aún no respondió el modelo.
+- Pensando · modelo gratuito: consulta enviada, esperando respuesta.
+- Conectado · modelo exacto: se recibió una respuesta efectiva.
+- Consulta fallida: la burbuja de error explica si fue clave, modelo no encontrado, cuota Free, crédito requerido, timeout o respuesta vacía.
 
-La API key no se guarda en localStorage, GitHub ni registros. Sale cifrada mediante HTTPS al proxy Vercel y desde allí a OpenRouter. La URL/modelo no son secretos. Si recargas, vuelve a pegar la clave.
+El estado **no equivale a una promesa de gasto global $0**. Consultas Free no implican que Google Maps, Vercel o una cuenta OpenRouter con otras rutas habilitadas no puedan generar cargos. El Director no hace llamadas pagadas ni fallback y no impone su antiguo límite artificial de 5 consultas.
 
-## Modelo, consulta libre y costo
+## Respuestas y permisos
 
-Solo se admiten openrouter/free e identificadores que terminen en :free. No se permite openrouter/auto ni modelos pagados. LINK no impone el antiguo límite artificial de 5 preguntas; OpenRouter aplica sus límites Free y el sistema se detiene cuando devuelve 429. No existe garantía global de costo cero en cuentas externas.
-
-Para Google Places: solo consulta tras pulsación humana; máximo 8 búsquedas por sesión y 12 por día en este navegador, máximo 20 resultados por búsqueda, radius 1800 m para Nearby, sin búsquedas silenciosas. Son barreras de interfaz, **no topes de facturación de Google Cloud**. Google Maps y Vercel tienen costos/cuotas independientes.
-
-## Alcance real
-
-La lectura privada usa tablas link_world_businesses, link_world_requests, link_world_relations y link_world_activity, mediante Supabase Auth/RLS. No tiene acceso a pagos, CRM externo, reservas reales ni otras bases de datos. Las cinco células y misión inicial son DEMO claramente etiquetada y pueden analizarse sin acceso privado; nunca equivalen a hechos comerciales. La IA solo propone, no escribe cambios operativos.
-
-La habilidad principal para trabajar desde ChatGPT sigue siendo LINK WORLD:
-https://github.com/gonzalogaraymunoz-star/link-world/blob/main/.agents/skills/link-world/SKILL.md
-
-La política ejecutada por el modelo está en api/LINK_DIRECTOR_SYSTEM.md y la habilidad secundaria en .agents/skills/link-director/SKILL.md.
+El prompt real se mantiene en `api/LINK_DIRECTOR_SYSTEM.md`. Responde según lo que se pregunta, estructurando análisis de negocios cuando corresponde y distinguiendo datos, hipótesis y DEMO. El Director es de solo lectura / propuesta: no actualiza operaciones, no crea reservas, no envía mensajes y no negocia alianzas. La habilidad maestra para construir desde ChatGPT es `.agents/skills/link-world/SKILL.md`.
