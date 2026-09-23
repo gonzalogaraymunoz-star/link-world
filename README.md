@@ -81,33 +81,37 @@ mediante Supabase Auth. Si el usuario utiliza otra autenticación, hay que
 configurarla antes de prometer acceso. La habilidad en GitHub no instala
 por sí sola un comando @ global.
 
-## Director IA · conexión verificable e investigación
+## Director IA · chat y OpenRouter
 
-El panel **Conexión** distingue si el servidor está disponible, si OpenRouter validó la clave sin generar texto y si un modelo gratuito ya respondió. En **Conversar**, puedes activar expresamente «Incluir datos propios LINK» para leer una instantánea actual y acotada de negocios, relaciones, solicitudes y actividad autorizados por RLS. Las células DEMO siguen etiquetadas. El Director no realiza búsquedas automáticas de Google y no ejecuta acciones reales. [Manual v2](docs/LINK_DIRECTOR_MANUAL.md).
+Abre la aplicación → **✦ Director IA**. El chat muestra bienvenida, mensajes
+y respuestas en burbujas, historial de la pestaña, estado de conexión siempre
+visible, escritura con Enter, nueva conversación y exportación JSON.
 
-## Director IA · OpenRouter con sólo tu clave
+Pulsa **Conexión / Modelo**, pega tu clave OpenRouter `sk-or-…`, y si quieres
+pulsa «Comprobar clave». El chequeo usa OpenRouter /api/v1/key sin generar
+texto; si falla el chequeo, se puede enviar una pregunta para probar el modelo
+y recibir un error concreto, sin segundo intento automático.
 
-Abre la aplicación → **✦ Director IA** → **URL · MODEL · API**:
+- URL fija: `https://openrouter.ai/api/v1/chat/completions`.
+- MODEL por defecto: `nvidia/nemotron-3-ultra-550b-a55b:free`; también
+  se permite `openrouter/free` y otros IDs `:free`. Nada pagado.
+- Contexto conversacional: hasta 12 turnos previos acotados; el chat no se
+  guarda automáticamente ni sincroniza entre pestañas o chats.
+- Respuesta: máximo 2600 tokens, esperando hasta 60 segundos a un modelo
+  de razonamiento, sin retry/fallback.
+- Investigación privada: casilla optativa para una instantánea limitada de
+  negocios, relaciones, solicitudes y actividad vía Supabase Auth/RLS.
+- Google Places: **sólo búsqueda manual del usuario** y contador de interfaz
+  (8 por sesión, 12 por día), no límite global de facturación.
 
-| Campo | Valor preconfigurado |
-| --- | --- |
-| URL | `https://openrouter.ai/api/v1/chat/completions` |
-| MODEL | `openrouter/free` |
-| API | tu clave privada `sk-or-…` de OpenRouter |
+LINK no impone cinco consultas diarias, pero OpenRouter sigue imponiendo
+cuotas Free. Los costos de Google Maps y Vercel son independientes. La clave
+no se guarda en GitHub ni localStorage, pero es enviada por HTTPS a la función
+de LINK y desde allí a OpenRouter en cada consulta.
 
-El proxy `/api/director` **rechaza modelos pagados**, `openrouter/auto`,
-URLs externas y modelos no terminados en `:free` salvo `openrouter/free`.
-No hay fallback ni reintentos. LINK no impone un límite diario adicional de consultas al Director; OpenRouter sigue aplicando su cuota Free. Cada solicitud admite hasta 3500 caracteres y 1100 tokens de salida como máximo.
-**No es límite global de gasto ni cubre Google Maps/Vercel**.
-
-La clave no se guarda en GitHub, Vercel ni localStorage por este formulario;
-viaja por HTTPS al proxy de LINK y después a OpenRouter. Las solicitudes se
-registran **sólo si el usuario lo elige**, localmente en su navegador
-(hasta 80, exportables como JSON); también admite registro manual sin IA.
-
-- [Skill reutilizable LINK Director](.agents/skills/link-director/SKILL.md)
-- [Manual de OpenRouter y registro](docs/LINK_DIRECTOR_MANUAL.md)
-- [Contrato de instrucciones de ejecución](api/LINK_DIRECTOR_SYSTEM.md)
+[Manual del chat](docs/LINK_DIRECTOR_MANUAL.md) ·
+[Skill LINK Director](.agents/skills/link-director/SKILL.md) ·
+[Prompt del Director](api/LINK_DIRECTOR_SYSTEM.md)
 
 ## Desarrollo sin instalar nada en el Mac antiguo
 
