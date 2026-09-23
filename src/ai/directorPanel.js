@@ -13,7 +13,7 @@ const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));re
 const day=()=>new Date().toISOString().slice(0,10);
 const saved=read(SETTINGS_KEY,{});
 const state={open:false,tab:'director',busy:false,checking:false,verified:false,modelVerified:false,
-  verifiedKey:'',validatedModel:'',serverOk:false,answer:null,showError:'',model:saved.model||'openrouter/free',
+  validatedModel:'',serverOk:false,answer:null,showError:'',model:saved.model||'openrouter/free',
   lastModel:'',pendingResearch:false};
 let getContext=()=>({});
 function freeModel(model){return model==='openrouter/free'||/^[A-Za-z0-9._/-]+:free$/.test(model);}
@@ -26,7 +26,7 @@ function showConnection(text,kind='pending'){
 }
 function currentModel(){return $('#ai-model')?.value.trim()||'';}
 function connectionInvalid(){
-  state.verified=false;state.modelVerified=false;state.verifiedKey='';state.validatedModel='';
+  state.verified=false;state.modelVerified=false;state.validatedModel='';
   showConnection('Sin verificar','pending');
 }
 function usableKey(){const key=$('#ai-key')?.value.trim()||'';return key.startsWith('sk-or-')&&key.length>15;}
@@ -90,7 +90,7 @@ async function checkKey({quiet=false}={}){
       body:JSON.stringify({action:'check',url:FREE_URL,model,apiKey:key,mode:'strict-zero'})});
     const data=await response.json().catch(()=>({error:'Servidor sin respuesta interpretable.'}));
     if(!response.ok)throw Error(data.error||'No se pudo verificar.');
-    state.verified=true;state.verifiedKey=key;state.validatedModel=model;
+    state.verified=true;state.validatedModel=model;
     state.modelVerified=false;
     showConnection('Clave conectada · modelo por probar','connected');
     $('#ai-connection-detail').textContent='OpenRouter aceptó la clave. Modelo '+model+
@@ -107,7 +107,7 @@ async function checkKey({quiet=false}={}){
 }
 function selectedContext(){
   const c=getContext()||{};
-  return {strategy:c.strategy||'',cell:c.cell||'',mission:c.mission||''};
+  return {strategy:c.strategy||'',cell:c.cell||'',mission:c.mission||'',demoSnapshot:c.demoSnapshot||''};
 }
 async function queryAI(){
   if(state.busy||state.checking)return;
@@ -116,7 +116,7 @@ async function queryAI(){
   if(!freeModel(model)){setTab('config');status('Selecciona openrouter/free o un modelo terminado en :free.',true);return;}
   const key=$('#ai-key').value.trim();
   if(!key){setTab('config');connectionInvalid();status('Primero pega y comprueba tu clave OpenRouter.',true);return;}
-  if(!state.verified||state.verifiedKey!==key||state.validatedModel!==model){
+  if(!state.verified||state.validatedModel!==model){
     setTab('config');status('Pulsa «Comprobar conexión» antes de consultar con esta clave y modelo.',true);return;
   }
   state.busy=true;$('#ai-send').disabled=true;
@@ -126,6 +126,7 @@ async function queryAI(){
   const keep=$('#ai-register').checked;
   try{
     const context=selectedContext();
+    if(context.demoSnapshot)context.demoSnapshot=context.demoSnapshot.slice(0,3200);
     if($('#ai-research').checked){
       const scope=$('#ai-scope').value;
       status('Leyendo datos propios y solicitudes autorizadas de LINK…');
