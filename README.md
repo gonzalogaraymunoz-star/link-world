@@ -4,7 +4,7 @@
 
 [Aplicación en Vercel](https://link-world-delta.vercel.app/) · [Skill de Google Maps](.agents/skills/google-maps-platform/SKILL.md) · [Skill LINK Geo](.agents/skills/link-geo/SKILL.md)
 
-## Estado v0.6
+## Estado v0.7
 
 **Este es un prototipo navegable y una Demo de estrategia, NO un sistema comercial sincronizado.**
 
@@ -20,7 +20,7 @@
 - Vistas Organismo y Constelación con cinco células **conceptuales**.
 - La información comercial devuelta por Google **no se guarda como base propia**.
 
-No hay conexiones activas con Supabase, reservas, ventas o agenda. No existe
+Hay lectura privada opcional de las cuatro tablas LINK WORLD en Supabase, sujeta a Supabase Auth/RLS y consentimiento antes de enviar un resumen a OpenRouter. No hay conexiones operativas con reservas, ventas ni agenda. No existe
 transmisión de imágenes satelitales en vivo. Google's imagery is not live.
 
 ## Conectar una clave sin modificar GitHub
@@ -81,6 +81,10 @@ mediante Supabase Auth. Si el usuario utiliza otra autenticación, hay que
 configurarla antes de prometer acceso. La habilidad en GitHub no instala
 por sí sola un comando @ global.
 
+## Director IA · conexión verificable e investigación
+
+El panel **Conexión** distingue si el servidor está disponible, si OpenRouter validó la clave sin generar texto y si un modelo gratuito ya respondió. En **Conversar**, puedes activar expresamente «Incluir datos propios LINK» para leer una instantánea actual y acotada de negocios, relaciones, solicitudes y actividad autorizados por RLS. Las células DEMO siguen etiquetadas. El Director no realiza búsquedas automáticas de Google y no ejecuta acciones reales. [Manual v2](docs/LINK_DIRECTOR_MANUAL.md).
+
 ## Director IA · OpenRouter con sólo tu clave
 
 Abre la aplicación → **✦ Director IA** → **URL · MODEL · API**:
@@ -93,11 +97,10 @@ Abre la aplicación → **✦ Director IA** → **URL · MODEL · API**:
 
 El proxy `/api/director` **rechaza modelos pagados**, `openrouter/auto`,
 URLs externas y modelos no terminados en `:free` salvo `openrouter/free`.
-No hay fallback ni reintentos. Se permiten 5 intentos/día por navegador,
-1800 caracteres por solicitud y 700 tokens como máximo de respuesta.
+No hay fallback ni reintentos. LINK no impone un límite diario adicional de consultas al Director; OpenRouter sigue aplicando su cuota Free. Cada solicitud admite hasta 3500 caracteres y 1100 tokens de salida como máximo.
 **No es límite global de gasto ni cubre Google Maps/Vercel**.
 
-La clave no queda en GitHub, Vercel ni localStorage por este formulario;
+La clave no se guarda en GitHub, Vercel ni localStorage por este formulario;
 viaja por HTTPS al proxy de LINK y después a OpenRouter. Las solicitudes se
 registran **sólo si el usuario lo elige**, localmente en su navegador
 (hasta 80, exportables como JSON); también admite registro manual sin IA.
@@ -130,7 +133,7 @@ El Google Maps de v0.3 es la etapa operativa mientras investigamos la capa 3D.
 ## Consumo
 
 Las búsquedas solo se realizan cuando el usuario pulsa Buscar; la interfaz
-limita a 40 solicitudes de búsqueda por sesión y devuelve hasta 20 resultados
+limita a 8 solicitudes por sesión y 12 por día en este navegador y devuelve hasta 20 resultados
 por consulta. **Este límite NO es un bloqueo real de facturación ni evita
 otros costos de carga de mapa.** Configura cuotas/alertas en Google Cloud.
 Los campos solicitados se limitan a nombre, ID, ubicación, dirección y enlace
