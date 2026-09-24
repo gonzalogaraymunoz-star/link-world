@@ -372,3 +372,25 @@ button,input,textarea,select{max-width:100%;}
 @media (pointer:coarse){
   .new-shell button,.lw-chat button,.bridge-panel button{touch-action:manipulation;}
 }
+
+
+/* Functional decision surfaces shared by desktop and mobile. */
+.panel-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0;}
+.context-secondary{display:block;width:100%;padding:11px 12px;border:1px solid #cfdacb;border-radius:9px;background:#f4f6ef;color:#4d684f;font-weight:700;font-size:11px;text-align:center;}
+.context-secondary:hover{background:#e7eee2;border-color:#9db497;}
+.relation-context{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:8px;align-items:center;margin:12px 0 16px;}
+.relation-party{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid #e0e6db;background:#f7f8f3;padding:9px;border-radius:10px;}
+.relation-party strong{font-size:11px;line-height:1.3;overflow-wrap:anywhere;}
+.relation-link{text-align:center;color:#789078;font-weight:700;}
+.connection-names em{display:block;margin-top:6px;font-style:normal;font-size:9px;color:#638066;font-weight:700;}
+.connection-row:hover .connection-names em{text-decoration:underline;}
+body.link-dark .context-secondary,body.link-dark .relation-party{background:#293c2e;color:#e4eee2;border-color:#49614a;}
+
+@media(max-width:900px){
+  .panel-actions{grid-template-columns:1fr;gap:6px;}
+  .context-cta,.context-secondary{padding:10px!important;font-size:10px!important;}
+  .relation-context{grid-template-columns:1fr;gap:5px;}
+  .relation-link{transform:rotate(90deg);}
+  .relation-party{padding:8px;}
+  .connection-names em{font-size:8px;}
+}
