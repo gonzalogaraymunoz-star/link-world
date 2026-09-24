@@ -26,7 +26,7 @@ $('#app').innerHTML=[
 "<div class='lw-overview'><div><strong id='lw-business-count'>—</strong><span>Negocios</span></div><div><strong id='lw-request-count'>—</strong><span>Solicitudes</span></div><div><strong id='lw-relation-count'>—</strong><span>Relaciones</span></div></div>",
 "<section class='lw-owned-section'><div class='lw-section-head'><div><span class='lw-kicker'>FUENTE DE VERDAD / LINK</span><h2>Tus negocios</h2></div><button id='lw-sync' class='lw-btn-secondary'>↻ Sincronizar</button></div>",
 "<p class='lw-data-state' id='lw-data-state' role='status'>Cargando negocios abiertos de LINK WORLD…</p><div id='lw-real-businesses' class='lw-business-grid'></div></section>",
-"<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Abrir negocio</strong><small>Entrar directo a la ficha real ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='director'><span>03</span><strong>Conversar con Director</strong><small>Trabajar sobre LINK WORLD ↗</small></button></section>",
+"<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Clientes LINK Cupones</strong><small>Abrir panel maestro de clientes ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='director'><span>03</span><strong>Conversar con Director</strong><small>Trabajar sobre LINK WORLD ↗</small></button></section>",
 "<p class='lw-boundary'>Google Maps permite observar negocios externos. Solo los datos propios que registremos con autorización forman parte de LINK.</p>",
 "</section>",
 "<section id='lw-territory' class='lw-territory hidden'><div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / FUENTE EXTERNA</span><h1>Explorar, no inventar.</h1><p>Las búsquedas Google se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
@@ -50,7 +50,7 @@ async function loadOpenWorld(){
   $('#lw-request-count').textContent='—';
   $('#lw-relation-count').textContent='—';
   $('#lw-data-state').textContent=state.businesses.length?
-    'Selecciona un negocio para abrir su ficha completa. Los cambios se realizan desde ChatGPT por ahora.':
+    'Selecciona LINK Cupones para abrir su panel de clientes. Desde cada cliente entrarás a su ficha maestra.':
     'Todavía no hay negocios abiertos en LINK WORLD.';
   renderBusinessList();
 }
