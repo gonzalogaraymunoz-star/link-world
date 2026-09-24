@@ -11,7 +11,7 @@ import './responsive.css';
 const $ = selector => document.querySelector(selector);
 const cellById = id => DEMO_CELLS.find(cell => cell.id === id);
 const safe = (s='') => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let view='world', strategy='demand', selectedCell=null, selectedPlace=null, contextOpen=true, activityOpen=false;
+let view='world', strategy='demand', selectedCell=null, selectedPlace=null, selectedRelation=null, contextOpen=true, activityOpen=false;
 let state;
 const demo=createDemoEngine(next=>{state=next;renderAll();});
 state=demo.get();
@@ -43,7 +43,7 @@ $('#app').innerHTML=[
 
 function renderStrategies(){
   $('#strategy-list').innerHTML=STRATEGIES.map((s,i)=>'<button type="button" class="strategy '+(s.id===strategy?'active':'')+'" data-strategy="'+s.id+'"><span class="strategy-num">'+(i+1)+'</span><span><strong>'+s.name+'</strong><small>'+s.short+'</small></span><span class="strategy-arrow">↗</span></button>').join('');
-  document.querySelectorAll('[data-strategy]').forEach(b=>b.addEventListener('click',()=>{strategy=b.dataset.strategy;renderStrategies();renderContext();}));
+  document.querySelectorAll('[data-strategy]').forEach(b=>b.addEventListener('click',()=>{strategy=b.dataset.strategy;selectedCell=null;selectedPlace=null;selectedRelation=null;renderStrategies();renderContext();toggleContext(true);}));
 }
 function renderContext(){
   const cell=cellById(selectedCell), lens=STRATEGIES.find(s=>s.id===strategy), p=demoProjection(state);
@@ -74,7 +74,22 @@ function renderContext(){
     if(b.dataset.contextAction==='mission'){selectedCell=null;setMode('world');renderContext();$('#mission-actions button')?.focus();}
   }));
 }
-function selectCell(id){selectedPlace=null;selectedCell=selectedCell===id?null:id;renderContext();if(view!=='world')renderMode();}
+function openDirector(prompt){
+  toggleContext(false);
+  document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+}
+function openBridgeRequest(title,instruction){
+  toggleContext(false);
+  document.dispatchEvent(new CustomEvent('linkworld:bridge-request',{detail:{title,instruction}}));
+}
+function selectCell(id){
+  selectedPlace=null;selectedRelation=null;selectedCell=selectedCell===id?null:id;
+  renderContext();if(view!=='world')renderMode();toggleContext(true);
+}
+function selectRelation(fromId,toId,index){
+  selectedPlace=null;selectedCell=null;selectedRelation={fromId,toId,index:Number(index)||0};
+  renderContext();toggleContext(true);
+}
 function renderMission(){
   const p=demoProjection(state),n=p.stage;
   const narratives=[
@@ -116,7 +131,7 @@ function renderConstellation(){
   return '<div class="editorial-board"><div class="eyebrow">03 / CONSTELACIÓN · DEMO</div><h2>Las conexiones tienen estados.</h2><p>Una línea conceptual no demuestra un convenio ni una operación.</p><div class="connections-board">'+
     [['hotel','lama'],['hotel','taxi'],['hotel','wellness']].map(([a,b],i)=>{
       const c=cellById(a),d=cellById(b);
-      return '<button type="button" class="connection-row" data-cell="'+b+'"><span class="small-cell" style="--accent:'+c.color+'">'+c.monogram+'</span><span class="connection-names">'+c.name+' <b>→</b> '+d.name+'<small>'+(i===0?safe(p.relation):'conceptual')+' · DEMO</small></span><span class="small-cell" style="--accent:'+d.color+'">'+d.monogram+'</span></button>';
+      return '<button type="button" class="connection-row" data-relation-from="'+a+'" data-relation-to="'+b+'" data-relation-index="'+i+'"><span class="small-cell" style="--accent:'+c.color+'">'+c.monogram+'</span><span class="connection-names">'+c.name+' <b>→</b> '+d.name+'<small>'+(i===0?safe(p.relation):'conceptual')+' · DEMO</small><em>Explorar relación ↗</em></span><span class="small-cell" style="--accent:'+d.color+'">'+d.monogram+'</span></button>';
     }).join('')+'</div><p class="board-caption">Las sinapsis reales exigirán acuerdos, permisos y evidencia autorizada.</p></div>';
 }
 function renderMode(){
@@ -124,6 +139,7 @@ function renderMode(){
   if(view==='world'){layer.replaceChildren();return;}
   layer.innerHTML=view==='organism'?renderOrganism():renderConstellation();
   layer.querySelectorAll('[data-cell]').forEach(b=>b.addEventListener('click',()=>selectCell(b.dataset.cell)));
+  layer.querySelectorAll('[data-relation-from]').forEach(b=>b.addEventListener('click',()=>selectRelation(b.dataset.relationFrom,b.dataset.relationTo,b.dataset.relationIndex)));
 }
 function setMode(next){
   view=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
@@ -152,7 +168,7 @@ $('#activity-toggle').addEventListener('click',()=>{activityOpen=!activityOpen;$
 $('#activity-close').addEventListener('click',()=>{activityOpen=false;$('#activity-panel').classList.add('hidden');});
 document.addEventListener('linkworld:place-selected',event=>{
   const detail=event.detail||{};selectedPlace={name:detail.name||'Lugar de Google',address:detail.address||'',uri:detail.uri||''};
-  selectedCell=null;toggleContext(true);renderContext();
+  selectedCell=null;selectedRelation=null;toggleContext(true);renderContext();
 });
 mountDirector(() => ({
   strategy: STRATEGIES.find(s=>s.id===strategy)?.name || '',
