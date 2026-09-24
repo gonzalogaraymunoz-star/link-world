@@ -96,7 +96,9 @@ function renderBusiness(){
   $('#bw-close-top').addEventListener('click',close);
   $('#bw-refresh').addEventListener('click',refresh);
   $('#bw-open-director').addEventListener('click',()=>{
-    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Analiza '+state.business.name+' usando solo los datos autorizados de LINK WORLD. Distingue hechos, decisiones pendientes y próximos pasos.'}}));
+    const prompt='Analiza '+state.business.name+' usando solo los datos autorizados de LINK WORLD. Distingue hechos, decisiones pendientes y próximos pasos.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
   $('#bw-add-client').addEventListener('click',()=>$('#bw-client-form').classList.remove('hidden'));
   $('#bwc-cancel').addEventListener('click',()=>$('#bw-client-form').classList.add('hidden'));
@@ -130,7 +132,9 @@ function openClient(id){
   ].join('');
   $('#bw-back-business').addEventListener('click',renderBusiness);
   $('#bw-client-director').addEventListener('click',()=>{
-    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Revisa el cliente '+state.client.name+' dentro de '+state.business.name+'. Analiza sus productos, responsabilidades, bloqueos y siguiente etapa sin inventar datos.'}}));
+    const prompt='Revisa el cliente '+state.client.name+' dentro de '+state.business.name+'. Analiza sus productos, responsabilidades, bloqueos y siguiente etapa sin inventar datos.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
   $('#bw-add-product').addEventListener('click',()=>$('#bw-product-form').classList.remove('hidden'));
   $('#bwp-cancel').addEventListener('click',()=>$('#bw-product-form').classList.add('hidden'));
