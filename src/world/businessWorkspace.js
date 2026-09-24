@@ -69,6 +69,48 @@ function productEconomics(p){
     Number(p.public_price)-Number(p.acquisition_price):null;
   return {clientShare,linkShare,min,splitKnown,blocked,spread};
 }
+
+function renderClientHub(){
+  state.client=null;
+  const m=businessMetrics(),root=$('#bw-content');
+  root.innerHTML=[
+    '<section class="bw-business-head">',
+      '<div><button class="bw-back" id="bw-close-hub" type="button">← LINK WORLD</button>',
+      '<span class="bw-kicker">'+safe(state.business.name)+' / CLIENTES</span>',
+      '<h1>Panel de clientes</h1>',
+      '<p>Entra a cada cliente para abrir su ficha maestra y revisar todos sus productos, convenios, responsabilidades y etapas.</p></div>',
+      '<div class="bw-head-actions"><button id="bw-business-master" type="button">Ficha de '+safe(state.business.name)+'</button><button id="bw-refresh-hub" type="button">↻ Actualizar</button></div>',
+    '</section>',
+    '<section class="bw-metrics"><div><strong>'+m.clients+'</strong><span>Clientes / convenios</span></div><div><strong>'+m.products+'</strong><span>Productos</span></div><div><strong>'+m.active+'</strong><span>Productos activos</span></div><div><strong>'+m.blocked+'</strong><span>Productos bloqueados</span></div></section>',
+    '<section class="bw-clients-section bw-client-hub">',
+      '<div class="bw-section-head"><div><span class="bw-kicker">ESCALA / CLIENTES</span><h2>Clientes de '+safe(state.business.name)+'</h2><p>Cliente → ficha maestra → productos. Esta es la ruta principal del negocio.</p></div>'+(state.canWrite?'<button id="bw-add-client" class="bw-primary" type="button">+ Nuevo cliente</button>':'<span class="bw-open-mode">Modo abierto · cambios desde ChatGPT</span>')+'</div>',
+      '<form id="bw-client-form" class="bw-form hidden"><h3>Nuevo cliente / convenio</h3><div class="bw-form-grid"><label>Nombre<input id="bwc-name" required maxlength="180"></label><label>Tipo<select id="bwc-role"><option value="comercio">Comercio</option><option value="proveedor">Proveedor</option><option value="establecimiento">Establecimiento</option><option value="partner">Partner</option><option value="otro">Otro</option></select></label><label>Ciudad<input id="bwc-city" maxlength="120"></label><label>País<input id="bwc-country" maxlength="100" value="Chile"></label></div><label>Contexto<textarea id="bwc-summary" rows="2" maxlength="900" placeholder="Qué relación tenemos y qué queremos probar"></textarea></label><div class="bw-form-actions"><button class="bw-primary" type="submit">Crear borrador</button><button id="bwc-cancel" type="button">Cancelar</button></div></form>',
+      '<div id="bw-client-list" class="bw-client-grid">'+(state.clients.length?state.clients.map(c=>{
+        const products=state.products.filter(p=>p.client_id===c.id);
+        const active=products.filter(p=>p.economic_state==='active'||p.stage==='active').length;
+        const blocked=products.filter(p=>p.economic_state==='blocked'||productEconomics(p).blocked).length;
+        return '<button class="bw-client-card master" type="button" data-client="'+safe(c.id)+'">'+
+          '<div class="bw-client-top"><span class="bw-client-icon">'+safe(c.name?.charAt(0)?.toUpperCase()||'C')+'</span><span class="bw-client-state">'+safe(stageNames[c.relationship_state]||c.relationship_state)+'</span></div>'+
+          '<strong>'+safe(c.name)+'</strong>'+
+          '<small>'+safe([c.role,c.city,c.country].filter(Boolean).join(' · '))+'</small>'+
+          '<p>'+safe(c.summary||'Sin resumen registrado.')+'</p>'+
+          '<div class="bw-client-numbers"><span><b>'+products.length+'</b> productos</span><span><b>'+active+'</b> activos</span><span><b>'+blocked+'</b> bloqueados</span></div>'+
+          '<em>Abrir ficha maestra →</em>'+
+        '</button>';
+      }).join(''):'<div class="bw-empty"><strong>Aún no hay clientes registrados.</strong><span>Cuando agreguemos el primer convenio real, aparecerá aquí y abrirá su ficha maestra a pantalla completa.</span></div>')+'</div>',
+    '</section>'
+  ].join('');
+  $('#bw-close-hub').addEventListener('click',close);
+  $('#bw-business-master').addEventListener('click',renderBusiness);
+  $('#bw-refresh-hub').addEventListener('click',refresh);
+  if(state.canWrite){
+    $('#bw-add-client')?.addEventListener('click',()=>$('#bw-client-form').classList.remove('hidden'));
+    $('#bwc-cancel')?.addEventListener('click',()=>$('#bw-client-form').classList.add('hidden'));
+    $('#bw-client-form')?.addEventListener('submit',createClientRecord);
+  }
+  root.querySelectorAll('[data-client]').forEach(b=>b.addEventListener('click',()=>openClient(b.dataset.client)));
+}
+
 function renderBusiness(){
   state.client=null;
   const f=facts(),m=businessMetrics();
@@ -79,7 +121,7 @@ function renderBusiness(){
   const root=$('#bw-content');
   root.innerHTML=[
     '<section class="bw-business-head">',
-      '<div><button class="bw-back" id="bw-close-top" type="button">← LINK WORLD</button>',
+      '<div><button class="bw-back" id="bw-close-top" type="button">← Panel de clientes</button>',
       '<span class="bw-kicker">NEGOCIO / '+safe(state.business.slug||'')+'</span>',
       '<h1>'+safe(state.business.name)+'</h1>',
       '<p>'+safe(f.tagline||state.business.summary||'')+'</p>',
@@ -101,7 +143,7 @@ function renderBusiness(){
       }).join(''):'<div class="bw-empty"><strong>Aún no hay clientes.</strong><span>El primer convenio real que registremos aparecerá aquí; no se crearán fichas ficticias.</span></div>')+'</div>',
     '</section>'
   ].join('');
-  $('#bw-close-top').addEventListener('click',close);
+  $('#bw-close-top').addEventListener('click',renderClientHub);
   $('#bw-refresh').addEventListener('click',refresh);
   $('#bw-open-director').addEventListener('click',()=>{
     const prompt='Analiza '+state.business.name+' usando solo los datos autorizados de LINK WORLD. Distingue hechos, decisiones pendientes y próximos pasos.';
@@ -124,6 +166,8 @@ function renderProduct(p){
     '<div class="bw-product-values"><div><small>Adquisición</small><strong>'+money(p.acquisition_price,p.currency)+'</strong></div><div><small>Precio público</small><strong>'+money(p.public_price,p.currency)+'</strong></div><div><small>Diferencia observada</small><strong>'+money(e.spread,p.currency)+'</strong></div></div>'+
     '<div class="bw-responsibility"><span><small>Responsabilidad</small><strong>'+(profile?safe(profile.label):'Por definir')+'</strong></span><b>'+(p.responsibility_percent==null?'—':safe(p.responsibility_percent)+'%')+'</b></div>'+
     split+
+    '<div class="bw-product-logic"><span><small>1 · Adquisición</small><b>'+money(p.acquisition_price,p.currency)+'</b></span><i>→</i><span><small>2 · Responsabilidad LINK</small><b>'+(p.responsibility_percent==null?'Por definir':safe(p.responsibility_percent)+'%')+'</b></span><i>→</i><span><small>3 · Reparto interno</small><b>'+(e.splitKnown?('Cliente '+e.clientShare+'% / LINK '+e.linkShare+'%'):'Por definir')+'</b></span><i>→</i><span><small>4 · Estado</small><b>'+(blocked?'Bloqueado':safe(p.economic_state))+'</b></span></div>'+
+    (p.responsibility_notes?'<p class="bw-product-notes"><b>Responsabilidad asumida:</b> '+safe(p.responsibility_notes)+'</p>':'')+
     '<div class="bw-product-foot"><span>Etapa: <b>'+safe(stageNames[p.stage]||p.stage)+'</b></span><span>Mínimo LINK: <b>'+(p.minimum_link_share_percent==null?'—':safe(p.minimum_link_share_percent)+'% de su reparto')+'</b></span></div>'+
     (blocked?'<p class="bw-block-reason">No puede activarse: el reparto actual deja a LINK bajo su mínimo definido.</p>':'')+
   '</article>';
@@ -140,7 +184,7 @@ function openClient(id){
     '<form id="bw-product-form" class="bw-form hidden"><h3>Nuevo producto</h3><div class="bw-form-grid"><label>Producto<input id="bwp-name" maxlength="180" required></label><label>Precio de adquisición<input id="bwp-acquisition" type="number" min="0" step="1" placeholder="Precio entregado por convenio"></label><label>Precio público de referencia<input id="bwp-public" type="number" min="0" step="1" placeholder="Opcional"></label><label>Perfil de responsabilidad<select id="bwp-profile"><option value="">Por definir</option>'+state.profiles.map(p=>'<option value="'+safe(p.id)+'" data-min="'+safe(p.min_percent)+'" data-max="'+safe(p.max_percent)+'">'+safe(p.label)+' · '+safe(p.min_percent)+'%'+(Number(p.max_percent)!==Number(p.min_percent)?'–'+safe(p.max_percent)+'%':'')+'</option>').join('')+'</select></label><label>% responsabilidad LINK<input id="bwp-responsibility" type="number" min="0" max="100" step="1" placeholder="Según perfil"></label><label>% beneficio cliente dentro del 100%<input id="bwp-client-share" type="number" min="0" max="100" step="1" placeholder="Ej. 60"></label><label>% mínimo LINK dentro del 100%<input id="bwp-min-link" type="number" min="0" max="100" step="1" placeholder="Ej. 30"></label><label>Etapa<select id="bwp-stage"><option value="detected">Detectar</option><option value="conversation">Conversar</option><option value="agreed">Acordar</option><option value="active">Activar</option></select></label></div><label>Responsabilidades de LINK<textarea id="bwp-notes" rows="2" maxlength="1000" placeholder="Qué asumimos realmente en este producto"></textarea></label><div id="bwp-preview" class="bw-form-preview">El reparto cliente/LINK se calcula sobre un 100% interno. Aún no define por sí solo el precio final.</div><div class="bw-form-actions"><button class="bw-primary" type="submit">Guardar producto</button><button id="bwp-cancel" type="button">Cancelar</button></div></form>',
     '<div class="bw-product-grid">'+(products.length?products.map(renderProduct).join(''):'<div class="bw-empty"><strong>Sin productos registrados.</strong><span>Agrega únicamente productos cuyo convenio/precio de adquisición conozcamos o estemos negociando.</span></div>')+'</div></section>'
   ].join('');
-  $('#bw-back-business').addEventListener('click',renderBusiness);
+  $('#bw-back-business').addEventListener('click',renderClientHub);
   $('#bw-client-director').addEventListener('click',()=>{
     const prompt='Revisa el cliente '+state.client.name+' dentro de '+state.business.name+'. Analiza sus productos, responsabilidades, bloqueos y siguiente etapa sin inventar datos.';
     close();
@@ -214,7 +258,7 @@ async function refresh(){
   try{
     await loadBusiness(businessId);
     if(clientId&&state.clients.some(c=>c.id===clientId)){state.client=state.clients.find(c=>c.id===clientId);openClient(clientId);}
-    else renderBusiness();
+    else renderClientHub();
     notice('');
   }catch(e){notice('No se pudo sincronizar: '+(e.message||e),true);}
 }
@@ -225,7 +269,7 @@ async function openBusiness(id){
   state.open=true;state.client=null;$('#business-workspace').classList.remove('hidden');
   $('#bw-content').innerHTML='<div class="bw-loading">Abriendo ficha real…</div>';
   notice('');
-  try{await loadBusiness(id);renderBusiness();}
+  try{await loadBusiness(id);renderClientHub();}
   catch(e){notice(e.message||'No se pudo abrir la ficha.',true);$('#bw-content').innerHTML='<div class="bw-loading">No pudimos leer esta ficha.</div>';}
 }
 function mount(){
