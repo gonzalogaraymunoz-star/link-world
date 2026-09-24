@@ -284,4 +284,13 @@ function renderWelcome(){
 export function mountDirector(contextProvider){
   getContext=contextProvider||(()=>({}));
   render();
+  document.addEventListener('linkworld:director-prompt',event=>{
+    const prompt=String(event.detail?.prompt||'').trim().slice(0,3500);
+    setOpen(true);showLog(false);setSettings(false);
+    if(prompt){
+      $('#lw-composer').value=prompt;
+      feedback('Consulta preparada desde LINK WORLD. Revísala y envíala cuando quieras.');
+    }
+    $('#lw-composer').focus();
+  });
 }
