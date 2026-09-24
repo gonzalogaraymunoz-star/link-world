@@ -176,6 +176,7 @@ function render(){
     '<div id="bridge-status" class="bridge-status" role="status">Fuente compartida: LINK CONTROL CENTRAL · Supabase. Ningún Google Place se guarda automáticamente.</div>',
     '<div id="bridge-login" class="bridge-login"><p>Para ver negocios y solicitudes privadas, inicia sesión con tu cuenta existente de LINK CONTROL CENTRAL. Este módulo no registra usuarios nuevos.</p>',
     '<form id="bridge-login-form"><label for="bridge-email">Correo de acceso</label><input id="bridge-email" type="email" autocomplete="username" required /><label for="bridge-password">Contraseña</label><input id="bridge-password" type="password" autocomplete="current-password" required /><button class="bridge-primary" type="submit">Conectar mi espacio LINK</button></form>',
+    '<button id="bridge-email-link" type="button" class="bridge-primary" style="margin-top:11px;background:#f0f5ec;color:#466847">Recibir enlace de acceso por correo ↗</button>',
     '<p class="bridge-muted">No pegues contraseñas aquí en ChatGPT. Si tu acceso a CONTROL CENTRAL no utiliza email y contraseña de Supabase, necesitaremos configurar una autenticación compatible antes de habilitar el panel web.</p></div>',
     '<div id="bridge-data" class="hidden bridge-data"><nav class="bridge-tabs"><button type="button" class="active" data-bridge-tab="directory">Negocios</button><button type="button" data-bridge-tab="requests">Solicitudes</button><button type="button" data-bridge-tab="add">Nuevo negocio</button><button type="button" data-bridge-tab="activity">Actividad</button></nav>',
     '<div class="bridge-toolbar"><button type="button" id="bridge-refresh">↻ Sincronizar ahora</button><button type="button" id="bridge-logout">Salir</button></div>',
@@ -193,6 +194,16 @@ function render(){
   trigger.addEventListener('click',()=>toggle());
   $('#bridge-close').addEventListener('click',()=>toggle(false));
   $('#bridge-login-form').addEventListener('submit',login);
+  $('#bridge-email-link').addEventListener('click',async()=>{
+    const email=$('#bridge-email').value.trim();
+    if(!email)return status('Primero introduce el correo de tu cuenta LINK CONTROL CENTRAL.',true);
+    status('Solicitando un enlace para esa cuenta existente…');
+    const {error}=await db.auth.signInWithOtp({
+      email,options:{shouldCreateUser:false,emailRedirectTo:location.origin}
+    });
+    if(error)return status('No se pudo enviar el enlace: '+error.message,true);
+    status('Si ese correo pertenece a una cuenta habilitada, revisa tu bandeja y abre el enlace en este mismo navegador. No se creó una cuenta nueva.');
+  });
   $('#bridge-refresh').addEventListener('click',refresh);
   $('#bridge-logout').addEventListener('click',async()=>{await db.auth.signOut();state.session=null;state.authorized=false;state.businesses=[];state.requests=[];state.selected.clear();showAccess();document.dispatchEvent(new CustomEvent('linkworld:workspace-data',{detail:{authenticated:false}}));status('Desconectado.');});
   $('#bridge-business-form').addEventListener('submit',saveBusiness);
