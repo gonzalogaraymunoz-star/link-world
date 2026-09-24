@@ -10,7 +10,7 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
 });
 const $=(s,root=document)=>root.querySelector(s);
 const safe=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const tables={businesses:'link_world_businesses',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity'};
+const tables={businesses:'link_world_businesses',clients:'link_world_clients',products:'link_world_products',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity'};
 const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],selected:new Set(),activePlaceId:'',loading:false,pendingDraft:null};
 const statuses={draft:'Borrador',needs_review:'Revisar',verified:'Verificado'};
 const short=id=>String(id||'').slice(0,8);
@@ -261,12 +261,17 @@ export async function readDirectorAppContext(scope='selected'){
     scope==='selected'&&chosen.length?bQuery.in('id',chosen).limit(3):bQuery.limit(15),
     db.from(tables.requests).select('id,title,status,business_ids,result_summary').order('created_at',{ascending:false}).limit(10),
     db.from(tables.relations).select('id,source_business_id,target_business_id,relation_type,state,rationale').order('created_at',{ascending:false}).limit(14),
-    db.from(tables.activity).select('action,target_type,note,created_at').order('created_at',{ascending:false}).limit(8)
+    db.from(tables.activity).select('action,target_type,note,created_at').order('created_at',{ascending:false}).limit(8),
+    db.from(tables.clients).select('id,business_id,name,role,relationship_state,agreement_status,city,country,summary').order('created_at',{ascending:true}).limit(30),
+    db.from(tables.products).select('id,business_id,client_id,name,stage,currency,acquisition_price,public_price,responsibility_profile_id,responsibility_percent,client_benefit_share_percent,link_share_percent,minimum_link_share_percent,economic_state,responsibility_notes').order('created_at',{ascending:true}).limit(45)
   ];
   const responses=await Promise.all(queries);
   const problem=responses.find(r=>r.error);
   if(problem)throw new Error('No se pudieron leer los datos autorizados de LINK: '+problem.error.message);
-  const [businesses,requests,relations,activity]=responses.map(r=>r.data||[]);
+  const [businesses,requests,relations,activity,allClients,allProducts]=responses.map(r=>r.data||[]);
+  const visibleIds=new Set(businesses.map(b=>b.id));
+  const clients=allClients.filter(x=>visibleIds.has(x.business_id));
+  const products=allProducts.filter(x=>visibleIds.has(x.business_id));
   const detailed=scope==='selected'&&chosen.length>0;
   const simplified=businesses.map(b=>({
     id:b.id,name:b.name,sector:b.sector,city:b.city,country:b.country,
@@ -280,6 +285,8 @@ export async function readDirectorAppContext(scope='selected'){
     observed_at:new Date().toISOString(),
     scope:detailed?'hasta 3 negocios seleccionados':'resumen del organismo',
     businesses:simplified,
+    clients:clients.map(x=>({...x,summary:(x.summary||'').slice(0,150)})),
+    products:products.map(x=>({...x,responsibility_notes:(x.responsibility_notes||'').slice(0,150)})),
     requests:requests.map(x=>({...x,title:(x.title||'').slice(0,130),result_summary:(x.result_summary||'').slice(0,130)})),
     relations:relations.map(x=>({...x,rationale:(x.rationale||'').slice(0,110)})),
     activity:activity.map(x=>({...x,note:(x.note||'').slice(0,90)})),
@@ -292,6 +299,8 @@ export async function readDirectorAppContext(scope='selected'){
     if(payload.activity.length)payload.activity.pop();
     else if(payload.relations.length>3)payload.relations.pop();
     else if(payload.requests.length>3)payload.requests.pop();
+    else if(payload.products.length>5)payload.products.pop();
+    else if(payload.clients.length>3)payload.clients.pop();
     else if(payload.businesses.length>1)payload.businesses.pop();
     else throw new Error('Incluso un negocio supera el límite seguro; reduce sus campos propios antes de investigar.');
   }
