@@ -1,236 +1,106 @@
-import { flyGoogle, startGoogleWorld } from './googleMaps.js';
-import { mountWorldBridge } from './world/bridge.js';
-import './world/bridge.css';
-import { mountDirector } from './ai/directorChat.js';
-import './ai/chat.css';
-import { DEMO_CELLS, DEMO_STEPS, STRATEGIES, createDemoEngine, demoProjection } from './domain/demoWorld.js';
+// LINK WORLD: real data first. No DEMO cells or simulated mission in active UI.
+import {flyGoogle,startGoogleWorld} from './googleMaps.js';
+import {mountWorldBridge} from './world/bridge.js';
+import {mountDirector} from './ai/directorChat.js';
 import './style.css';
-import './world-ui.css';
-import './responsive.css';
+import './world/bridge.css';
+import './ai/chat.css';
+import './simple.css';
 
-const $ = selector => document.querySelector(selector);
-const cellById = id => DEMO_CELLS.find(cell => cell.id === id);
-const safe = (s='') => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let view='world', strategy='demand', selectedCell=null, selectedPlace=null, selectedRelation=null, contextOpen=true, activityOpen=false;
-let state;
-const demo=createDemoEngine(next=>{state=next;renderAll();});
-state=demo.get();
+const $=s=>document.querySelector(s);
+const state={map:false,connected:false,businesses:[],requests:[],relations:[]};
 $('#app').innerHTML=[
-'<div class="shell new-shell">',
-' <header class="topbar"><a class="brand" href="/" aria-label="LINK WORLD"><span class="brandmark">L<span class="brand-dot">•</span></span><span><strong>LINK WORLD</strong><small>Territorio · capacidades · conexiones</small></span></a>',
-'  <span class="header-territory" id="header-territory">SAN PEDRO DE ATACAMA / ORGANISMO LINK</span>',
-'  <div class="header-actions"><span class="state-pill">● DEMO GUIADA</span><button id="theme-switch" class="header-button" type="button" aria-label="Cambiar tema">◐</button><button id="context-toggle" class="header-button" type="button" aria-label="Mostrar u ocultar contexto" aria-expanded="true">☷</button><a class="repo-link" href="https://github.com/gonzalogaraymunoz-star/link-world" target="_blank" rel="noopener noreferrer">CÓDIGO ↗</a></div></header>',
-' <aside class="sidebar"><div class="side-label">PERSPECTIVA</div><div class="mode-menu" role="group" aria-label="Cambiar perspectiva">',
-'  <button class="mode active" data-mode="world" type="button"><span class="mode-icon">◎</span><span>Mundo<small>Explorar territorio</small></span><span class="mode-key">01</span></button>',
-'  <button class="mode" data-mode="organism" type="button"><span class="mode-icon">⬡</span><span>Organismo<small>Inspeccionar células</small></span><span class="mode-key">02</span></button>',
-'  <button class="mode" data-mode="constellation" type="button"><span class="mode-icon">⌁</span><span>Constelación<small>Relaciones y tejidos</small></span><span class="mode-key">03</span></button></div>',
-' <div class="side-rule"></div><div class="side-label">7 ESTRATEGIAS <span>elige una lente</span></div><div id="strategy-list" class="strategy-list"></div>',
-' <div class="side-rule"></div><div class="side-label">TERRITORIOS</div><div class="territory-list">',
-'  <button class="place active" data-location="atacama" type="button"><span class="place-pin">⌖</span><span>San Pedro de Atacama<small>Chile · origen</small></span><span>↗</span></button>',
-'  <button class="place" data-location="saopaulo" type="button"><span class="place-pin">⌖</span><span>São Paulo<small>Brasil · expansión</small></span><span>↗</span></button>',
-'  <button class="place" data-location="earth" type="button"><span class="place-pin">◎</span><span>Ver planeta<small>Perspectiva global</small></span><span>↗</span></button></div>',
-' <div class="sidebar-grow"></div><div class="status-panel"><span class="status-title">FUENTES Y VERDAD</span><div class="status-row"><span class="status-light ok"></span> LINK · Demo aislada</div><div class="status-row"><span class="status-light" id="imagery-light"></span><span id="imagery-status">Google Maps · comprobando…</span></div><div class="status-row"><span id="places-light" class="status-light off"></span><span id="places-status">Google Places · bajo demanda</span></div><div class="status-row"><span class="status-light off"></span> Operaciones · no conectadas</div></div><div class="sidebar-foot">DATOS REALES ≠ SIMULACIÓN</div></aside>',
-' <main class="workspace" aria-label="Vista principal"><div id="cesiumContainer" aria-label="Mapa de Google del territorio"></div><div class="map-shade"></div>',
-'  <div class="world-heading"><div class="eyebrow" id="scene-kicker">01 / TERRITORIO</div><h1 id="scene-title">Observa el territorio.</h1><p id="scene-subtitle">Negocios reales de Google; decisiones propias de LINK.</p></div>',
-'  <div class="view-controls"><button data-location="atacama" type="button">SAN PEDRO ↗</button><button data-location="earth" type="button">PLANETA ◉</button></div>',
-'  <div class="world-caption"><span class="tiny-circle"></span><span id="city-label">SAN PEDRO DE ATACAMA · CHILE</span><span class="caption-divider">/</span><span>GOOGLE MAPS · NO EN VIVO</span></div>',
-'  <section id="mode-layer" class="mode-layer hidden" aria-live="polite"></section><div class="notice">Google: lugares externos; LINK: demostración. No hay operaciones conectadas.</div></main>',
-' <aside class="context-pane" id="context-pane" aria-label="Contexto y decisiones"><div class="context-head"><div><span class="eyebrow">CONTEXTO / DECISIÓN</span><h2 id="context-heading">Tu siguiente decisión.</h2></div><button id="close-context" class="context-close" type="button" aria-label="Cerrar contexto">×</button></div><div class="context-content" id="context-content"></div><div class="context-footer">◌ Google: externo &nbsp; · &nbsp; ⬡ LINK: DEMO</div></aside>',
-' <section class="mission-bar" aria-label="Misión estratégica DEMO"><div class="mission-overline"><span>◉ MISIÓN / DEMO GUIADA</span><span id="mission-step-count">PASO 1 DE 6</span></div><div class="mission-row"><div class="mission-intro"><h2 id="mission-title">Una necesidad activa una célula.</h2><p id="mission-explain">Ejercicio ficticio: un huésped solicita una experiencia.</p></div><div class="mission-controls"><div id="mission-actions" class="mission-actions"></div><button id="activity-toggle" class="secondary-action" type="button">Memoria ↗</button></div></div><div id="mission-progress" class="mission-progress" aria-label="Etapas de misión"></div><div id="mission-note" class="mission-note" role="status"></div></section>',
-' <section class="activity-panel hidden" id="activity-panel" aria-label="Memoria de demostración"><div class="activity-head"><div><span class="eyebrow">CORTEZA / MEMORIA</span><h2>Historial de esta partida</h2></div><button id="activity-close" type="button">Cerrar ×</button></div><div id="activity-content"></div></section>',
-'</div>'
+"<div class='lw-app'>",
+"<header class='lw-app-header'>",
+"<a href='/' class='lw-app-brand'><span class='lw-brand-symbol'>L•</span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
+"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='director'>Director IA</button></nav>",
+"<span class='lw-app-state' id='lw-app-state'>Espacio privado · sin conectar</span>",
+"<div class='header-actions' id='lw-hidden-triggers'></div></header>",
+"<main class='lw-main'>",
+"<section id='lw-businesses' class='lw-home'>",
+"<div class='lw-home-hero'><div><span class='lw-kicker'>TU ESPACIO DE TRABAJO</span><h1>Construyamos con lo que existe.</h1><p>Negocios, solicitudes y relaciones reales. Sin misiones ficticias.</p></div><button id='lw-new-business' class='lw-btn-primary'>+ Nuevo negocio</button></div>",
+"<div class='lw-overview'><div><strong id='lw-business-count'>—</strong><span>Negocios</span></div><div><strong id='lw-request-count'>—</strong><span>Solicitudes</span></div><div><strong id='lw-relation-count'>—</strong><span>Relaciones</span></div></div>",
+"<section class='lw-owned-section'><div class='lw-section-head'><div><span class='lw-kicker'>FUENTE DE VERDAD / LINK</span><h2>Tus negocios</h2></div><button id='lw-sync' class='lw-btn-secondary'>↻ Sincronizar</button></div>",
+"<p class='lw-data-state' id='lw-data-state' role='status'>Conecta tu usuario para consultar los negocios reales. Ningún dato de demostración se presenta como negocio.</p><div id='lw-real-businesses' class='lw-business-grid'></div></section>",
+"<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Gestionar negocios</strong><small>Acceso privado y solicitudes ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='director'><span>03</span><strong>Conversar con Director</strong><small>OpenRouter gratuito ↗</small></button></section>",
+"<p class='lw-boundary'>Google Maps permite observar negocios externos. Solo los datos propios que registremos con autorización forman parte de LINK.</p>",
+"</section>",
+"<section id='lw-territory' class='lw-territory hidden'><div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / FUENTE EXTERNA</span><h1>Explorar, no inventar.</h1><p>Las búsquedas Google se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
+"<div class='workspace lw-map-workspace'><div id='cesiumContainer' aria-label='Mapa de Google'></div><div id='lw-place-card' class='lw-place-card hidden' role='status'></div><div class='notice'>Google Maps no muestra imágenes en vivo. Un resultado externo no es un negocio registrado en LINK.</div></div>",
+"<div class='lw-map-foot'><span id='imagery-status'>Google Maps · se abre al entrar en Territorio</span><span id='places-status'>Google Places · bajo demanda</span><span id='city-label'>SAN PEDRO DE ATACAMA · CHILE</span></div></section>",
+"</main></div>"
 ].join('');
 
-function renderStrategies(){
-  $('#strategy-list').innerHTML=STRATEGIES.map((s,i)=>'<button type="button" class="strategy '+(s.id===strategy?'active':'')+'" data-strategy="'+s.id+'"><span class="strategy-num">'+(i+1)+'</span><span><strong>'+s.name+'</strong><small>'+s.short+'</small></span><span class="strategy-arrow">↗</span></button>').join('');
-  document.querySelectorAll('[data-strategy]').forEach(b=>b.addEventListener('click',()=>{strategy=b.dataset.strategy;selectedCell=null;selectedPlace=null;selectedRelation=null;renderStrategies();renderContext();toggleContext(true);}));
+const bridge=()=>$('#bridge-toggle');
+function openBridge(tab){
+  if(!bridge())return;
+  if($('#bridge-panel')?.classList.contains('hidden'))bridge().click();
+  if(tab)document.querySelector('[data-bridge-tab="'+tab+'"]')?.click();
 }
-function renderContext(){
-  const cell=cellById(selectedCell),lens=STRATEGIES.find(s=>s.id===strategy),p=demoProjection(state);
-  const relation=selectedRelation?{
-    from:cellById(selectedRelation.fromId),to:cellById(selectedRelation.toId),
-    state:selectedRelation.index===0?p.relation:'conceptual'
-  }:null;
-  let title='Tu siguiente decisión.',html='';
-
-  if(relation?.from&&relation?.to){
-    title=relation.from.name+' ↔ '+relation.to.name;
-    html='<span class="source-tag demo">RELACIÓN · DEMO / NO ES CONVENIO</span>'+
-      '<div class="relation-context"><div class="relation-party"><span class="tiny-cell" style="--accent:'+relation.from.color+'">'+relation.from.monogram+'</span><strong>'+safe(relation.from.name)+'</strong></div>'+
-      '<span class="relation-link">↔</span><div class="relation-party"><span class="tiny-cell" style="--accent:'+relation.to.color+'">'+relation.to.monogram+'</span><strong>'+safe(relation.to.name)+'</strong></div></div>'+
-      '<div class="context-section"><span class="eyebrow">ESTADO DE LA RELACIÓN</span><div class="mini-row"><span>Estado</span><strong>'+safe(relation.state)+' · DEMO</strong></div><div class="mini-row"><span>Fuente</span><strong>Modelo conceptual LINK</strong></div></div>'+
-      '<p>Esta conexión sirve para explorar una colaboración. Antes de convertirla en relación real hay que comprobar capacidad, acuerdo, responsables y evidencia.</p>'+
-      '<div class="panel-actions"><button type="button" class="context-cta" data-context-action="director-relation">✦ Analizar con Director</button><button type="button" class="context-secondary" data-context-action="bridge-relation">↔ Crear solicitud de trabajo</button></div>'+
-      '<div class="context-section"><span class="eyebrow">ABRIR CÉLULAS</span><div class="context-cell-list"><button type="button" data-cell="'+relation.from.id+'"><span class="tiny-cell" style="--accent:'+relation.from.color+'">'+relation.from.monogram+'</span>'+safe(relation.from.name)+' ↗</button><button type="button" data-cell="'+relation.to.id+'"><span class="tiny-cell" style="--accent:'+relation.to.color+'">'+relation.to.monogram+'</span>'+safe(relation.to.name)+' ↗</button></div></div>';
-
-  }else if(selectedPlace){
-    title='Negocio encontrado.';
-    html='<span class="source-tag google">GOOGLE PLACES / FUENTE EXTERNA</span><h3>'+safe(selectedPlace.name)+'</h3><p>'+safe(selectedPlace.address)+'</p>'+
-      '<div class="source-disclaimer">Un lugar encontrado no es una célula LINK, un cliente, un aliado ni demanda verificada.</div>'+
-      '<div class="panel-actions">'+
-      (selectedPlace.uri?'<a class="context-cta" href="'+safe(selectedPlace.uri)+'" target="_blank" rel="noopener noreferrer">Abrir Google Maps ↗</a>':'')+
-      '<button type="button" class="context-secondary" data-context-action="director-place">✦ Analizar hallazgo</button></div>'+
-      '<button type="button" class="quiet-btn" data-context-action="clear">Volver a LINK</button>';
-
-  }else if(cell){
-    title=cell.name;
-    html='<span class="source-tag demo">CÉLULA DE REFERENCIA · DEMO</span><div class="cell-portrait" style="--accent:'+cell.color+'">'+cell.monogram+'</div><h3>'+safe(cell.name)+'</h3><p>'+safe(cell.purpose)+'</p>'+
-      '<div class="context-section"><span class="eyebrow">GENES / CAPACIDADES DE REFERENCIA</span><div class="gene-list">'+cell.genes.map(g=>'<span class="gene">'+safe(g)+'</span>').join('')+'</div></div>'+
-      '<div class="context-section"><span class="eyebrow">ORGÁNULOS · NO VERIFICADOS</span>'+cell.organelles.map(o=>'<div class="mini-row">↗ '+safe(o)+'</div>').join('')+'</div>'+
-      '<div class="context-section"><span class="eyebrow">MISIÓN</span><p>'+safe(p.mission)+' · '+safe(p.next)+'</p></div>'+
-      '<div class="panel-actions"><button type="button" class="context-cta" data-context-action="director-cell">✦ Trabajar con Director</button><button type="button" class="context-secondary" data-context-action="bridge-cell">↔ Registrar solicitud</button></div>'+
-      '<button type="button" class="quiet-btn" data-context-action="mission">Ver misión DEMO</button>';
-
-  }else{
-    html='<span class="source-tag demo">LENTE ESTRATÉGICA · ACCIÓN</span><p>Cada estrategia cambia la pregunta que LINK hace sobre el mismo territorio y organismo.</p>'+
-      '<div class="focus-card"><span class="eyebrow">ESTRATEGIA ACTIVA</span><h3>'+safe(lens.name)+'</h3><p>'+safe(lens.detail)+'</p></div>'+
-      '<div class="context-section"><span class="eyebrow">ESTADO DE LA MISIÓN</span><div class="mini-row"><span>Oportunidad</span><strong>'+safe(p.opportunity)+'</strong></div><div class="mini-row"><span>Sinapsis</span><strong>'+safe(p.relation)+'</strong></div><div class="mini-row"><span>Evidencia</span><strong>'+safe(p.evidence)+'</strong></div></div>'+
-      '<div class="panel-actions"><button type="button" class="context-cta" data-context-action="director-strategy">✦ Aplicar esta estrategia</button><button type="button" class="context-secondary" data-context-action="world-search">⌖ Investigar territorio</button></div>'+
-      '<div class="context-section"><span class="eyebrow">CÉLULAS DE REFERENCIA</span><div class="context-cell-list">'+DEMO_CELLS.map(c=>'<button type="button" data-cell="'+c.id+'"><span class="tiny-cell" style="--accent:'+c.color+'">'+c.monogram+'</span>'+safe(c.name)+' ↗</button>').join('')+'</div></div>';
+function setView(next){
+  if(next==='director'){ $('#ai-toggle')?.click();return; }
+  const territory=next==='territory';
+  document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
+  $('#lw-businesses').classList.toggle('hidden',territory);
+  $('#lw-territory').classList.toggle('hidden',!territory);
+  if(territory&&!state.map){
+    state.map=true; // Google JS loads only on explicit territory visit.
+    startGoogleWorld(()=>flyGoogle('atacama')).catch(()=>{
+      $('#imagery-status').textContent='Google Maps · no se pudo conectar';
+    });
   }
-
-  $('#context-heading').textContent=title;$('#context-content').innerHTML=html;
-  $('#context-content').querySelectorAll('[data-cell]').forEach(b=>b.addEventListener('click',()=>selectCell(b.dataset.cell)));
-  $('#context-content').querySelectorAll('[data-context-action]').forEach(b=>b.addEventListener('click',()=>{
-    const action=b.dataset.contextAction;
-    if(action==='clear'){selectedCell=null;selectedPlace=null;selectedRelation=null;renderContext();return;}
-    if(action==='mission'){selectedCell=null;selectedRelation=null;setMode('world');toggleContext(false);$('#mission-actions button')?.focus();return;}
-    if(action==='director-cell'&&cell){
-      openDirector('Trabajemos la célula DEMO '+cell.name+'. Analiza sus capacidades de referencia ('+cell.genes.join(', ')+'), qué datos faltan verificar y qué proyecto concreto podríamos construir sin asumir que hay operaciones reales.');
-      return;
-    }
-    if(action==='bridge-cell'&&cell){
-      openBridgeRequest('Investigar '+cell.name,'Revisar qué datos reales existen para '+cell.name+', qué falta verificar y qué acción debería convertirse en una solicitud de trabajo. La célula mostrada en la interfaz es DEMO hasta que existan fichas reales.');
-      return;
-    }
-    if(action==='director-relation'&&relation){
-      openDirector('Analiza una posible colaboración entre '+relation.from.name+' y '+relation.to.name+'. La relación actual es '+relation.state+' dentro de una DEMO. Explica capacidades complementarias, datos que faltan verificar, riesgos y una primera prueba de bajo costo.');
-      return;
-    }
-    if(action==='bridge-relation'&&relation){
-      openBridgeRequest('Explorar '+relation.from.name+' + '+relation.to.name,'Preparar una investigación y propuesta de colaboración entre '+relation.from.name+' y '+relation.to.name+'. No tratar la relación DEMO como convenio real; primero verificar capacidades, responsables, acuerdo y evidencia.');
-      return;
-    }
-    if(action==='director-place'&&selectedPlace){
-      openDirector('Analiza este hallazgo seleccionado manualmente en Google Maps: '+selectedPlace.name+(selectedPlace.address?' · '+selectedPlace.address:'')+'. No asumas que es cliente ni aliado. Indica qué convendría verificar y qué oportunidad podría investigarse con LINK.');
-      return;
-    }
-    if(action==='director-strategy'){
-      openDirector('Apliquemos la estrategia '+lens.name+' en LINK WORLD. '+lens.detail+' Usa las células DEMO solo como referencia, distingue lo comprobado de lo hipotético y propón una investigación concreta.');
-      return;
-    }
-    if(action==='world-search'){
-      setMode('world');toggleContext(false);
-      document.querySelector('#google-text-query')?.focus();
-      return;
-    }
-  }));
 }
-function openDirector(prompt){
-  toggleContext(false);
-  document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+function make(tag,css,text){
+  const node=document.createElement(tag);node.className=css;
+  if(text!==undefined)node.textContent=String(text);
+  return node;
 }
-function openBridgeRequest(title,instruction){
-  toggleContext(false);
-  document.dispatchEvent(new CustomEvent('linkworld:bridge-request',{detail:{title,instruction}}));
+function renderBusinessList(){
+  const list=$('#lw-real-businesses');list.replaceChildren();
+  if(!state.connected)return;
+  for(const b of state.businesses){
+    const card=make('button','lw-real-business');
+    card.type='button';
+    card.append(make('span','lw-business-icon',b.name?.trim()?.charAt(0)?.toUpperCase()||'L'),
+      make('strong','lw-business-name',b.name||'Negocio'),
+      make('small','lw-business-sector',[b.sector,b.city,b.country].filter(Boolean).join(' · ')),
+      make('small','lw-business-status',b.verification_status==='verified'?'Verificado':b.verification_status==='needs_review'?'Por verificar':'Borrador'));
+    card.addEventListener('click',()=>{
+      openBridge('directory');
+      const search=$('#bridge-search');
+      if(search){search.value=b.name;search.dispatchEvent(new Event('input'));}
+    });
+    list.append(card);
+  }
 }
-function selectCell(id){
-  selectedPlace=null;selectedRelation=null;selectedCell=selectedCell===id?null:id;
-  renderContext();if(view!=='world')renderMode();toggleContext(true);
-}
-function selectRelation(fromId,toId,index){
-  selectedPlace=null;selectedCell=null;selectedRelation={fromId,toId,index:Number(index)||0};
-  renderContext();toggleContext(true);
-}
-function renderMission(){
-  const p=demoProjection(state),n=p.stage;
-  const narratives=[
-    ['Observa una necesidad.','Caso ficticio: un huésped solicita una experiencia turística. No existe reserva.'],
-    ['¿Cómo responderías?','Una oportunidad puede generar alternativas, no una venta automática.'],
-    ['Coordinar exige capacidad.','Una sinapsis propuesta no equivale a un acuerdo ni disponibilidad.'],
-    ['Actuar requiere condiciones.','Simular una ejecución no modifica ningún sistema operativo real.'],
-    ['¿Qué puede aprender LINK?','El resultado es ficticio: registra un aprendizaje DEMO.'],
-    ['El ciclo vuelve a comenzar.','Prueba otra decisión o explora negocios reales sobre el mapa.']
-  ];
-  $('#mission-step-count').textContent='PASO '+Math.min(n+1,6)+' DE 6';
-  $('#mission-title').textContent=narratives[n][0];$('#mission-explain').textContent=narratives[n][1];
-  const actions=n===0?[['observe','Registrar hipótesis DEMO','primary']]
-    : n===1?[['coordinate','Proponer coordinación','primary'],['defer','Reprogramar','secondary'],['decline','No intervenir','secondary']]
-    : n===2&&state.decision==='defer'?[['revise','Revisar opciones','primary'],['reset','Reiniciar','secondary']]
-    : n===2?[['simulate_availability','Simular disponibilidad','primary'],['reset','Reiniciar','secondary']]
-    : n===3?[['simulate_execution','Simular ejecución','primary'],['reset','Reiniciar','secondary']]
-    : n===4?[['record_lesson','Proponer aprendizaje','primary'],['reset','Reiniciar','secondary']]
-    :[['reset','Nueva partida DEMO','primary']];
-  $('#mission-actions').innerHTML=actions.map(([a,t,k])=>'<button type="button" class="mission-action '+k+'" data-demo-action="'+a+'">'+t+'</button>').join('');
-  $('#mission-actions').querySelectorAll('[data-demo-action]').forEach(b=>b.addEventListener('click',()=>{
-    const result=demo.dispatch(b.dataset.demoAction);
-    if(!result.ok)$('#mission-note').textContent=result.error;
-  }));
-  $('#mission-progress').innerHTML=DEMO_STEPS.map((s,i)=>'<span class="step '+(i<n?'done':i===n?'current':'')+'"><i>'+(i<n?'✓':i+1)+'</i><span>'+s+'</span></span>').join('');
-  $('#mission-note').textContent=p.blocked?'BLOQUEO DEMO · '+p.blocked:state.finished?
-    'Partida finalizada. No se ha registrado ninguna operación real.':'SIMULACIÓN · No registra ventas, reservas, pagos o acuerdos reales.';
-}
-function renderActivity(){
-  const e=demoProjection(state).events;
-  $('#activity-content').innerHTML=e.length?e.map((v,i)=>'<article class="event-line"><span class="event-index">'+String(i+1).padStart(2,'0')+'</span><div><strong>'+safe(v.label)+'</strong><small>'+safe(v.source)+' · '+safe(v.verification_state)+'</small></div></article>').reverse().join(''):'<p class="empty-copy">Todavía no hay eventos. Cada decisión DEMO aparecerá aquí.</p>';
-}
-function renderOrganism(){
-  const p=demoProjection(state);
-  return '<div class="editorial-board"><div class="eyebrow">02 / ORGANISMO · DEMO</div><h2>Un ADN. Varias células.</h2><p>Elige una célula. Las capacidades son referencias: no implican sistemas conectados.</p><div class="cell-board">'+DEMO_CELLS.map(c=>'<button type="button" class="board-cell" data-cell="'+c.id+'" style="--accent:'+c.color+'"><span class="board-monogram">'+c.monogram+'</span><strong>'+c.name+'</strong><small>'+c.sector+'</small><em>Explorar ↗</em></button>').join('')+'</div><div class="board-rule"><strong>Estado de esta DEMO</strong><span>Oportunidad: '+safe(p.opportunity)+' · Misión: '+safe(p.mission)+'</span></div></div>';
-}
-function renderConstellation(){
-  const p=demoProjection(state);
-  return '<div class="editorial-board"><div class="eyebrow">03 / CONSTELACIÓN · DEMO</div><h2>Las conexiones tienen estados.</h2><p>Una línea conceptual no demuestra un convenio ni una operación.</p><div class="connections-board">'+
-    [['hotel','lama'],['hotel','taxi'],['hotel','wellness']].map(([a,b],i)=>{
-      const c=cellById(a),d=cellById(b);
-      return '<button type="button" class="connection-row" data-relation-from="'+a+'" data-relation-to="'+b+'" data-relation-index="'+i+'"><span class="small-cell" style="--accent:'+c.color+'">'+c.monogram+'</span><span class="connection-names">'+c.name+' <b>→</b> '+d.name+'<small>'+(i===0?safe(p.relation):'conceptual')+' · DEMO</small><em>Explorar relación ↗</em></span><span class="small-cell" style="--accent:'+d.color+'">'+d.monogram+'</span></button>';
-    }).join('')+'</div><p class="board-caption">Las sinapsis reales exigirán acuerdos, permisos y evidencia autorizada.</p></div>';
-}
-function renderMode(){
-  const layer=$('#mode-layer');layer.classList.toggle('hidden',view==='world');
-  if(view==='world'){layer.replaceChildren();return;}
-  layer.innerHTML=view==='organism'?renderOrganism():renderConstellation();
-  layer.querySelectorAll('[data-cell]').forEach(b=>b.addEventListener('click',()=>selectCell(b.dataset.cell)));
-  layer.querySelectorAll('[data-relation-from]').forEach(b=>b.addEventListener('click',()=>selectRelation(b.dataset.relationFrom,b.dataset.relationTo,b.dataset.relationIndex)));
-}
-function setMode(next){
-  view=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
-  const t={world:['01 / TERRITORIO','Observa el territorio.','Negocios reales de Google; decisiones propias de LINK.'],
-    organism:['02 / ORGANISMO','Inspecciona las células.','Capacidades de referencia hasta conectar fuentes autorizadas.'],
-    constellation:['03 / CONSTELACIÓN','Comprende las relaciones.','Una conexión propuesta no equivale a una operación real.']};
-  $('#scene-kicker').textContent=t[next][0];$('#scene-title').textContent=t[next][1];$('#scene-subtitle').textContent=t[next][2];renderMode();
-}
-function renderAll(){renderContext();renderMission();renderActivity();if(view!=='world')renderMode();}
-function toggleContext(open){contextOpen=open;document.body.classList.toggle('context-collapsed',!open);$('#context-toggle').setAttribute('aria-expanded',String(open));}
-renderStrategies();renderAll();
-const mobileLayout=window.matchMedia('(max-width:900px)');
-if (mobileLayout.matches) toggleContext(false);
-mobileLayout.addEventListener?.('change',event=>{
-  if(event.matches) toggleContext(false);
+document.addEventListener('linkworld:workspace-data',event=>{
+  const d=event.detail||{};
+  state.connected=d.authenticated===true;
+  state.businesses=Array.isArray(d.businesses)?d.businesses:[];
+  state.requests=Array.isArray(d.requests)?d.requests:[];
+  state.relations=Array.isArray(d.relations)?d.relations:[];
+  $('#lw-app-state').textContent=state.connected?'Espacio LINK · conectado':'Espacio privado · sin conectar';
+  $('#lw-business-count').textContent=state.connected?String(state.businesses.length):'—';
+  $('#lw-request-count').textContent=state.connected?String(state.requests.length):'—';
+  $('#lw-relation-count').textContent=state.connected?String(state.relations.length):'—';
+  $('#lw-data-state').textContent=!state.connected?
+    'Conecta tu cuenta autorizada de LINK CONTROL CENTRAL para leer los negocios propios. No mostraremos datos ficticios.':
+    state.businesses.length?'Información propia sincronizada desde Supabase. Selecciona un negocio para ver su ficha.':
+    'Aún no hay negocios registrados en LINK WORLD. Puedes crear la primera ficha como borrador privado.';
+  renderBusinessList();
 });
-document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
-document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>{
-  setMode('world');flyGoogle(b.dataset.location);
-  $('#header-territory').textContent=(b.dataset.location==='saopaulo'?'SÃO PAULO':b.dataset.location==='earth'?'PLANETA':'SAN PEDRO DE ATACAMA')+' / ORGANISMO LINK';
-}));
-$('#theme-switch').addEventListener('click',()=>document.body.classList.toggle('link-dark'));
-$('#context-toggle').addEventListener('click',()=>toggleContext(!contextOpen));
-$('#close-context').addEventListener('click',()=>toggleContext(false));
-$('#activity-toggle').addEventListener('click',()=>{activityOpen=!activityOpen;$('#activity-panel').classList.toggle('hidden',!activityOpen);});
-$('#activity-close').addEventListener('click',()=>{activityOpen=false;$('#activity-panel').classList.add('hidden');});
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
+$('#lw-open-bridge').addEventListener('click',()=>openBridge('directory'));
+$('#lw-sync').addEventListener('click',()=>{openBridge('directory');$('#bridge-refresh')?.click();});
+$('#lw-new-business').addEventListener('click',()=>openBridge('add'));
 document.addEventListener('linkworld:place-selected',event=>{
-  const detail=event.detail||{};selectedPlace={name:detail.name||'Lugar de Google',address:detail.address||'',uri:detail.uri||''};
-  selectedCell=null;selectedRelation=null;toggleContext(true);renderContext();
+  const d=event.detail||{},el=$('#lw-place-card');
+  el.replaceChildren(make('strong','',d.name||'Lugar de Google'),make('small','',d.address||''));
+  if(d.uri&&/^https:\/\/(?:www\.)?google\.[^/]+\/maps/.test(d.uri)){
+    const a=make('a','','Abrir en Google Maps ↗');a.href=d.uri;a.target='_blank';a.rel='noopener noreferrer';el.append(a);
+  }
+  el.classList.remove('hidden');
 });
-mountDirector(() => ({
-  strategy: STRATEGIES.find(s=>s.id===strategy)?.name || '',
-  cell: cellById(selectedCell)?.name || '',
-  mission: demoProjection(state).mission+' (DEMO, no comprobada)',
-  demoSnapshot: JSON.stringify({
-    source:'DEMO FICTICIA · NO SON FICHAS EMPRESARIALES',
-    cells:DEMO_CELLS.map(({id,name,sector,purpose,genes,organelles})=>({id,name,sector,purpose,genes,organelles})),
-    mission:demoProjection(state),note:'No equivale a reservas, acuerdos, datos verificados ni estado de Supabase.'
-  }).slice(0,3200)
-}));
 mountWorldBridge();
-startGoogleWorld(()=>flyGoogle('atacama'));
+mountDirector(()=>({strategy:'',cell:'',mission:'',demoSnapshot:''}));
