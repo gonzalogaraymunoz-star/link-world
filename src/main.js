@@ -2,9 +2,11 @@
 import {flyGoogle,startGoogleWorld} from './googleMaps.js';
 import {mountWorldBridge} from './world/bridge.js';
 import {mountDirector} from './ai/directorChat.js';
+import {mountBusinessWorkspace} from './world/businessWorkspace.js';
 import './style.css';
 import './world/bridge.css';
 import './ai/chat.css';
+import './world/businessWorkspace.css';
 import './simple.css';
 
 const $=s=>document.querySelector(s);
@@ -66,9 +68,7 @@ function renderBusinessList(){
       make('small','lw-business-sector',[b.sector,b.city,b.country].filter(Boolean).join(' · ')),
       make('small','lw-business-status',b.verification_status==='verified'?'Verificado':b.verification_status==='needs_review'?'Por verificar':'Borrador'));
     card.addEventListener('click',()=>{
-      openBridge('directory');
-      const search=$('#bridge-search');
-      if(search){search.value=b.name;search.dispatchEvent(new Event('input'));}
+      document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:b.id}}));
     });
     list.append(card);
   }
@@ -104,3 +104,4 @@ document.addEventListener('linkworld:place-selected',event=>{
 });
 mountWorldBridge();
 mountDirector(()=>({strategy:'',cell:'',mission:'',demoSnapshot:''}));
+mountBusinessWorkspace();
