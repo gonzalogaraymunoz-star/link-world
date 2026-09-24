@@ -11,7 +11,7 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
 const $=(s,root=document)=>root.querySelector(s);
 const safe=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tables={businesses:'link_world_businesses',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity'};
-const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],selected:new Set(),activePlaceId:'',loading:false};
+const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],selected:new Set(),activePlaceId:'',loading:false,pendingDraft:null};
 const statuses={draft:'Borrador',needs_review:'Revisar',verified:'Verificado'};
 const short=id=>String(id||'').slice(0,8);
 function status(text,error=false){const n=$('#bridge-status');if(n){n.textContent=text;n.classList.toggle('error',error);}}
@@ -113,6 +113,13 @@ async function login(event){
   try{if(!await requireMember()){status('Tu cuenta está autenticada pero no figura como miembro activo de LINK CONTROL CENTRAL.',true);await db.auth.signOut();state.session=null;state.authorized=false;showAccess();return;}}
   catch(e){status('No fue posible validar tu acceso: '+e.message,true);return;}
   showAccess();await refresh();
+  if(state.pendingDraft){
+    setTab('directory');
+    $('#bridge-request-title').value=state.pendingDraft.title;
+    $('#bridge-request-instruction').value=state.pendingDraft.instruction;
+    $('#bridge-request-form').scrollIntoView({behavior:'smooth',block:'center'});
+    status('Solicitud preparada. Revísala y pulsa Registrar en LINK para guardarla.');
+  }
 }
 function showAccess(){
   $('#bridge-login').classList.toggle('hidden',Boolean(state.session&&state.authorized));
@@ -150,7 +157,7 @@ async function saveRequest(event){
     business_ids:[...state.selected],created_by:state.session.user.id
   });
   if(error)return status('No se guardó la solicitud: '+error.message,true);
-  $('#bridge-request-form').reset();setTab('requests');await refresh();
+  $('#bridge-request-form').reset();state.pendingDraft=null;setTab('requests');await refresh();
   status('Solicitud compartida. Invoca LINK WORLD aquí y pídele revisar las solicitudes pendientes.');
 }
 function render(){
@@ -192,6 +199,20 @@ function render(){
     catch{window.prompt('Copia este texto para ChatGPT:',text);}
   });
   showAccess();
+  document.addEventListener('linkworld:bridge-request',event=>{
+    const detail=event.detail||{};
+    state.pendingDraft={title:String(detail.title||'').slice(0,240),instruction:String(detail.instruction||'').slice(0,1500)};
+    toggle(true);
+    if(state.session&&state.authorized){
+      setTab('directory');
+      $('#bridge-request-title').value=state.pendingDraft.title;
+      $('#bridge-request-instruction').value=state.pendingDraft.instruction;
+      $('#bridge-request-form').scrollIntoView({behavior:'smooth',block:'center'});
+      status('Solicitud preparada desde otro panel. Revísala y pulsa Registrar en LINK cuando estés de acuerdo.');
+    }else{
+      status('Solicitud preparada. Conecta tu espacio LINK para revisarla y registrarla; no se ha guardado nada todavía.');
+    }
+  });
 }
 export async function mountWorldBridge(){
   render();
