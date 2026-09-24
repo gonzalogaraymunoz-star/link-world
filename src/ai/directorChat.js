@@ -272,9 +272,9 @@ function renderWelcome(){
   const t=$('#lw-transcript');t.innerHTML=
     '<div class="lw-welcome"><div class="lw-welcome-icon">✦</div><div class="lw-eyebrow">UN LUGAR PARA PENSAR Y CONSTRUIR</div><h3>Hola, ¿qué vamos a desarrollar?</h3>'+
     '<p>Conversa con el Director sobre LINK, combina células o trae una idea nueva. Tus decisiones siguen siendo tuyas.</p>'+
-    '<div class="lw-starters"><button type="button" data-start="Analiza las capacidades de Lama Travelers, Hotel Experience y TaxiHotel. Distingue demo de datos comprobados.">Explorar tres células ↗</button>'+
+    '<div class="lw-starters"><button type="button" data-start="Investiga los negocios reales de LINK WORLD: distingue datos disponibles, desconocidos y próximos pasos.">Investigar negocios ↗</button>'+
     '<button type="button" data-start="Quiero diseñar un negocio nuevo en LINK WORLD. Hazme las preguntas necesarias y prepara un plan de construcción.">Crear un negocio ↗</button>'+
-    '<button type="button" data-start="¿Qué información tenemos en LINK WORLD y qué falta verificar antes de crecer?">Entender el organismo ↗</button></div>'+
+    '<button type="button" data-start="Quiero registrar una solicitud real. Ayúdame a definirla, sin afirmar que ya está guardada.">Preparar una solicitud ↗</button></div>'+
     '<small>OpenRouter Free · Sin escrituras automáticas · Google solo por búsqueda manual</small></div>';
   t.querySelectorAll('[data-start]').forEach(b=>b.addEventListener('click',()=>{
     $('#lw-composer').value=b.dataset.start;$('#lw-composer').focus();
