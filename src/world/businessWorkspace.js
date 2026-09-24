@@ -14,21 +14,29 @@ const money=(n,currency='CLP')=>{
   catch{return '$'+Math.round(x).toLocaleString('es-CL');}
 };
 const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',active:'Activar',recorded:'Registrar',learning:'Aprender',expanding:'Expandir',paused:'Pausado',closed:'Cerrado'};
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,busy:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,busy:false,canWrite:false};
 
-async function member(){
+async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
-  if(!session)throw new Error('Conecta tu cuenta LINK WORLD para abrir esta ficha.');
+  if(!session)throw new Error('Por ahora los cambios se realizan desde ChatGPT; la navegación web queda abierta.');
   const {data,error}=await db.rpc('link_world_is_member');
-  if(error||data!==true)throw new Error('Tu usuario no tiene acceso a este espacio privado.');
+  if(error||data!==true)throw new Error('Esta sesión no tiene permisos de edición.');
   return session;
+}
+async function detectWriteAccess(){
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    if(!session){state.canWrite=false;return;}
+    const {data,error}=await db.rpc('link_world_is_member');
+    state.canWrite=!error&&data===true;
+  }catch{state.canWrite=false;}
 }
 function notice(text,error=false){
   const el=$('#bw-notice');if(!el)return;
   el.textContent=text||'';el.classList.toggle('error',error);el.classList.toggle('hidden',!text);
 }
 async function loadBusiness(businessId){
-  await member();
+  await detectWriteAccess();
   const [b,c,p,r]=await Promise.all([
     db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
     db.from('link_world_clients').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
@@ -85,7 +93,7 @@ function renderBusiness(){
       '<article class="bw-panel"><span class="bw-kicker">CICLO</span><h2>Cómo avanza</h2><div class="bw-cycle">'+cycle.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
     '</section>',
     '<section class="bw-clients-section">',
-      '<div class="bw-section-head"><div><span class="bw-kicker">ESCALA / CLIENTES</span><h2>Convenios y productos</h2><p>Cada cliente tiene su propia ficha y sus productos. El crecimiento se mide desde aquí.</p></div><button id="bw-add-client" class="bw-primary" type="button">+ Nuevo cliente</button></div>',
+      '<div class="bw-section-head"><div><span class="bw-kicker">ESCALA / CLIENTES</span><h2>Convenios y productos</h2><p>Cada cliente tiene su propia ficha y sus productos. El crecimiento se mide desde aquí.</p></div>'+(state.canWrite?'<button id="bw-add-client" class="bw-primary" type="button">+ Nuevo cliente</button>':'<span class="bw-open-mode">Modo abierto · cambios desde ChatGPT</span>')+'</div>',
       '<form id="bw-client-form" class="bw-form hidden"><h3>Nuevo cliente / convenio</h3><div class="bw-form-grid"><label>Nombre<input id="bwc-name" required maxlength="180"></label><label>Tipo<select id="bwc-role"><option value="comercio">Comercio</option><option value="proveedor">Proveedor</option><option value="establecimiento">Establecimiento</option><option value="partner">Partner</option><option value="otro">Otro</option></select></label><label>Ciudad<input id="bwc-city" maxlength="120"></label><label>País<input id="bwc-country" maxlength="100" value="Chile"></label></div><label>Contexto<textarea id="bwc-summary" rows="2" maxlength="900" placeholder="Qué relación tenemos y qué queremos probar"></textarea></label><div class="bw-form-actions"><button class="bw-primary" type="submit">Crear borrador</button><button id="bwc-cancel" type="button">Cancelar</button></div></form>',
       '<div id="bw-client-list" class="bw-client-grid">'+(state.clients.length?state.clients.map(c=>{
         const products=state.products.filter(p=>p.client_id===c.id),active=products.filter(p=>p.economic_state==='active').length;
@@ -100,9 +108,11 @@ function renderBusiness(){
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
-  $('#bw-add-client').addEventListener('click',()=>$('#bw-client-form').classList.remove('hidden'));
-  $('#bwc-cancel').addEventListener('click',()=>$('#bw-client-form').classList.add('hidden'));
-  $('#bw-client-form').addEventListener('submit',createClientRecord);
+  if(state.canWrite){
+    $('#bw-add-client')?.addEventListener('click',()=>$('#bw-client-form').classList.remove('hidden'));
+    $('#bwc-cancel')?.addEventListener('click',()=>$('#bw-client-form').classList.add('hidden'));
+    $('#bw-client-form')?.addEventListener('submit',createClientRecord);
+  }
   root.querySelectorAll('[data-client]').forEach(b=>b.addEventListener('click',()=>openClient(b.dataset.client)));
 }
 function renderProduct(p){
@@ -126,7 +136,7 @@ function openClient(id){
     '<section class="bw-client-head"><div><button id="bw-back-business" class="bw-back" type="button">← '+safe(state.business.name)+'</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(state.client.role)+'</span><h1>'+safe(state.client.name)+'</h1><p>'+safe(state.client.summary||'Sin contexto adicional registrado.')+'</p><div class="bw-tags"><span>'+safe(stageNames[state.client.relationship_state]||state.client.relationship_state)+'</span><span>'+safe(state.client.agreement_status)+'</span></div></div><button id="bw-client-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+products.length+'</strong><span>Productos</span></div><div><strong>'+active+'</strong><span>Activos</span></div><div><strong>'+blocked+'</strong><span>Bloqueados</span></div><div><strong>'+products.filter(p=>p.stage==='learning'||p.stage==='expanding').length+'</strong><span>Aprendiendo / escalando</span></div></section>',
     '<section class="bw-grid"><article class="bw-panel"><span class="bw-kicker">RELACIÓN</span><h2>Convenio</h2><div class="bw-facts"><span><b>Estado</b>'+safe(state.client.agreement_status)+'</span><span><b>Etapa</b>'+safe(stageNames[state.client.relationship_state]||state.client.relationship_state)+'</span><span><b>Ubicación</b>'+safe([state.client.city,state.client.country].filter(Boolean).join(', ')||'—')+'</span></div></article><article class="bw-panel span-2"><span class="bw-kicker">LECTURA DE ESCALA</span><h2>Productos de este cliente</h2><p>Cada producto conserva su precio de adquisición, nivel de responsabilidad y distribución propia. Así LINK puede crecer sin imponer una economía idéntica a todos.</p></article></section>',
-    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">PRODUCTOS</span><h2>'+safe(state.client.name)+'</h2></div><button id="bw-add-product" class="bw-primary" type="button">+ Nuevo producto</button></div>',
+    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">PRODUCTOS</span><h2>'+safe(state.client.name)+'</h2></div>'+(state.canWrite?'<button id="bw-add-product" class="bw-primary" type="button">+ Nuevo producto</button>':'<span class="bw-open-mode">Modo abierto · cambios desde ChatGPT</span>')+'</div>',
     '<form id="bw-product-form" class="bw-form hidden"><h3>Nuevo producto</h3><div class="bw-form-grid"><label>Producto<input id="bwp-name" maxlength="180" required></label><label>Precio de adquisición<input id="bwp-acquisition" type="number" min="0" step="1" placeholder="Precio entregado por convenio"></label><label>Precio público de referencia<input id="bwp-public" type="number" min="0" step="1" placeholder="Opcional"></label><label>Perfil de responsabilidad<select id="bwp-profile"><option value="">Por definir</option>'+state.profiles.map(p=>'<option value="'+safe(p.id)+'" data-min="'+safe(p.min_percent)+'" data-max="'+safe(p.max_percent)+'">'+safe(p.label)+' · '+safe(p.min_percent)+'%'+(Number(p.max_percent)!==Number(p.min_percent)?'–'+safe(p.max_percent)+'%':'')+'</option>').join('')+'</select></label><label>% responsabilidad LINK<input id="bwp-responsibility" type="number" min="0" max="100" step="1" placeholder="Según perfil"></label><label>% beneficio cliente dentro del 100%<input id="bwp-client-share" type="number" min="0" max="100" step="1" placeholder="Ej. 60"></label><label>% mínimo LINK dentro del 100%<input id="bwp-min-link" type="number" min="0" max="100" step="1" placeholder="Ej. 30"></label><label>Etapa<select id="bwp-stage"><option value="detected">Detectar</option><option value="conversation">Conversar</option><option value="agreed">Acordar</option><option value="active">Activar</option></select></label></div><label>Responsabilidades de LINK<textarea id="bwp-notes" rows="2" maxlength="1000" placeholder="Qué asumimos realmente en este producto"></textarea></label><div id="bwp-preview" class="bw-form-preview">El reparto cliente/LINK se calcula sobre un 100% interno. Aún no define por sí solo el precio final.</div><div class="bw-form-actions"><button class="bw-primary" type="submit">Guardar producto</button><button id="bwp-cancel" type="button">Cancelar</button></div></form>',
     '<div class="bw-product-grid">'+(products.length?products.map(renderProduct).join(''):'<div class="bw-empty"><strong>Sin productos registrados.</strong><span>Agrega únicamente productos cuyo convenio/precio de adquisición conozcamos o estemos negociando.</span></div>')+'</div></section>'
   ].join('');
@@ -136,12 +146,14 @@ function openClient(id){
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
-  $('#bw-add-product').addEventListener('click',()=>$('#bw-product-form').classList.remove('hidden'));
-  $('#bwp-cancel').addEventListener('click',()=>$('#bw-product-form').classList.add('hidden'));
-  $('#bwp-profile').addEventListener('change',syncResponsibilityRange);
-  $('#bwp-client-share').addEventListener('input',previewSplit);
-  $('#bwp-min-link').addEventListener('input',previewSplit);
-  $('#bw-product-form').addEventListener('submit',createProductRecord);
+  if(state.canWrite){
+    $('#bw-add-product')?.addEventListener('click',()=>$('#bw-product-form').classList.remove('hidden'));
+    $('#bwp-cancel')?.addEventListener('click',()=>$('#bw-product-form').classList.add('hidden'));
+    $('#bwp-profile')?.addEventListener('change',syncResponsibilityRange);
+    $('#bwp-client-share')?.addEventListener('input',previewSplit);
+    $('#bwp-min-link')?.addEventListener('input',previewSplit);
+    $('#bw-product-form')?.addEventListener('submit',createProductRecord);
+  }
 }
 function syncResponsibilityRange(){
   const sel=$('#bwp-profile'),opt=sel.selectedOptions[0],input=$('#bwp-responsibility');
@@ -160,7 +172,7 @@ function previewSplit(){
 async function createClientRecord(event){
   event.preventDefault();if(state.busy)return;state.busy=true;notice('Creando ficha…');
   try{
-    const session=await member(),name=$('#bwc-name').value.trim();
+    const session=await writeSession(),name=$('#bwc-name').value.trim();
     const slug=(name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cliente')+'-'+Date.now().toString().slice(-6);
     const {error}=await db.from('link_world_clients').insert({
       business_id:state.business.id,slug,name,role:$('#bwc-role').value,
@@ -175,7 +187,7 @@ async function createClientRecord(event){
 async function createProductRecord(event){
   event.preventDefault();if(state.busy)return;state.busy=true;notice('Guardando producto…');
   try{
-    const session=await member(),clientShare=$('#bwp-client-share').value===''?null:Number($('#bwp-client-share').value);
+    const session=await writeSession(),clientShare=$('#bwp-client-share').value===''?null:Number($('#bwp-client-share').value);
     const linkShare=clientShare==null?null:100-clientShare;
     const minimum=$('#bwp-min-link').value===''?null:Number($('#bwp-min-link').value);
     const blocked=linkShare!=null&&minimum!=null&&linkShare<minimum;
