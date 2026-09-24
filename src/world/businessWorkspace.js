@@ -121,7 +121,7 @@ function renderBusiness(){
   const root=$('#bw-content');
   root.innerHTML=[
     '<section class="bw-business-head">',
-      '<div><button class="bw-back" id="bw-close-top" type="button">← Panel de clientes</button>',
+      '<div><button class="bw-back" id="bw-close-top" type="button">← Negocios LINK WORLD</button>',
       '<span class="bw-kicker">NEGOCIO / '+safe(state.business.slug||'')+'</span>',
       '<h1>'+safe(state.business.name)+'</h1>',
       '<p>'+safe(f.tagline||state.business.summary||'')+'</p>',
@@ -143,7 +143,7 @@ function renderBusiness(){
       }).join(''):'<div class="bw-empty"><strong>Aún no hay clientes.</strong><span>El primer convenio real que registremos aparecerá aquí; no se crearán fichas ficticias.</span></div>')+'</div>',
     '</section>'
   ].join('');
-  $('#bw-close-top').addEventListener('click',renderClientHub);
+  $('#bw-close-top').addEventListener('click',close);
   $('#bw-refresh').addEventListener('click',refresh);
   $('#bw-open-director').addEventListener('click',()=>{
     const prompt='Analiza '+state.business.name+' usando solo los datos autorizados de LINK WORLD. Distingue hechos, decisiones pendientes y próximos pasos.';
@@ -184,7 +184,7 @@ function openClient(id){
     '<form id="bw-product-form" class="bw-form hidden"><h3>Nuevo producto</h3><div class="bw-form-grid"><label>Producto<input id="bwp-name" maxlength="180" required></label><label>Precio de adquisición<input id="bwp-acquisition" type="number" min="0" step="1" placeholder="Precio entregado por convenio"></label><label>Precio público de referencia<input id="bwp-public" type="number" min="0" step="1" placeholder="Opcional"></label><label>Perfil de responsabilidad<select id="bwp-profile"><option value="">Por definir</option>'+state.profiles.map(p=>'<option value="'+safe(p.id)+'" data-min="'+safe(p.min_percent)+'" data-max="'+safe(p.max_percent)+'">'+safe(p.label)+' · '+safe(p.min_percent)+'%'+(Number(p.max_percent)!==Number(p.min_percent)?'–'+safe(p.max_percent)+'%':'')+'</option>').join('')+'</select></label><label>% responsabilidad LINK<input id="bwp-responsibility" type="number" min="0" max="100" step="1" placeholder="Según perfil"></label><label>% beneficio cliente dentro del 100%<input id="bwp-client-share" type="number" min="0" max="100" step="1" placeholder="Ej. 60"></label><label>% mínimo LINK dentro del 100%<input id="bwp-min-link" type="number" min="0" max="100" step="1" placeholder="Ej. 30"></label><label>Etapa<select id="bwp-stage"><option value="detected">Detectar</option><option value="conversation">Conversar</option><option value="agreed">Acordar</option><option value="active">Activar</option></select></label></div><label>Responsabilidades de LINK<textarea id="bwp-notes" rows="2" maxlength="1000" placeholder="Qué asumimos realmente en este producto"></textarea></label><div id="bwp-preview" class="bw-form-preview">El reparto cliente/LINK se calcula sobre un 100% interno. Aún no define por sí solo el precio final.</div><div class="bw-form-actions"><button class="bw-primary" type="submit">Guardar producto</button><button id="bwp-cancel" type="button">Cancelar</button></div></form>',
     '<div class="bw-product-grid">'+(products.length?products.map(renderProduct).join(''):'<div class="bw-empty"><strong>Sin productos registrados.</strong><span>Agrega únicamente productos cuyo convenio/precio de adquisición conozcamos o estemos negociando.</span></div>')+'</div></section>'
   ].join('');
-  $('#bw-back-business').addEventListener('click',renderClientHub);
+  $('#bw-back-business').addEventListener('click',renderBusiness);
   $('#bw-client-director').addEventListener('click',()=>{
     const prompt='Revisa el cliente '+state.client.name+' dentro de '+state.business.name+'. Analiza sus productos, responsabilidades, bloqueos y siguiente etapa sin inventar datos.';
     close();
@@ -258,7 +258,7 @@ async function refresh(){
   try{
     await loadBusiness(businessId);
     if(clientId&&state.clients.some(c=>c.id===clientId)){state.client=state.clients.find(c=>c.id===clientId);openClient(clientId);}
-    else renderClientHub();
+    else renderBusiness();
     notice('');
   }catch(e){notice('No se pudo sincronizar: '+(e.message||e),true);}
 }
@@ -269,7 +269,7 @@ async function openBusiness(id){
   state.open=true;state.client=null;$('#business-workspace').classList.remove('hidden');
   $('#bw-content').innerHTML='<div class="bw-loading">Abriendo ficha real…</div>';
   notice('');
-  try{await loadBusiness(id);renderClientHub();}
+  try{await loadBusiness(id);renderBusiness();}
   catch(e){notice(e.message||'No se pudo abrir la ficha.',true);$('#bw-content').innerHTML='<div class="bw-loading">No pudimos leer esta ficha.</div>';}
 }
 function mount(){
