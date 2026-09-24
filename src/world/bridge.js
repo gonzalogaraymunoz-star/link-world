@@ -37,6 +37,12 @@ async function refresh(){
     [state.businesses,state.requests,state.relations,state.activity]=results.map(r=>r.data||[]);
     state.selected=new Set([...state.selected].filter(id=>state.businesses.some(b=>b.id===id)));
     renderData();
+    document.dispatchEvent(new CustomEvent('linkworld:workspace-data',{detail:{
+      authenticated:true,
+      businesses:state.businesses.map(({id,name,sector,city,country,summary,verification_status})=>({id,name,sector,city,country,summary,verification_status})),
+      requests:state.requests.map(({id,title,status})=>({id,title,status})),
+      relations:state.relations.map(({id,state})=>({id,state}))
+    }}));
     status('Sincronizado. '+state.businesses.length+' negocios LINK · '+state.requests.length+' solicitudes compartidas. Google Places no se copia.');
   }catch(e){status('No se pudo sincronizar: '+(e.message||'Revisa tu sesión.'),true);}
   finally{state.loading=false;}
@@ -188,7 +194,7 @@ function render(){
   $('#bridge-close').addEventListener('click',()=>toggle(false));
   $('#bridge-login-form').addEventListener('submit',login);
   $('#bridge-refresh').addEventListener('click',refresh);
-  $('#bridge-logout').addEventListener('click',async()=>{await db.auth.signOut();state.session=null;state.authorized=false;state.businesses=[];state.requests=[];state.selected.clear();showAccess();status('Desconectado.');});
+  $('#bridge-logout').addEventListener('click',async()=>{await db.auth.signOut();state.session=null;state.authorized=false;state.businesses=[];state.requests=[];state.selected.clear();showAccess();document.dispatchEvent(new CustomEvent('linkworld:workspace-data',{detail:{authenticated:false}}));status('Desconectado.');});
   $('#bridge-business-form').addEventListener('submit',saveBusiness);
   $('#bridge-request-form').addEventListener('submit',saveRequest);
   $('#bridge-search').addEventListener('input',renderData);
