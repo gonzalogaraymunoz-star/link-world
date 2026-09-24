@@ -46,32 +46,84 @@ function renderStrategies(){
   document.querySelectorAll('[data-strategy]').forEach(b=>b.addEventListener('click',()=>{strategy=b.dataset.strategy;selectedCell=null;selectedPlace=null;selectedRelation=null;renderStrategies();renderContext();toggleContext(true);}));
 }
 function renderContext(){
-  const cell=cellById(selectedCell), lens=STRATEGIES.find(s=>s.id===strategy), p=demoProjection(state);
+  const cell=cellById(selectedCell),lens=STRATEGIES.find(s=>s.id===strategy),p=demoProjection(state);
+  const relation=selectedRelation?{
+    from:cellById(selectedRelation.fromId),to:cellById(selectedRelation.toId),
+    state:selectedRelation.index===0?p.relation:'conceptual'
+  }:null;
   let title='Tu siguiente decisión.',html='';
-  if(selectedPlace){
+
+  if(relation?.from&&relation?.to){
+    title=relation.from.name+' ↔ '+relation.to.name;
+    html='<span class="source-tag demo">RELACIÓN · DEMO / NO ES CONVENIO</span>'+
+      '<div class="relation-context"><div class="relation-party"><span class="tiny-cell" style="--accent:'+relation.from.color+'">'+relation.from.monogram+'</span><strong>'+safe(relation.from.name)+'</strong></div>'+
+      '<span class="relation-link">↔</span><div class="relation-party"><span class="tiny-cell" style="--accent:'+relation.to.color+'">'+relation.to.monogram+'</span><strong>'+safe(relation.to.name)+'</strong></div></div>'+
+      '<div class="context-section"><span class="eyebrow">ESTADO DE LA RELACIÓN</span><div class="mini-row"><span>Estado</span><strong>'+safe(relation.state)+' · DEMO</strong></div><div class="mini-row"><span>Fuente</span><strong>Modelo conceptual LINK</strong></div></div>'+
+      '<p>Esta conexión sirve para explorar una colaboración. Antes de convertirla en relación real hay que comprobar capacidad, acuerdo, responsables y evidencia.</p>'+
+      '<div class="panel-actions"><button type="button" class="context-cta" data-context-action="director-relation">✦ Analizar con Director</button><button type="button" class="context-secondary" data-context-action="bridge-relation">↔ Crear solicitud de trabajo</button></div>'+
+      '<div class="context-section"><span class="eyebrow">ABRIR CÉLULAS</span><div class="context-cell-list"><button type="button" data-cell="'+relation.from.id+'"><span class="tiny-cell" style="--accent:'+relation.from.color+'">'+relation.from.monogram+'</span>'+safe(relation.from.name)+' ↗</button><button type="button" data-cell="'+relation.to.id+'"><span class="tiny-cell" style="--accent:'+relation.to.color+'">'+relation.to.monogram+'</span>'+safe(relation.to.name)+' ↗</button></div></div>';
+
+  }else if(selectedPlace){
     title='Negocio encontrado.';
     html='<span class="source-tag google">GOOGLE PLACES / FUENTE EXTERNA</span><h3>'+safe(selectedPlace.name)+'</h3><p>'+safe(selectedPlace.address)+'</p>'+
       '<div class="source-disclaimer">Un lugar encontrado no es una célula LINK, un cliente, un aliado ni demanda verificada.</div>'+
+      '<div class="panel-actions">'+
       (selectedPlace.uri?'<a class="context-cta" href="'+safe(selectedPlace.uri)+'" target="_blank" rel="noopener noreferrer">Abrir Google Maps ↗</a>':'')+
+      '<button type="button" class="context-secondary" data-context-action="director-place">✦ Analizar hallazgo</button></div>'+
       '<button type="button" class="quiet-btn" data-context-action="clear">Volver a LINK</button>';
+
   }else if(cell){
     title=cell.name;
-    html='<span class="source-tag demo">CÉLULA DE REFERENCIA · DEMO</span><div class="cell-portrait" style="--accent:'+cell.color+'">'+cell.monogram+'</div><h3>'+cell.name+'</h3><p>'+cell.purpose+'</p>'+
-      '<div class="context-section"><span class="eyebrow">GENES / CAPACIDADES DE REFERENCIA</span><div class="gene-list">'+cell.genes.map(g=>'<span class="gene">'+g+'</span>').join('')+'</div></div>'+
-      '<div class="context-section"><span class="eyebrow">ORGÁNULOS · NO VERIFICADOS</span>'+cell.organelles.map(o=>'<div class="mini-row">↗ '+o+'</div>').join('')+'</div>'+
+    html='<span class="source-tag demo">CÉLULA DE REFERENCIA · DEMO</span><div class="cell-portrait" style="--accent:'+cell.color+'">'+cell.monogram+'</div><h3>'+safe(cell.name)+'</h3><p>'+safe(cell.purpose)+'</p>'+
+      '<div class="context-section"><span class="eyebrow">GENES / CAPACIDADES DE REFERENCIA</span><div class="gene-list">'+cell.genes.map(g=>'<span class="gene">'+safe(g)+'</span>').join('')+'</div></div>'+
+      '<div class="context-section"><span class="eyebrow">ORGÁNULOS · NO VERIFICADOS</span>'+cell.organelles.map(o=>'<div class="mini-row">↗ '+safe(o)+'</div>').join('')+'</div>'+
       '<div class="context-section"><span class="eyebrow">MISIÓN</span><p>'+safe(p.mission)+' · '+safe(p.next)+'</p></div>'+
-      '<button type="button" class="context-cta" data-context-action="mission">Ver misión DEMO ↗</button><button type="button" class="quiet-btn" data-context-action="clear">Cerrar ficha</button>';
+      '<div class="panel-actions"><button type="button" class="context-cta" data-context-action="director-cell">✦ Trabajar con Director</button><button type="button" class="context-secondary" data-context-action="bridge-cell">↔ Registrar solicitud</button></div>'+
+      '<button type="button" class="quiet-btn" data-context-action="mission">Ver misión DEMO</button>';
+
   }else{
-    html='<span class="source-tag demo">DEMO GUIADA · SIN DATOS COMERCIALES</span><p>Google permite observar lugares. LINK coordina decisiones, capacidades, cooperación y memoria propia.</p>'+
-      '<div class="focus-card"><span class="eyebrow">LENTE ESTRATÉGICA</span><h3>'+lens.name+'</h3><p>'+lens.detail+'</p></div>'+
+    html='<span class="source-tag demo">LENTE ESTRATÉGICA · ACCIÓN</span><p>Cada estrategia cambia la pregunta que LINK hace sobre el mismo territorio y organismo.</p>'+
+      '<div class="focus-card"><span class="eyebrow">ESTRATEGIA ACTIVA</span><h3>'+safe(lens.name)+'</h3><p>'+safe(lens.detail)+'</p></div>'+
       '<div class="context-section"><span class="eyebrow">ESTADO DE LA MISIÓN</span><div class="mini-row"><span>Oportunidad</span><strong>'+safe(p.opportunity)+'</strong></div><div class="mini-row"><span>Sinapsis</span><strong>'+safe(p.relation)+'</strong></div><div class="mini-row"><span>Evidencia</span><strong>'+safe(p.evidence)+'</strong></div></div>'+
-      '<div class="context-section"><span class="eyebrow">CÉLULAS DE REFERENCIA</span><div class="context-cell-list">'+DEMO_CELLS.map(c=>'<button type="button" data-cell="'+c.id+'"><span class="tiny-cell" style="--accent:'+c.color+'">'+c.monogram+'</span>'+c.name+' ↗</button>').join('')+'</div></div>';
+      '<div class="panel-actions"><button type="button" class="context-cta" data-context-action="director-strategy">✦ Aplicar esta estrategia</button><button type="button" class="context-secondary" data-context-action="world-search">⌖ Investigar territorio</button></div>'+
+      '<div class="context-section"><span class="eyebrow">CÉLULAS DE REFERENCIA</span><div class="context-cell-list">'+DEMO_CELLS.map(c=>'<button type="button" data-cell="'+c.id+'"><span class="tiny-cell" style="--accent:'+c.color+'">'+c.monogram+'</span>'+safe(c.name)+' ↗</button>').join('')+'</div></div>';
   }
+
   $('#context-heading').textContent=title;$('#context-content').innerHTML=html;
   $('#context-content').querySelectorAll('[data-cell]').forEach(b=>b.addEventListener('click',()=>selectCell(b.dataset.cell)));
   $('#context-content').querySelectorAll('[data-context-action]').forEach(b=>b.addEventListener('click',()=>{
-    if(b.dataset.contextAction==='clear'){selectedCell=null;selectedPlace=null;renderContext();}
-    if(b.dataset.contextAction==='mission'){selectedCell=null;setMode('world');renderContext();$('#mission-actions button')?.focus();}
+    const action=b.dataset.contextAction;
+    if(action==='clear'){selectedCell=null;selectedPlace=null;selectedRelation=null;renderContext();return;}
+    if(action==='mission'){selectedCell=null;selectedRelation=null;setMode('world');toggleContext(false);$('#mission-actions button')?.focus();return;}
+    if(action==='director-cell'&&cell){
+      openDirector('Trabajemos la célula DEMO '+cell.name+'. Analiza sus capacidades de referencia ('+cell.genes.join(', ')+'), qué datos faltan verificar y qué proyecto concreto podríamos construir sin asumir que hay operaciones reales.');
+      return;
+    }
+    if(action==='bridge-cell'&&cell){
+      openBridgeRequest('Investigar '+cell.name,'Revisar qué datos reales existen para '+cell.name+', qué falta verificar y qué acción debería convertirse en una solicitud de trabajo. La célula mostrada en la interfaz es DEMO hasta que existan fichas reales.');
+      return;
+    }
+    if(action==='director-relation'&&relation){
+      openDirector('Analiza una posible colaboración entre '+relation.from.name+' y '+relation.to.name+'. La relación actual es '+relation.state+' dentro de una DEMO. Explica capacidades complementarias, datos que faltan verificar, riesgos y una primera prueba de bajo costo.');
+      return;
+    }
+    if(action==='bridge-relation'&&relation){
+      openBridgeRequest('Explorar '+relation.from.name+' + '+relation.to.name,'Preparar una investigación y propuesta de colaboración entre '+relation.from.name+' y '+relation.to.name+'. No tratar la relación DEMO como convenio real; primero verificar capacidades, responsables, acuerdo y evidencia.');
+      return;
+    }
+    if(action==='director-place'&&selectedPlace){
+      openDirector('Analiza este hallazgo seleccionado manualmente en Google Maps: '+selectedPlace.name+(selectedPlace.address?' · '+selectedPlace.address:'')+'. No asumas que es cliente ni aliado. Indica qué convendría verificar y qué oportunidad podría investigarse con LINK.');
+      return;
+    }
+    if(action==='director-strategy'){
+      openDirector('Apliquemos la estrategia '+lens.name+' en LINK WORLD. '+lens.detail+' Usa las células DEMO solo como referencia, distingue lo comprobado de lo hipotético y propón una investigación concreta.');
+      return;
+    }
+    if(action==='world-search'){
+      setMode('world');toggleContext(false);
+      document.querySelector('#google-text-query')?.focus();
+      return;
+    }
   }));
 }
 function openDirector(prompt){
