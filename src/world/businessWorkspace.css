@@ -109,3 +109,5 @@
  .bw-product-grid{grid-template-columns:1fr;}
  .bw-product-values{grid-template-columns:1fr;}
 }
+
+.bw-open-mode{display:inline-flex;align-items:center;padding:8px 10px;border:1px solid #d5e2d1;background:#f1f6ee;color:#627b63;border-radius:999px;font-size:9px;font-weight:700;white-space:nowrap;}
