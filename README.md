@@ -78,5 +78,6 @@ No se requiere instalar Node en el equipo antiguo para abrir la web.
 - [Director IA](docs/LINK_DIRECTOR_MANUAL.md)
 - [Protocolo abierto de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
 - [Archivo central de intervenciones IA](docs/LINK_DIRECTOR_INTERVENTION_ARCHIVE.md)
+- [LINK Conversion Engine + Daily Intelligence](docs/LINK_CONVERSION_ENGINE.md)
 - [Google Maps / LINK Geo](.agents/skills/link-geo/SKILL.md)
 - [Manual histórico de interfaz](docs/INTERFAZ_ESTRATEGICA_V0.4.md)
