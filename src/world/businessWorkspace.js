@@ -17,7 +17,7 @@ const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -40,15 +40,26 @@ function notice(text,error=false){
 }
 async function loadBusiness(businessId){
   await detectWriteAccess();
-  const [b,c,p,r]=await Promise.all([
+  const statusRead=state.canWrite
+    ? db.from('ecosystem_operational_house_status_v')
+        .select('business_id,global_id,structure_status,transport_status,projection_status,overall_status,coverage_mode,baseline_verified_at,event_counts,processed_event_count,last_event_at,last_engine_run_at,interpretation_note')
+        .eq('business_id',businessId)
+        .maybeSingle()
+    : Promise.resolve({data:null,error:null});
+  const [b,c,p,r,s]=await Promise.all([
     db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
     db.from('link_world_clients').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_products').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
-    db.from('link_world_responsibility_profiles').select('*').order('sort_order',{ascending:true})
+    db.from('link_world_responsibility_profiles').select('*').order('sort_order',{ascending:true}),
+    statusRead
   ]);
   const problem=[b,c,p,r].find(x=>x.error);
   if(problem)throw problem.error;
-  state.business=b.data;state.clients=c.data||[];state.products=p.data||[];state.profiles=r.data||[];
+  state.business=b.data;
+  state.clients=c.data||[];
+  state.products=p.data||[];
+  state.profiles=r.data||[];
+  state.houseStatus=s?.error?null:(s?.data||null);
 }
 function facts(){
   return state.business?.owned_facts&&typeof state.business.owned_facts==='object'?state.business.owned_facts:{};
@@ -178,6 +189,7 @@ function renderOperationalHouseBusinessCell(){
   const house=f.house_model&&typeof f.house_model==='object'?f.house_model:{};
   const vocabulary=f.house_vocabulary&&typeof f.house_vocabulary==='object'?f.house_vocabulary:{};
   const bridge=f.bridge_contract&&typeof f.bridge_contract==='object'?f.bridge_contract:{};
+  const live=state.houseStatus&&typeof state.houseStatus==='object'?state.houseStatus:null;
   const flow=Array.isArray(f.flow)?f.flow:[];
   const capabilities=Array.isArray(f.capabilities)?f.capabilities:[];
   const partners=state.clients;
@@ -187,6 +199,9 @@ function renderOperationalHouseBusinessCell(){
   const sourceProject=f.canonical_source?.project_id||f.source_project_id||'—';
   const bridgeReady=integration.live_bridge_status==='connected'||bridge.live_status==='connected';
   const bridgeLabel=bridgeReady?'Bridge vivo conectado':'Bridge estructural registrado · eventos pendientes';
+  const overallLabel=live?.overall_status==='ready'?'Casa lista y observada':live?.overall_status==='attention'?'Casa requiere atención':live?.overall_status==='pending'?'Casa en preparación':bridgeLabel;
+  const coverageLabel=live?.coverage_mode==='baseline_plus_forward_events'?'Baseline verificado + eventos futuros':'Eventos futuros';
+  const observedEvents=live?.processed_event_count??0;
   const counterpartyTitle=vocabulary.counterparties||'Contrapartes conectadas';
   const productTitle=vocabulary.products||'Productos y servicios';
   const providerTitle=vocabulary.providers||'Proveedores en la fuente';
@@ -214,12 +229,13 @@ function renderOperationalHouseBusinessCell(){
       '<span class="bw-kicker">'+safe(houseLabel.toUpperCase())+' / '+safe(state.business.slug||'')+'</span>',
       '<h1>'+safe(state.business.name)+'</h1>',
       '<p>'+safe(f.tagline||state.business.summary||'Casa operativa conectada al ecosistema LINK.')+'</p>',
-      '<div class="bw-tags"><span>'+safe(houseLabel)+'</span><span>'+partners.length+' contrapartes</span><span class="status">'+safe(bridgeLabel)+'</span></div></div>',
+      '<div class="bw-tags"><span>'+safe(houseLabel)+'</span><span>'+partners.length+' contrapartes</span><span class="status">'+safe(overallLabel)+'</span></div></div>',
       '<div class="bw-head-actions"><button id="bw-operational-house-director" type="button">✦ Revisar con Director</button><button id="bw-refresh-operational-house" type="button">↻ Actualizar</button></div>',
     '</section>',
     '<section class="bw-metrics"><div><strong>'+partners.length+'</strong><span>Contrapartes observadas</span></div><div><strong>'+safe(network.active_catalog_products??'—')+'</strong><span>'+safe(productTitle)+'</span></div><div><strong>'+safe(network.supplier_records??'—')+'</strong><span>'+safe(providerTitle)+'</span></div><div><strong>'+safe(network.services??'—')+'</strong><span>'+safe(transactionTitle)+'</span></div></section>',
     '<section class="bw-grid">',
       '<article class="bw-panel span-2"><span class="bw-kicker">ARQUITECTURA / '+safe(f.cell_archetype||'operational_house_v1')+'</span><h2>Una casa · múltiples aparatos de venta</h2><p>Los canales comerciales pueden captar y convertir oportunidades, mientras la verdad transaccional permanece en '+safe(sourceName)+'. LINK WORLD conserva identidad, relaciones, capacidades, estado y eventos mínimos; no crea una segunda operación.</p><div class="bw-facts"><span><b>Fuente operacional</b>'+safe(sourceProject)+'</span><span><b>Política de copia</b>Proyección solamente · sin transacciones sensibles</span><span><b>Bridge</b>'+safe(bridgeLabel)+'</span></div></article>',
+      live?'<article class="bw-panel span-2"><span class="bw-kicker">SALUD / PROJECTION ENGINE</span><h2>'+safe(overallLabel)+'</h2><p>La salud separa estructura, transporte y proyección. Un binding registrado no necesita copiar su sistema fuente para considerarse correcto.</p><div class="bw-facts"><span><b>Estructura</b>'+safe(live.structure_status)+'</span><span><b>Transporte</b>'+safe(live.transport_status)+'</span><span><b>Proyección</b>'+safe(live.projection_status)+'</span><span><b>Cobertura</b>'+safe(coverageLabel)+'</span><span><b>Eventos observados</b>'+safe(observedEvents)+'</span></div></article>':'',
       '<article class="bw-panel"><span class="bw-kicker">SUPERFICIES</span><h2>Ventas ↔ Operación</h2><p>Las superficies externas siguen siendo responsables de ejecutar su dominio. LINK WORLD las observa y conecta mediante bindings versionados.</p><div class="bw-form-actions"><button id="bw-open-sales" type="button">Abrir Ventas ↗</button><button id="bw-open-ops" type="button">Abrir Operación ↗</button></div></article>',
       '<article class="bw-panel"><span class="bw-kicker">FLUJO</span><h2>'+safe(flowTitle)+'</h2><div class="bw-cycle">'+flow.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
       '<article class="bw-panel span-2"><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta esta casa al ecosistema</h2><div class="bw-capabilities">'+capabilities.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
@@ -230,7 +246,8 @@ function renderOperationalHouseBusinessCell(){
   $('#bw-close-operational-house').addEventListener('click',close);
   $('#bw-refresh-operational-house').addEventListener('click',refresh);
   $('#bw-operational-house-director').addEventListener('click',()=>{
-    const prompt='Revisa '+state.business.name+' como '+houseLabel+' dentro de LINK WORLD. Lee su red de contrapartes, capacidades, fuentes operacionales, aparatos de venta y estado del bridge. Respeta la separación de verdad del arquetipo '+(f.cell_archetype||'operational_house_v1')+'; no copies datos sensibles ni inventes acuerdos económicos.';
+    const health=live?(' Estado observado: estructura '+live.structure_status+', transporte '+live.transport_status+', proyección '+live.projection_status+', overall '+live.overall_status+'. Los event_counts son posteriores a la activación y no equivalen al histórico total.'):'';
+    const prompt='Revisa '+state.business.name+' como '+houseLabel+' dentro de LINK WORLD. Lee su red de contrapartes, capacidades, fuentes operacionales, aparatos de venta y estado del bridge.'+health+' Respeta la separación de verdad del arquetipo '+(f.cell_archetype||'operational_house_v1')+'; no copies datos sensibles ni inventes acuerdos económicos.';
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
