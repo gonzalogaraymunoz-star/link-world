@@ -176,7 +176,15 @@ document.addEventListener('linkworld:director-state',event=>{
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
 $('#lw-landscape-mode').addEventListener('click',requestTerritoryLandscape);
 $('#lw-portrait-bypass').addEventListener('click',()=>{territoryPortraitBypass=true;syncTerritoryOrientation();});
-window.addEventListener('resize',syncTerritoryOrientation,{passive:true});
+function syncTerritoryViewport(){
+  const h=window.visualViewport?.height||window.innerHeight;
+  document.documentElement.style.setProperty('--lw-visual-height',Math.round(h)+'px');
+  syncTerritoryOrientation();
+}
+window.addEventListener('resize',syncTerritoryViewport,{passive:true});
+window.visualViewport?.addEventListener?.('resize',syncTerritoryViewport,{passive:true});
+window.visualViewport?.addEventListener?.('scroll',syncTerritoryViewport,{passive:true});
+syncTerritoryViewport();
 window.addEventListener('orientationchange',()=>setTimeout(syncTerritoryOrientation,60),{passive:true});
 screen.orientation?.addEventListener?.('change',()=>setTimeout(syncTerritoryOrientation,60));
 document.addEventListener('fullscreenchange',()=>setTimeout(syncTerritoryOrientation,60));
