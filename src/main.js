@@ -40,7 +40,7 @@ $('#app').innerHTML=[
 async function loadOpenWorld(){
   $('#lw-data-state').textContent='Sincronizando LINK WORLD…';
   const {data,error}=await publicDb.from('link_world_businesses')
-    .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace')
+    .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace,owned_facts')
     .eq('public_workspace',true).order('name',{ascending:true});
   if(error){
     $('#lw-data-state').textContent='No se pudo abrir LINK WORLD: '+error.message;
@@ -84,6 +84,9 @@ function renderBusinessList(){
   for(const b of state.businesses){
     const card=make('button','lw-real-business');
     card.type='button';
+    const visual=b.owned_facts?.visual_identity||{};
+    const color=visual.color_visible===true&&/^#[0-9a-f]{6}$/i.test(visual.assigned_color||'')?visual.assigned_color:null;
+    if(color){card.style.borderLeft='4px solid '+color;card.style.paddingLeft='18px';}
     card.append(make('span','lw-business-icon',b.name?.trim()?.charAt(0)?.toUpperCase()||'L'),
       make('strong','lw-business-name',b.name||'Negocio'),
       make('small','lw-business-sector',[b.sector,b.city,b.country].filter(Boolean).join(' · ')),
