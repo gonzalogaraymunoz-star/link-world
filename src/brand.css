@@ -1,0 +1,186 @@
+/* LINK WORLD · monochrome brand layer
+   Pure black/white system inspired by the new LINK WORLD mark.
+   Loaded last so it only changes presentation, not application logic. */
+
+:root{
+  --lw-bg:#f5f5f3;
+  --lw-paper:#ffffff;
+  --lw-text:#111111;
+  --lw-muted:#727272;
+  --lw-border:#e4e4e1;
+  --lw-soft:#f1f1ef;
+  --lw-ink:#111111;
+  --lw-shadow:0 18px 55px rgba(0,0,0,.07);
+}
+body{background:var(--lw-bg);color:var(--lw-text);}
+button,a,input,textarea,select{transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #111;outline-offset:3px;}
+
+.lw-app{background:var(--lw-bg);color:var(--lw-text);}
+.lw-app-header{
+  min-height:68px;height:68px;background:rgba(255,255,255,.94);
+  border-bottom:1px solid var(--lw-border);backdrop-filter:blur(16px);
+}
+.lw-app-brand{gap:12px;color:#111;}
+.lw-brand-symbol{
+  width:40px;height:40px;padding:0;border:0;border-radius:0;background:transparent;
+  color:#111;display:grid;place-items:center;
+}
+.lw-brand-symbol img{display:block;width:100%;height:100%;object-fit:contain;}
+.lw-app-brand strong{color:#111;letter-spacing:.14em;font-size:12px;font-weight:700;}
+.lw-app-brand small{color:#8a8a86;font-size:9px;letter-spacing:.02em;}
+.lw-app-nav{gap:4px;}
+.lw-app-nav button{
+  color:#686864;background:transparent;border-color:transparent;border-radius:999px;
+  padding:10px 15px;font-size:11px;font-weight:600;
+}
+.lw-app-nav button:hover{color:#111;background:#f1f1ef;border-color:#ececea;}
+.lw-app-nav button.active{color:#fff;background:#111;border-color:#111;}
+.lw-app-state{color:#666;background:#fff;border:1px solid #dededb;border-radius:999px;padding:7px 10px;}
+
+.lw-home{max-width:1220px;padding-top:clamp(34px,5vw,76px);}
+.lw-home-hero{align-items:flex-end;}
+.lw-kicker,.bw-kicker,.lw-eyebrow{color:#777;letter-spacing:.19em;font-weight:700;}
+.lw-home h1,.lw-territory h1{
+  color:#111;font-family:'Space Grotesk',system-ui,sans-serif;font-weight:500;
+  letter-spacing:-.055em;
+}
+.lw-home h1{font-size:clamp(36px,5vw,66px);max-width:720px;line-height:1.02;margin:13px 0 14px;}
+.lw-home-hero p,.lw-territory-top p{color:#777;line-height:1.7;}
+.lw-btn-primary,.lw-btn-secondary{
+  border-radius:999px;padding:12px 17px;font-size:11px;font-weight:700;
+}
+.lw-btn-primary,.bw-primary,.bridge-primary,.lw-chat .lw-primary{background:#111!important;border-color:#111!important;color:#fff!important;}
+.lw-btn-primary:hover,.bw-primary:hover,.bridge-primary:hover,.lw-chat .lw-primary:hover{background:#2b2b2b!important;border-color:#2b2b2b!important;}
+.lw-btn-secondary{background:#fff;color:#111;border-color:#d8d8d5;}
+.lw-btn-secondary:hover{background:#f4f4f2;border-color:#c9c9c5;}
+
+.lw-overview{gap:9px;margin-top:42px;}
+.lw-overview>div{
+  background:#fff;border:1px solid var(--lw-border);border-radius:18px;padding:20px 22px;
+  box-shadow:none;
+}
+.lw-overview strong{color:#111;font-weight:500;}
+.lw-overview span{color:#858580;letter-spacing:.02em;}
+
+.lw-owned-section{
+  background:#fff;border:1px solid var(--lw-border);border-radius:22px;
+  padding:clamp(18px,2.5vw,30px);box-shadow:0 1px 0 rgba(0,0,0,.02);
+}
+.lw-section-head h2{color:#111;font-weight:500;}
+.lw-data-state{color:#7b7b76;}
+.lw-business-grid{gap:9px;}
+.lw-real-business{
+  background:#fafaf8;border-color:#e5e5e2;border-radius:16px;color:#111;
+  padding:16px;min-height:140px;
+}
+.lw-real-business:hover{background:#111;color:#fff;border-color:#111;transform:translateY(-1px);}
+.lw-business-icon{
+  width:34px;height:34px;border-radius:50%;background:transparent;border:1px solid currentColor;
+  color:inherit;font-size:12px;font-weight:700;
+}
+.lw-business-sector,.lw-business-status{color:#898984;}
+.lw-real-business:hover .lw-business-sector,.lw-real-business:hover .lw-business-status{color:#c7c7c2;}
+
+.lw-next-actions{gap:9px;}
+.lw-next-actions button{
+  min-height:128px;background:#fff;color:#111;border:1px solid var(--lw-border);
+  border-radius:18px;padding:18px;
+}
+.lw-next-actions button:hover{background:#f4f4f1;border-color:#cfcfca;transform:translateY(-1px);}
+.lw-next-actions button>span{color:#8c8c87;}
+.lw-next-actions small,.lw-boundary{color:#858580;}
+
+.lw-territory{background:#fff;}
+.lw-territory-top,.lw-map-foot{background:#fff;border-color:var(--lw-border);}
+.lw-map-locations button{
+  background:#fff;color:#111;border-color:#dededb;border-radius:999px;
+}
+.lw-map-locations button:hover{background:#111;color:#fff;border-color:#111;}
+.lw-map-workspace{background:#ededeb;}
+.lw-map-workspace .google-search-panel,.lw-place-card,.lw-map-workspace .google-setup{
+  background:rgba(255,255,255,.95)!important;color:#111!important;border-color:#dededb!important;
+  box-shadow:var(--lw-shadow)!important;
+}
+.lw-map-workspace .google-category,.lw-map-workspace .google-result{
+  background:#f7f7f5!important;color:#111!important;border-color:#e2e2df!important;
+}
+.lw-map-workspace .google-category.active,.lw-map-workspace .google-category:hover,
+.lw-map-workspace .google-text-fields button,.lw-map-workspace .google-search-btn,
+.lw-map-workspace .google-setup button{background:#111!important;color:#fff!important;border-color:#111!important;}
+.lw-map-workspace .google-text-fields input,.lw-map-workspace .google-setup input{
+  background:#fff!important;color:#111!important;border-color:#d8d8d4!important;
+}
+.lw-map-workspace .google-feedback,.lw-map-workspace .google-powered,
+.lw-map-workspace .google-text-form label,.lw-place-card small,.lw-map-foot{color:#777!important;}
+
+/* Business master sheets */
+.business-workspace{background:#f5f5f3!important;color:#111!important;}
+.bw-business-head,.bw-client-head{border-color:#dededb!important;}
+.bw-business-head h1,.bw-client-head h1,.bw-panel h2,.bw-section-head h2,.bw-product h3{color:#111!important;font-weight:500!important;}
+.bw-business-head p,.bw-client-head p,.bw-panel p,.bw-section-head p,.bw-soft{color:#777!important;}
+.bw-back{color:#111!important;text-decoration:none!important;}
+.bw-tags span,.bw-open-mode,.bw-economic,.bw-cycle span{
+  background:#f0f0ee!important;border-color:#dfdfdc!important;color:#555!important;
+}
+.bw-metrics>div,.bw-panel,.bw-clients-section,.bw-products-section,.bw-client-card,.bw-product,
+.bw-capabilities>div,.bw-form,.bw-form-preview,.bw-product-values>div,.bw-responsibility,.bw-product-logic{
+  background:#fff!important;border-color:#e2e2df!important;color:#111!important;
+}
+.bw-client-card:hover{background:#f1f1ef!important;border-color:#c9c9c5!important;}
+.bw-client-icon{background:transparent!important;color:#111!important;border:1px solid #111;border-radius:50%!important;}
+.bw-metrics strong,.bw-product-values strong,.bw-responsibility>b,.bw-facts b,.bw-split strong{color:#111!important;}
+.bw-form input,.bw-form textarea,.bw-form select{background:#fff!important;color:#111!important;border-color:#d7d7d3!important;}
+.bw-head-actions button,.bw-client-head>button,.bw-form-actions button:not(.bw-primary){
+  background:#fff!important;color:#111!important;border-color:#d8d8d4!important;border-radius:999px!important;
+}
+
+/* Director IA */
+.lw-chat{
+  --lw-forest:#111;--lw-ink:#111;--lw-muted:#777;--lw-paper:#fff;--lw-soft:#f5f5f3;--lw-border:#dfdfdc;
+  border-radius:22px!important;border-color:#dfdfdc!important;box-shadow:var(--lw-shadow)!important;
+}
+.lw-top,.lw-compose,.lw-transcript{background:#fff!important;}
+.lw-symbol,.lw-welcome-icon,.lw-avatar{
+  background:#fff!important;color:#111!important;border:1px solid #111!important;border-radius:50%!important;
+}
+.lw-status-line,.lw-settings{background:#f6f6f4!important;border-color:#e2e2df!important;}
+.lw-status-line button,.lw-top-actions button,.lw-starters button,.lw-log-head button,.lw-log-tools button{
+  background:#fff!important;color:#111!important;border-color:#dededb!important;
+}
+.lw-starters button:hover{background:#f1f1ef!important;border-color:#c9c9c5!important;}
+.lw-welcome h3,.lw-identity h2{color:#111!important;font-weight:500!important;}
+.lw-welcome p,.lw-message-name,.lw-message-meta,.lw-hint{color:#777!important;}
+.lw-bubble{background:#f3f3f1!important;color:#111!important;}
+.lw-message.user .lw-bubble{background:#111!important;color:#fff!important;}
+.lw-message.user .lw-avatar{background:#111!important;color:#fff!important;}
+.lw-composer-row{background:#fff!important;border-color:#d8d8d4!important;box-shadow:none!important;}
+.lw-composer-row:focus-within{border-color:#111!important;}
+#lw-composer,.lw-settings input,.lw-log textarea{color:#111!important;background:#fff!important;border-color:#d8d8d4!important;}
+.lw-consent input,.lw-foot input{accent-color:#111!important;}
+.lw-consent select{background:#f5f5f3!important;color:#111!important;border-color:#dededb!important;}
+.lw-foot button{color:#111!important;}
+
+/* Private bridge */
+.bridge-panel{background:#fff!important;color:#111!important;border-color:#dfdfdc!important;box-shadow:var(--lw-shadow)!important;}
+.bridge-head,.bridge-tabs,.bridge-toolbar{border-color:#e3e3e0!important;}
+.bridge-head h2{color:#111!important;font-weight:500!important;}
+.bridge-head small,.bridge-muted,.bridge-business small,.bridge-request small,.bridge-request p{color:#777!important;}
+.bridge-status{background:#f5f5f3!important;color:#555!important;border-color:#e3e3e0!important;}
+.bridge-tabs button{color:#777!important;}
+.bridge-tabs button.active{background:#111!important;color:#fff!important;border-color:#111!important;}
+.bridge-business,.bridge-selection,.bridge-inspector{
+  background:#fafaf8!important;color:#111!important;border-color:#e1e1de!important;
+}
+.bridge-panel input:not([type=checkbox]),.bridge-panel textarea{background:#fff!important;color:#111!important;border-color:#d8d8d4!important;}
+.bridge-business input{accent-color:#111!important;}
+.bridge-inspect,.bridge-toolbar button,.bridge-inspector a{color:#111!important;}
+.bridge-selection button{background:#111!important;color:#fff!important;border-color:#111!important;}
+
+@media(max-width:760px){
+  .lw-app-header{height:108px;min-height:108px;}
+  .lw-brand-symbol{width:34px;height:34px;}
+  .lw-home{padding-top:28px;}
+  .lw-home h1{font-size:36px;}
+  .lw-overview{margin-top:24px;}
+}
