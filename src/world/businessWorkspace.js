@@ -111,9 +111,37 @@ function renderClientHub(){
   root.querySelectorAll('[data-client]').forEach(b=>b.addEventListener('click',()=>openClient(b.dataset.client)));
 }
 
-function renderBusiness(){
+function renderClientBusinessCell(){
   state.client=null;
-  const f=facts(),m=businessMetrics();
+  const f=facts(),contract=f.active_contract||{},product=f.sold_product||{};
+  const commitments=Array.isArray(product.commitments)?product.commitments:[];
+  const root=$('#bw-content');
+  const paymentLabel=contract.payment_status==='unknown_not_inferred'?'Por verificar':(contract.payment_status||'Por verificar');
+  const invoiceLabel=contract.invoice_status==='unknown_not_inferred'?'Por verificar':(contract.invoice_status||'Por verificar');
+  root.innerHTML=[
+    '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CONTRATO')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+safe(product.status==='active'?'Producto vendido activo':product.status||'Producto')+'</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
+    '<section class="bw-metrics"><div><strong>'+money(product.agreed_price_clp||contract.monthly_fee_clp,contract.currency||'CLP')+'</strong><span>Contrato mensual</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+safe(contract.locations_count||'—')+'</strong><span>Locales</span></div><div><strong>'+safe(product.status==='active'?'Activo':'—')+'</strong><span>Producto vendido</span></div></section>',
+    '<section class="bw-grid">',
+      '<article class="bw-panel span-2"><span class="bw-kicker">PRODUCTO VENDIDO</span><h2>'+safe(product.name||contract.stage||'Etapa 1 · Contenido / RRSS')+'</h2><p>Producto mensual vendido y vigente. La facturación corresponde al contrato completo; los gestos ejecutan y evidencian sus compromisos, pero no se cobran de forma independiente.</p><div class="bw-facts"><span><b>Precio acordado</b>'+money(product.agreed_price_clp||contract.monthly_fee_clp,contract.currency||'CLP')+' / mes</span><span><b>Inicio</b>'+safe((product.starts_at||'2026-09-01').slice(0,10))+'</span><span><b>Contrato</b>'+safe(product.contract_code||contract.code||'—')+'</span></div></article>',
+      '<article class="bw-panel"><span class="bw-kicker">ESTADO ECONÓMICO</span><h2>Seguimiento</h2><div class="bw-facts"><span><b>Facturación</b>'+safe(invoiceLabel)+'</span><span><b>Pago</b>'+safe(paymentLabel)+'</span><span><b>Modelo</b>Compromisos, no gestos</span></div></article>',
+      '<article class="bw-panel"><span class="bw-kicker">REGLA OPERATIVA</span><h2>Mantener activo</h2><p>Mientras el producto vendido permanezca activo, cada compromiso debe mantenerse en ejecución o cerrarse explícitamente con evidencia.</p></article>',
+    '</section>',
+    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS DEL PRODUCTO</span><h2>'+safe(product.name||'Etapa 1 · Contenido / RRSS')+'</h2><p>La composición económica explica el contrato; no convierte cada compromiso en un servicio facturable independiente.</p></div></div>',
+    '<div class="bw-product-grid">'+(commitments.length?commitments.map(c=>'<article class="bw-product"><div class="bw-product-head"><div><span class="bw-kicker">'+safe(c.code||'COMPROMISO')+'</span><h3>'+safe(c.title||'Compromiso')+'</h3></div><span class="bw-economic active">'+safe(c.status==='in_progress'?'En curso':c.status||'Activo')+'</span></div><div class="bw-product-values"><div><small>Componente del contrato</small><strong>'+money(c.component_clp,contract.currency||'CLP')+'</strong></div><div><small>Facturación individual</small><strong>No</strong></div><div><small>Estado</small><strong>'+safe(c.status==='in_progress'?'En curso':c.status||'—')+'</strong></div></div></article>').join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong><span>Actualiza la ficha desde LINK WORLD.</span></div>')+'</div></section>'
+  ].join('');
+  $('#bw-close-client-cell').addEventListener('click',close);
+  $('#bw-client-cell-director').addEventListener('click',()=>{
+    const prompt='Revisa la ficha contractual de '+state.business.name+' en LINK WORLD: producto vendido, compromisos activos, evidencias, facturación y siguiente acción. No inventes pagos ni cierres.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  });
+}
+
+function renderBusiness(){
+  const f=facts();
+  if(f.ecosystem_role==='client_business_cell'){renderClientBusinessCell();return;}
+  state.client=null;
+  const m=businessMetrics();
   const identity=Array.isArray(f.identity_words)?f.identity_words:[];
   const caps=Array.isArray(f.capabilities)?f.capabilities:[];
   const cycle=Array.isArray(f.cycle)?f.cycle:['Detectar','Conversar','Acordar','Activar','Registrar','Aprender','Expandir'];
@@ -264,8 +292,12 @@ async function refresh(){
 }
 function close(){
   state.open=false;state.client=null;$('#business-workspace').classList.add('hidden');
+  const url=new URL(window.location.href);url.searchParams.delete('business');
+  window.history.replaceState({},'',url.pathname+url.search+url.hash);
 }
 async function openBusiness(id){
+  const url=new URL(window.location.href);url.searchParams.set('business',id);
+  window.history.replaceState({},'',url.pathname+url.search+url.hash);
   state.open=true;state.client=null;$('#business-workspace').classList.remove('hidden');
   $('#bw-content').innerHTML='<div class="bw-loading">Abriendo ficha real…</div>';
   notice('');
@@ -280,5 +312,9 @@ function mount(){
   document.addEventListener('linkworld:open-business',event=>{
     const id=String(event.detail?.id||'');if(id)openBusiness(id);
   });
+  const deepLinkBusiness=new URLSearchParams(window.location.search).get('business');
+  if(deepLinkBusiness&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deepLinkBusiness)){
+    openBusiness(deepLinkBusiness);
+  }
 }
 export {mount as mountBusinessWorkspace};
