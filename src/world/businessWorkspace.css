@@ -184,3 +184,11 @@
  .bw-taxi-leg{grid-template-columns:48px 1fr}
  .bw-taxi-leg em{grid-column:2}
 }
+
+.bw-link-login{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;padding:12px;border:1px solid #e0e7dd;background:#f7f9f5;border-radius:12px}
+.bw-link-login label{display:grid;gap:5px;font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:#748474}
+.bw-link-login input{min-width:0;border:1px solid #d3ded0;background:#fff;border-radius:9px;padding:10px 11px;font:inherit;color:#304c36}
+.bw-link-login small{grid-column:1/-1;color:#829083;font-size:8px;text-transform:none;letter-spacing:0}
+.bw-taxi-session{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.bw-taxi-session button{border:0;background:transparent;color:#718272;font-size:8px;text-decoration:underline;cursor:pointer}
+@media(max-width:760px){.bw-link-login{grid-template-columns:1fr}.bw-link-login small{grid-column:auto}.bw-taxi-session{justify-content:flex-start}}
