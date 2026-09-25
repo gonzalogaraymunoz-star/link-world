@@ -113,25 +113,40 @@ function renderClientHub(){
 
 function renderClientBusinessCell(){
   state.client=null;
-  const f=facts(),contract=f.active_contract||{},product=f.sold_product||{};
-  const commitments=Array.isArray(product.commitments)?product.commitments:[];
+  const f=facts(),contract=f.active_contract||{};
+  const fallback=f.sold_product&&Object.keys(f.sold_product).length?[f.sold_product]:[];
+  const branches=Array.isArray(f.product_branches)&&f.product_branches.length?f.product_branches:fallback;
+  const active=branches.filter(p=>p.status==='active');
+  const commitments=branches.flatMap(p=>Array.isArray(p.commitments)?p.commitments:[]);
   const root=$('#bw-content');
-  const paymentLabel=contract.payment_status==='unknown_not_inferred'?'Por verificar':(contract.payment_status||'Por verificar');
-  const invoiceLabel=contract.invoice_status==='unknown_not_inferred'?'Por verificar':(contract.invoice_status||'Por verificar');
+  const branchCard=p=>{
+    const perSession=p.billing_model==='per_session';
+    const price=perSession?money(p.price_clp,'CLP')+' líquidos / jornada':money(p.price_clp,'CLP')+' / mes';
+    const schedule=p.schedule&&typeof p.schedule==='object'?
+      [Array.isArray(p.schedule.days)?p.schedule.days.join(' · '):'',p.schedule.start_local?('desde '+p.schedule.start_local):'',p.schedule.end_rule==='cierre_del_local'?'hasta cierre':''].filter(Boolean).join(' · '):'';
+    const cs=Array.isArray(p.commitments)?p.commitments:[];
+    const finance=p.financial_folder_url?'<a href="'+safe(p.financial_folder_url)+'" target="_blank" rel="noopener noreferrer">Abrir carpeta financiera ↗</a>':'';
+    return '<article class="bw-product">'+
+      '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.product_code||'PRODUCTO VENDIDO')+'</span><h3>'+safe(p.name||'Producto')+'</h3></div><span class="bw-economic active">Activo</span></div>'+
+      '<div class="bw-product-values"><div><small>Precio acordado</small><strong>'+price+'</strong></div><div><small>Cobro</small><strong>'+safe(perSession?'Por jornada':'Mensual')+'</strong></div><div><small>Documento</small><strong>Boleta de honorarios</strong></div></div>'+
+      (schedule?'<p class="bw-product-notes"><b>Compromiso horario:</b> '+safe(schedule)+'</p>':'')+
+      (finance?'<p class="bw-product-notes">'+finance+'</p>':'')+
+      '<div class="bw-product-foot"><span>Compromisos: <b>'+cs.length+'</b></span><span>Estado: <b>Activo</b></span></div>'+
+    '</article>';
+  };
+  const commitmentCard=(c,p)=>'<article class="bw-product"><div class="bw-product-head"><div><span class="bw-kicker">'+safe(c.code||'COMPROMISO')+'</span><h3>'+safe(c.title||'Compromiso')+'</h3></div><span class="bw-economic active">'+safe(c.status==='in_progress'?'En curso':c.status||'Activo')+'</span></div>'+
+    '<div class="bw-product-values"><div><small>Producto</small><strong>'+safe(p.name||'—')+'</strong></div><div><small>Valor asociado</small><strong>'+(c.component_clp?money(c.component_clp,'CLP'):(p.billing_model==='per_session'?money(p.price_clp,'CLP')+' / jornada':'Incluido'))+'</strong></div><div><small>Facturación individual</small><strong>'+(p.billing_model==='per_session'?'Sí, por jornada':'No')+'</strong></div></div>'+
+    (c.schedule?'<p class="bw-product-notes"><b>Horario:</b> '+safe(c.days||'')+' · '+safe(c.schedule)+'</p>':'')+
+  '</article>';
   root.innerHTML=[
-    '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CONTRATO')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+safe(product.status==='active'?'Producto vendido activo':product.status||'Producto')+'</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
-    '<section class="bw-metrics"><div><strong>'+money(product.agreed_price_clp||contract.monthly_fee_clp,contract.currency||'CLP')+'</strong><span>Contrato mensual</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+safe(contract.locations_count||'—')+'</strong><span>Locales</span></div><div><strong>'+safe(product.status==='active'?'Activo':'—')+'</strong><span>Producto vendido</span></div></section>',
-    '<section class="bw-grid">',
-      '<article class="bw-panel span-2"><span class="bw-kicker">PRODUCTO VENDIDO</span><h2>'+safe(product.name||contract.stage||'Etapa 1 · Contenido / RRSS')+'</h2><p>Producto mensual vendido y vigente. La facturación corresponde al contrato completo; los gestos ejecutan y evidencian sus compromisos, pero no se cobran de forma independiente.</p><div class="bw-facts"><span><b>Precio acordado</b>'+money(product.agreed_price_clp||contract.monthly_fee_clp,contract.currency||'CLP')+' / mes</span><span><b>Inicio</b>'+safe((product.starts_at||'2026-09-01').slice(0,10))+'</span><span><b>Contrato</b>'+safe(product.contract_code||contract.code||'—')+'</span></div></article>',
-      '<article class="bw-panel"><span class="bw-kicker">ESTADO ECONÓMICO</span><h2>Seguimiento</h2><div class="bw-facts"><span><b>Facturación</b>'+safe(invoiceLabel)+'</span><span><b>Pago</b>'+safe(paymentLabel)+'</span><span><b>Modelo</b>Compromisos, no gestos</span></div></article>',
-      '<article class="bw-panel"><span class="bw-kicker">REGLA OPERATIVA</span><h2>Mantener activo</h2><p>Mientras el producto vendido permanezca activo, cada compromiso debe mantenerse en ejecución o cerrarse explícitamente con evidencia.</p></article>',
-    '</section>',
-    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS DEL PRODUCTO</span><h2>'+safe(product.name||'Etapa 1 · Contenido / RRSS')+'</h2><p>La composición económica explica el contrato; no convierte cada compromiso en un servicio facturable independiente.</p></div></div>',
-    '<div class="bw-product-grid">'+(commitments.length?commitments.map(c=>'<article class="bw-product"><div class="bw-product-head"><div><span class="bw-kicker">'+safe(c.code||'COMPROMISO')+'</span><h3>'+safe(c.title||'Compromiso')+'</h3></div><span class="bw-economic active">'+safe(c.status==='in_progress'?'En curso':c.status||'Activo')+'</span></div><div class="bw-product-values"><div><small>Componente del contrato</small><strong>'+money(c.component_clp,contract.currency||'CLP')+'</strong></div><div><small>Facturación individual</small><strong>No</strong></div><div><small>Estado</small><strong>'+safe(c.status==='in_progress'?'En curso':c.status||'—')+'</strong></div></div></article>').join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong><span>Actualiza la ficha desde LINK WORLD.</span></div>')+'</div></section>'
+    '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
+    '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
+    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
+    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
   $('#bw-close-client-cell').addEventListener('click',close);
   $('#bw-client-cell-director').addEventListener('click',()=>{
-    const prompt='Revisa la ficha contractual de '+state.business.name+' en LINK WORLD: producto vendido, compromisos activos, evidencias, facturación y siguiente acción. No inventes pagos ni cierres.';
+    const prompt='Revisa la ficha completa de '+state.business.name+' en LINK WORLD: productos vendidos, compromisos, jornadas, evidencias, boletas, pagos y siguiente acción. No inventes pagos ni cierres.';
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
