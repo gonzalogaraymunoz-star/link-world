@@ -77,5 +77,6 @@ No se requiere instalar Node en el equipo antiguo para abrir la web.
 - [Protocolo del puente](docs/LINK_WORLD_BRIDGE_PROTOCOL.md)
 - [Director IA](docs/LINK_DIRECTOR_MANUAL.md)
 - [Protocolo abierto de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
+- [Archivo central de intervenciones IA](docs/LINK_DIRECTOR_INTERVENTION_ARCHIVE.md)
 - [Google Maps / LINK Geo](.agents/skills/link-geo/SKILL.md)
 - [Manual histórico de interfaz](docs/INTERFAZ_ESTRATEGICA_V0.4.md)
