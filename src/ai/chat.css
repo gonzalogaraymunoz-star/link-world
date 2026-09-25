@@ -587,3 +587,33 @@ body.lw-director-open{overflow:hidden;}
   .lw-compose-label small{display:none;}
   #lw-composer{font-size:11px;}
 }
+
+
+/* Provider protocol controls */
+.lw-settings select{
+  width:100%;
+  min-width:0;
+  padding:9px;
+  border:1px solid #3c3c3a!important;
+  border-radius:9px!important;
+  background:#1c1c1b!important;
+  color:#fff!important;
+  font-size:9px;
+}
+#lw-endpoint-wrap{display:grid;gap:6px;}
+#lw-endpoint-wrap.hidden{display:none!important;}
+#lw-endpoint-wrap label{
+  font-size:7px;
+  font-weight:700;
+  letter-spacing:.12em;
+  color:#bdbdb7;
+  margin-top:4px;
+}
+#lw-provider-note{
+  display:block;
+  padding:8px 0 2px;
+  color:#bdbdb7!important;
+  font-size:8px!important;
+  line-height:1.5!important;
+}
+.lw-meta-list strong{word-break:break-word;}
