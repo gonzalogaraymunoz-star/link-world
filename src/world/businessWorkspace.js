@@ -172,53 +172,65 @@ function renderClientBusinessCell(){
 }
 
 
-function renderTourismHouseBusinessCell(){
+function renderOperationalHouseBusinessCell(){
   state.client=null;
   const f=facts(),network=f.observed_network||{},surfaces=f.surfaces||{},integration=f.integration_policy||{};
+  const house=f.house_model&&typeof f.house_model==='object'?f.house_model:{};
+  const vocabulary=f.house_vocabulary&&typeof f.house_vocabulary==='object'?f.house_vocabulary:{};
+  const bridge=f.bridge_contract&&typeof f.bridge_contract==='object'?f.bridge_contract:{};
   const flow=Array.isArray(f.flow)?f.flow:[];
   const capabilities=Array.isArray(f.capabilities)?f.capabilities:[];
   const partners=state.clients;
-  const hotels=partners.filter(c=>c.owned_facts?.partner_type==='hotel');
-  const agencies=partners.filter(c=>c.owned_facts?.partner_type==='agency');
   const categories=network.product_categories&&typeof network.product_categories==='object'?network.product_categories:{};
-  const bridgeReady=integration.live_bridge_status==='connected';
-  const bridgeLabel=bridgeReady?'Bridge vivo conectado':'Bindings registrados · sincronización viva pendiente';
+  const houseLabel=house.label||'Casa Operativa';
+  const sourceName=f.canonical_source?.label||f.source_system||state.business.name;
+  const sourceProject=f.canonical_source?.project_id||f.source_project_id||'—';
+  const bridgeReady=integration.live_bridge_status==='connected'||bridge.live_status==='connected';
+  const bridgeLabel=bridgeReady?'Bridge vivo conectado':'Bridge estructural registrado · eventos pendientes';
+  const counterpartyTitle=vocabulary.counterparties||'Contrapartes conectadas';
+  const productTitle=vocabulary.products||'Productos y servicios';
+  const providerTitle=vocabulary.providers||'Proveedores en la fuente';
+  const transactionTitle=vocabulary.transactions||'Operaciones observadas';
+  const counterpartySource=vocabulary.counterparty_source||'sistema fuente';
+  const catalogSource=vocabulary.catalog_source||'catálogo fuente';
+  const flowTitle=vocabulary.flow_title||'De la captación al aprendizaje';
   const root=$('#bw-content');
   const partnerCard=c=>{
     const cf=c.owned_facts||{};
     const agreement=c.agreement_status==='none'?'Términos por normalizar':c.agreement_status;
+    const type=cf.partner_type||c.role||'contraparte';
     return '<button class="bw-client-card master" type="button" data-client="'+safe(c.id)+'">'+
-      '<div class="bw-client-top"><span class="bw-client-icon">'+safe(c.name?.charAt(0)?.toUpperCase()||'H')+'</span><span class="bw-client-state">'+safe(cf.partner_type==='hotel'?'Hotel':'Agencia / partner')+'</span></div>'+
+      '<div class="bw-client-top"><span class="bw-client-icon">'+safe(c.name?.charAt(0)?.toUpperCase()||'C')+'</span><span class="bw-client-state">'+safe(type)+'</span></div>'+
       '<strong>'+safe(c.name)+'</strong>'+
       '<small>'+safe([cf.default_channel,cf.lead_prefix?('prefijo '+cf.lead_prefix):''].filter(Boolean).join(' · '))+'</small>'+
-      '<p>'+safe(c.summary||'Contraparte proyectada desde HOTEL EXPERIENCE.')+'</p>'+
+      '<p>'+safe(c.summary||('Contraparte proyectada desde '+sourceName+'.'))+'</p>'+
       '<div class="bw-client-numbers"><span><b>'+safe(c.relationship_state)+'</b> relación</span><span><b>'+safe(agreement)+'</b> convenio</span></div>'+
       '<em>Abrir vínculo →</em>'+
     '</button>';
   };
   root.innerHTML=[
     '<section class="bw-business-head">',
-      '<div><button class="bw-back" id="bw-close-tourism-house" type="button">← Negocios LINK WORLD</button>',
-      '<span class="bw-kicker">CASA TURÍSTICA / '+safe(state.business.slug||'hotel-experience')+'</span>',
+      '<div><button class="bw-back" id="bw-close-operational-house" type="button">← Negocios LINK WORLD</button>',
+      '<span class="bw-kicker">'+safe(houseLabel.toUpperCase())+' / '+safe(state.business.slug||'')+'</span>',
       '<h1>'+safe(state.business.name)+'</h1>',
-      '<p>'+safe(f.tagline||state.business.summary||'Casa comercial y operacional para convenios turísticos con hoteles.')+'</p>',
-      '<div class="bw-tags"><span>Casa turística</span><span>'+hotels.length+' hoteles</span><span>'+agencies.length+' agencia / partner</span><span class="status">'+safe(bridgeLabel)+'</span></div></div>',
-      '<div class="bw-head-actions"><button id="bw-tourism-house-director" type="button">✦ Revisar con Director</button><button id="bw-refresh-tourism-house" type="button">↻ Actualizar</button></div>',
+      '<p>'+safe(f.tagline||state.business.summary||'Casa operativa conectada al ecosistema LINK.')+'</p>',
+      '<div class="bw-tags"><span>'+safe(houseLabel)+'</span><span>'+partners.length+' contrapartes</span><span class="status">'+safe(bridgeLabel)+'</span></div></div>',
+      '<div class="bw-head-actions"><button id="bw-operational-house-director" type="button">✦ Revisar con Director</button><button id="bw-refresh-operational-house" type="button">↻ Actualizar</button></div>',
     '</section>',
-    '<section class="bw-metrics"><div><strong>'+partners.length+'</strong><span>Contrapartes observadas</span></div><div><strong>'+safe(network.active_catalog_products??'—')+'</strong><span>Productos activos en HOTEL EXPERIENCE</span></div><div><strong>'+safe(network.supplier_records??'—')+'</strong><span>Proveedores en la fuente</span></div><div><strong>'+safe(network.services??'—')+'</strong><span>Servicios observados</span></div></section>',
+    '<section class="bw-metrics"><div><strong>'+partners.length+'</strong><span>Contrapartes observadas</span></div><div><strong>'+safe(network.active_catalog_products??'—')+'</strong><span>'+safe(productTitle)+'</span></div><div><strong>'+safe(network.supplier_records??'—')+'</strong><span>'+safe(providerTitle)+'</span></div><div><strong>'+safe(network.services??'—')+'</strong><span>'+safe(transactionTitle)+'</span></div></section>',
     '<section class="bw-grid">',
-      '<article class="bw-panel span-2"><span class="bw-kicker">ARQUITECTURA</span><h2>Una casa · múltiples aparatos de venta</h2><p>Los aparatos comerciales captan y convierten oportunidades, pero la reserva y la operación permanecen en el mismo núcleo HOTEL EXPERIENCE. LINK WORLD conserva identidad, relaciones, capacidades y eventos mínimos; no replica pasajeros, reservas ni pagos.</p><div class="bw-facts"><span><b>Fuente operacional</b>'+safe(f.canonical_source?.project_id||'lpirjwifzosdzgdncsbt')+'</span><span><b>Política de copia</b>Proyección בלבד · sin transacciones</span><span><b>Bridge</b>'+safe(bridgeLabel)+'</span></div></article>',
-      '<article class="bw-panel"><span class="bw-kicker">SUPERFICIES</span><h2>Ventas ↔ Operación</h2><p>Ambas superficies comparten el mismo Supabase. La entrega ocurre sobre el mismo objeto comercial/operacional, no mediante un CRM externo.</p><div class="bw-form-actions"><button id="bw-open-sales" type="button">Abrir Ventas ↗</button><button id="bw-open-ops" type="button">Abrir Operación ↗</button></div></article>',
-      '<article class="bw-panel"><span class="bw-kicker">FLUJO</span><h2>Del huésped al aprendizaje</h2><div class="bw-cycle">'+flow.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
+      '<article class="bw-panel span-2"><span class="bw-kicker">ARQUITECTURA / '+safe(f.cell_archetype||'operational_house_v1')+'</span><h2>Una casa · múltiples aparatos de venta</h2><p>Los canales comerciales pueden captar y convertir oportunidades, mientras la verdad transaccional permanece en '+safe(sourceName)+'. LINK WORLD conserva identidad, relaciones, capacidades, estado y eventos mínimos; no crea una segunda operación.</p><div class="bw-facts"><span><b>Fuente operacional</b>'+safe(sourceProject)+'</span><span><b>Política de copia</b>Proyección solamente · sin transacciones sensibles</span><span><b>Bridge</b>'+safe(bridgeLabel)+'</span></div></article>',
+      '<article class="bw-panel"><span class="bw-kicker">SUPERFICIES</span><h2>Ventas ↔ Operación</h2><p>Las superficies externas siguen siendo responsables de ejecutar su dominio. LINK WORLD las observa y conecta mediante bindings versionados.</p><div class="bw-form-actions"><button id="bw-open-sales" type="button">Abrir Ventas ↗</button><button id="bw-open-ops" type="button">Abrir Operación ↗</button></div></article>',
+      '<article class="bw-panel"><span class="bw-kicker">FLUJO</span><h2>'+safe(flowTitle)+'</h2><div class="bw-cycle">'+flow.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
       '<article class="bw-panel span-2"><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta esta casa al ecosistema</h2><div class="bw-capabilities">'+capabilities.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
     '</section>',
-    '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>Hoteles y canales conectados</h2><p>Son proyecciones de identidad desde <code>hotel_partners</code>. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Los hoteles seguirán viviendo en HOTEL EXPERIENCE hasta que exista una relación validada para LINK WORLD.</span></div>')+'</div></section>',
-    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">CATÁLOGO / PROYECCIÓN</span><h2>'+safe(network.active_catalog_products??0)+' productos activos sin duplicarlos</h2><p>El catálogo canónico sigue en HOTEL EXPERIENCE. LINK WORLD observa familias y capacidad de distribución; no mantiene una segunda copia de precios o reservas.</p></div></div><div class="bw-capabilities">'+Object.entries(categories).map(([k,v])=>'<div><b>'+safe(v)+'</b><span>'+safe(String(k).replaceAll('_',' '))+'</span></div>').join('')+'</div></section>'
+    '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>'+safe(counterpartyTitle)+'</h2><p>Son proyecciones de identidad desde '+safe(counterpartySource)+'. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Las relaciones deben existir en la fuente o contar con evidencia antes de incorporarse a LINK WORLD.</span></div>')+'</div></section>',
+    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">CATÁLOGO / PROYECCIÓN</span><h2>'+safe(network.active_catalog_products??0)+' '+safe(productTitle.toLowerCase())+' sin duplicarlos</h2><p>El catálogo canónico sigue en '+safe(sourceName)+' ('+safe(catalogSource)+'). LINK WORLD observa identidad y capacidad de distribución; no mantiene una segunda copia de precios, reservas o estados transaccionales.</p></div></div><div class="bw-capabilities">'+Object.entries(categories).map(([k,v])=>'<div><b>'+safe(v)+'</b><span>'+safe(String(k).replaceAll('_',' '))+'</span></div>').join('')+'</div></section>'
   ].join('');
-  $('#bw-close-tourism-house').addEventListener('click',close);
-  $('#bw-refresh-tourism-house').addEventListener('click',refresh);
-  $('#bw-tourism-house-director').addEventListener('click',()=>{
-    const prompt='Revisa HOTEL EXPERIENCE como Casa turística dentro de LINK WORLD. Lee su red de hoteles, catálogo observado, proveedores, aparatos de venta, estado del bridge y salud operacional. No copies reservas ni datos de pasajeros y no inventes convenios económicos.';
+  $('#bw-close-operational-house').addEventListener('click',close);
+  $('#bw-refresh-operational-house').addEventListener('click',refresh);
+  $('#bw-operational-house-director').addEventListener('click',()=>{
+    const prompt='Revisa '+state.business.name+' como '+houseLabel+' dentro de LINK WORLD. Lee su red de contrapartes, capacidades, fuentes operacionales, aparatos de venta y estado del bridge. Respeta la separación de verdad del arquetipo '+(f.cell_archetype||'operational_house_v1')+'; no copies datos sensibles ni inventes acuerdos económicos.';
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
@@ -230,7 +242,7 @@ function renderTourismHouseBusinessCell(){
 function renderBusiness(){
   const f=facts();
   if(f.ecosystem_role==='client_business_cell'){renderClientBusinessCell();return;}
-  if(f.ecosystem_role==='tourism_house_business_cell'){renderTourismHouseBusinessCell();return;}
+  if(f.cell_archetype==='operational_house_v1'||f.ecosystem_role==='tourism_house_business_cell'){renderOperationalHouseBusinessCell();return;}
   state.client=null;
   const m=businessMetrics();
   const identity=Array.isArray(f.identity_words)?f.identity_words:[];
