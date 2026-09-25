@@ -1,125 +1,59 @@
-# LINK WORLD · Director IA conversacional v5
+# LINK WORLD · Director IA conversacional v6
 
-El Director es una **sala de inteligencia a pantalla completa** dentro de LINK WORLD. Ya no está amarrado a OpenRouter ni a un único modelo.
+El Director es la sala de inteligencia de LINK WORLD.
 
-Código activo:
+## Conectar una IA
 
-- `src/ai/directorChat.js`
-- `src/ai/chat.css`
-- `api/director.js`
-- `api/LINK_DIRECTOR_SYSTEM.md`
-- `docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md`
-
-## Empezar
-
-### Camino normal
-
-1. Abre https://link-world-delta.vercel.app/ → **Director IA**.
+1. Abre **Director IA**.
 2. Pulsa **Conectar IA**.
-3. Pega tu API key de OpenRouter.
-4. Pulsa **Conectar IA**.
-5. Espera la confirmación **Conectado · OpenRouter**.
-6. Conversa.
+3. Elige **Proveedor**.
+4. Escribe **Modelo**.
+5. Pega **API**.
+6. Pulsa **Conectar**.
+7. Conversa.
 
-Eso es todo.
+No hay ningún otro paso obligatorio.
 
-LINK WORLD usa por defecto `qwen/qwen3-235b-a22b-2507:free`.
+## Proveedores disponibles
 
-### Camino avanzado
+- OpenRouter
+- Groq
+- NVIDIA NIM
 
-Solo si quieres cambiar proveedor o modelo:
+El campo **Modelo** siempre usa el identificador exacto que entrega el proveedor.
 
-1. Abre **Conectar IA**.
-2. Pulsa **Configuración avanzada**.
-3. Elige proveedor, modelo y endpoint cuando corresponda.
-4. Usa la misma API key temporal.
+## Estado
 
-## OpenRouter y modelos abiertos
-
-OpenRouter ya no está limitado a `:free`.
-
-Puedes escribir cualquier ID de modelo permitido por tu propia cuenta. LINK WORLD usa exactamente ese modelo y no cambia a otro automáticamente.
-
-Si OpenRouter exige crédito, limita cuota o rechaza el modelo, verás el error y la consulta se detiene.
-
-## Otros proveedores
-
-Groq y NVIDIA NIM tienen presets.
-
-Para otros hosts de modelos open source usa **Otro · OpenAI-compatible**. El backend normaliza una URL base `/v1` hacia `/chat/completions`.
-
-El endpoint debe ser público HTTPS. No se permiten localhost, redes privadas ni endpoints internos.
-
-## Estado comprensible
-
-- **Configuración incompleta:** falta modelo, endpoint custom o API key obligatoria.
-- **Proveedor modificado · pendiente de prueba:** cambiaste de proveedor.
-- **Modelo modificado · pendiente de prueba:** cambiaste el modelo.
-- **Probando proveedor…:** se está haciendo una generación mínima.
-- **Conectado · proveedor:** el proveedor y modelo respondieron.
-- **Pensando · proveedor:** una consulta real está en curso.
-- **Consulta fallida:** la interfaz muestra el error devuelto por proveedor/backend.
+- **Configuración incompleta:** falta modelo o API.
+- **Probando proveedor…:** LINK WORLD está validando la conexión.
+- **Conectado:** proveedor, modelo y API respondieron.
+- **Consulta fallida:** se muestra el error real del proveedor.
 
 ## Sin fallback
 
-LINK WORLD nunca cambia automáticamente:
-
-- proveedor;
-- modelo;
-- endpoint;
-- plan de precio.
-
-Una falla no dispara un segundo proveedor ni un modelo de pago.
+LINK WORLD no cambia automáticamente de proveedor ni de modelo.
 
 ## Contexto LINK
 
-Para compartir datos propios, marca **Incluir datos de LINK** antes de enviar.
+Marca **Incluir datos de LINK** únicamente cuando quieras compartir contexto autorizado de LINK WORLD con el modelo seleccionado.
 
-La app lee una muestra autorizada de Supabase LINK CONTROL CENTRAL y la entrega únicamente al proveedor seleccionado en esa consulta.
+Supabase sigue siendo la fuente de verdad.
 
-Supabase sigue siendo la fuente de verdad. El modelo recibe una instantánea, no acceso directo a las tablas.
+## Privacidad
 
-## Privacidad de credenciales
-
-La API key:
-
+La API:
 - no se guarda en localStorage;
 - no se guarda en Supabase;
 - no se guarda en GitHub;
-- no aparece en el registro local;
+- no aparece en el archivo de intervenciones;
 - no forma parte del prompt del Director.
 
-Sí se pueden recordar localmente el proveedor, el modelo y el endpoint custom para no tener que configurarlos en cada apertura.
+El proveedor y el modelo sí pueden recordarse localmente sin credenciales.
 
-## Conversación y registro
+## Archivo IA
 
-El chat mantiene hasta 12 mensajes anteriores recortados para contexto durante la sesión.
+Las intervenciones del Director se archivan en Supabase para auditoría y aprendizaje.
 
-Puedes:
+## Documentación técnica
 
-- exportar la conversación;
-- iniciar una nueva;
-- activar **Guardar respuestas en registro local**;
-- registrar solicitudes locales manuales.
-
-El registro local no equivale a una escritura en LINK WORLD.
-
-## Google
-
-**Abrir territorio / Google** sale del Director y abre la herramienta territorial.
-
-El modelo no ejecuta búsquedas Google en silencio.
-
-## Costos
-
-LINK WORLD no promete costo cero.
-
-Cada proveedor conserva sus propias reglas de cuota, crédito, límites y precios. La prueba de conexión y cada consulta pueden consumir cuota del proveedor configurado.
-
-## Contrato completo
-
-Ver:
-
-`docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md`
-
-Ese protocolo separa la lógica del Director del proveedor de IA y permite ampliar el sistema sin rehacer la interfaz.
+Ver `docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md`.
