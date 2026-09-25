@@ -56,7 +56,11 @@ async function loadOpenWorld(){
   renderBusinessList();
 }
 function setView(next){
-  if(next==='director'){ $('#ai-toggle')?.click();return; }
+  if(next==='director'){
+    document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='director'));
+    $('#ai-toggle')?.click();
+    return;
+  }
   const territory=next==='territory';
   document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
   $('#lw-businesses').classList.toggle('hidden',territory);
@@ -90,6 +94,11 @@ function renderBusinessList(){
   }
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.addEventListener('linkworld:director-state',event=>{
+  const open=Boolean(event.detail?.open);
+  const fallback=$('#lw-territory').classList.contains('hidden')?'businesses':'territory';
+  document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===(open?'director':fallback)));
+});
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
 $('#lw-open-bridge').addEventListener('click',()=>{$('#lw-real-businesses')?.scrollIntoView({behavior:'smooth',block:'center'});});
 $('#lw-sync').addEventListener('click',loadOpenWorld);
