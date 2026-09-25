@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
-version: 2.2.0
+version: 2.3.0
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -108,6 +108,8 @@ Nunca decir “guardado” antes de verificar.
 - `ecosystem_cell_organelle_bindings`
 - `integration_bindings`
 - `event_bus`
+- `operational_house_projection_state`
+- `ecosystem_operational_house_status_v`
 
 No sustituir estas tablas por CRM, Hotel Experience u otras bases salvo que el protocolo explícitamente lo indique.
 
@@ -171,6 +173,30 @@ Para incorporar una nueva Casa:
 11. usar la misma vista genérica de Casa Operativa: no crear frontend especial por negocio.
 
 HOTEL EXPERIENCE es la instancia de referencia inicial del arquetipo, no una excepción arquitectónica.
+
+### Projection Engine de Casas
+
+Para `operational_house_v1`, leer `ecosystem_operational_house_status_v` antes de emitir un juicio de salud.
+
+No confundir:
+
+- **structure_status:** roles declarados;
+- **transport_status:** bridge real;
+- **projection_status:** consumidor/estado derivado;
+- **overall_status:** salud operativa global;
+- **binding_sync_readiness:** diagnóstico técnico legado de bindings, no objetivo de sincronización universal.
+
+Persistencia:
+
+- `event_bus` = evidencia;
+- `private.operational_house_projection_event_ledger` = consumo idempotente;
+- `operational_house_projection_state` = read model reconstruible;
+- baseline agregado y eventos posteriores se mantienen separados.
+
+Principio de equilibrio: **no sincronizar por sincronizar**. Superficies de ventas, operación, catálogos o contrapartes pueden permanecer como fuentes registradas/controladas si no existe un beneficio explícito en duplicarlas.
+
+Un evento recibido nunca autoriza una mutación comercial automática. Para convertir señales en acciones usar reglas/decisiones explícitas del ciclo LINK.
+
 
 ## 6. Director IA
 
