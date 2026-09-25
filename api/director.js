@@ -220,7 +220,7 @@ export default async function handler(req,res){
     providers:Object.entries(PROVIDERS).map(([id,p])=>({id,label:p.label,endpoint:p.endpoint,keyRequired:p.keyRequired})),
     customEndpoint:true,
     exactModel:true,
-    simpleInstall:{provider:'openrouter',model:'qwen/qwen3-235b-a22b-2507:free',fields:['apiKey']},
+    simpleInstall:{fields:['provider','model','apiKey'],providers:['openrouter','groq','nvidia']},
     automaticFallback:false,
     credentialsPersisted:false,
     interventionArchive:true,
