@@ -1,6 +1,6 @@
 // deploy: director-link-expert-v1
 // LINK WORLD: real data first. No DEMO cells or simulated mission in active UI.
-import {flyGoogle,startGoogleWorld} from './googleMaps.js';
+import {flyGoogle,startGoogleWorld,setLinkBusinesses,flyToLinkBusiness} from './googleMaps.js';
 import {createClient} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './world/connection.js';
 import {mountDirector} from './ai/directorChat.js';
@@ -31,7 +31,7 @@ $('#app').innerHTML=[
 "<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Panel de negocios</strong><small>Entrar a los negocios de LINK WORLD ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='director'><span>03</span><strong>Conversar con Director</strong><small>Trabajar sobre LINK WORLD ↗</small></button></section>",
 "<p class='lw-boundary'>Google Maps permite observar negocios externos. Solo los datos propios que registremos con autorización forman parte de LINK.</p>",
 "</section>",
-"<section id='lw-territory' class='lw-territory hidden'><div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / FUENTE EXTERNA</span><h1>Explorar, no inventar.</h1><p>Las búsquedas Google se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
+"<section id='lw-territory' class='lw-territory hidden'><div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / GOOGLE + LINK</span><h1>Nuestros negocios sobre el territorio real.</h1><p>Los negocios LINK vinculados aparecen automáticamente. Google completa datos en vivo; las búsquedas externas se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
 "<div class='workspace lw-map-workspace'><div id='cesiumContainer' aria-label='Mapa de Google'></div><div id='lw-place-card' class='lw-place-card hidden' role='status'></div><div class='notice'>Google Maps no muestra imágenes en vivo. Un resultado externo no es un negocio registrado en LINK.</div></div>",
 "<div class='lw-map-foot'><span id='imagery-status'>Google Maps · se abre al entrar en Territorio</span><span id='places-status'>Google Places · bajo demanda</span><span id='city-label'>SAN PEDRO DE ATACAMA · CHILE</span></div></section>",
 "</main></div>"
@@ -40,13 +40,14 @@ $('#app').innerHTML=[
 async function loadOpenWorld(){
   $('#lw-data-state').textContent='Sincronizando LINK WORLD…';
   const {data,error}=await publicDb.from('link_world_businesses')
-    .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace,owned_facts')
+    .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace,google_place_id,owned_facts')
     .eq('public_workspace',true).order('name',{ascending:true});
   if(error){
     $('#lw-data-state').textContent='No se pudo abrir LINK WORLD: '+error.message;
     return;
   }
   state.connected=true;state.businesses=data||[];state.requests=[];state.relations=[];
+  setLinkBusinesses(state.businesses);
   $('#lw-app-state').textContent='Modo abierto';
   $('#lw-business-count').textContent=String(state.businesses.length);
   $('#lw-request-count').textContent='—';
@@ -106,10 +107,17 @@ document.addEventListener('linkworld:director-state',event=>{
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
 $('#lw-open-bridge').addEventListener('click',()=>{$('#lw-real-businesses')?.scrollIntoView({behavior:'smooth',block:'center'});});
 $('#lw-sync').addEventListener('click',loadOpenWorld);
-$('#lw-new-business').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Quiero trabajar en LINK WORLD. Ayúdame a revisar el siguiente cambio antes de registrarlo.'}})));
+$('#lw-new-business').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Quiero crear un nuevo negocio en LINK WORLD. Antes de registrarlo, pídeme nombre y si es físico o virtual. Si es físico, pídeme la dirección exacta y vincúlalo con Google Maps mediante Place ID; no cierres la ficha sin resolver su estado territorial.'}})));
+document.addEventListener('linkworld:open-territory-business',event=>{
+  const id=String(event.detail?.id||'');
+  if(!id)return;
+  setView('territory');
+  const go=()=>flyToLinkBusiness(id);
+  if(state.map)setTimeout(go,100); else setTimeout(go,900);
+});
 document.addEventListener('linkworld:place-selected',event=>{
   const d=event.detail||{},el=$('#lw-place-card');
-  el.replaceChildren(make('strong','',d.name||'Lugar de Google'),make('small','',d.address||''));
+  el.replaceChildren(make('strong','',d.name||'Lugar de Google'),make('small','',d.address||''),make('small','',d.placeId?('Place ID · '+d.placeId):''));
   if(d.uri&&/^https:\/\/(?:www\.)?google\.[^/]+\/maps/.test(d.uri)){
     const a=make('a','','Abrir en Google Maps ↗');a.href=d.uri;a.target='_blank';a.rel='noopener noreferrer';el.append(a);
   }
