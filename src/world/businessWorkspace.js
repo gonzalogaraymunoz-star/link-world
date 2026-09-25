@@ -14,6 +14,9 @@ const money=(n,currency='CLP')=>{
   catch{return '$'+Math.round(x).toLocaleString('es-CL');}
 };
 const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',active:'Activar',recorded:'Registrar',learning:'Aprender',expanding:'Expandir',paused:'Pausado',closed:'Cerrado'};
+const visibleColor=(visual={})=>visual&&visual.color_visible===true&&/^#[0-9a-f]{6}$/i.test(visual.assigned_color||'')?visual.assigned_color:null;
+const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
+
 const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,busy:false,canWrite:false};
 
 async function writeSession(){
@@ -89,7 +92,8 @@ function renderClientHub(){
         const products=state.products.filter(p=>p.client_id===c.id);
         const active=products.filter(p=>p.economic_state==='active'||p.stage==='active').length;
         const blocked=products.filter(p=>p.economic_state==='blocked'||productEconomics(p).blocked).length;
-        return '<button class="bw-client-card master" type="button" data-client="'+safe(c.id)+'">'+
+        const cColor=visibleColor(c.owned_facts?.visual_identity||c.metadata?.visual_identity||c.visual_identity);
+        return '<button class="bw-client-card master"'+colorStyle(cColor)+' type="button" data-client="'+safe(c.id)+'">'+
           '<div class="bw-client-top"><span class="bw-client-icon">'+safe(c.name?.charAt(0)?.toUpperCase()||'C')+'</span><span class="bw-client-state">'+safe(stageNames[c.relationship_state]||c.relationship_state)+'</span></div>'+
           '<strong>'+safe(c.name)+'</strong>'+
           '<small>'+safe([c.role,c.city,c.country].filter(Boolean).join(' · '))+'</small>'+
@@ -126,7 +130,7 @@ function renderClientBusinessCell(){
       [Array.isArray(p.schedule.days)?p.schedule.days.join(' · '):'',p.schedule.start_local?('desde '+p.schedule.start_local):'',p.schedule.end_rule==='cierre_del_local'?'hasta cierre':''].filter(Boolean).join(' · '):'';
     const cs=Array.isArray(p.commitments)?p.commitments:[];
     const finance=p.financial_folder_url?'<a href="'+safe(p.financial_folder_url)+'" target="_blank" rel="noopener noreferrer">Abrir carpeta financiera ↗</a>':'';
-    const pColor=visibleColor(p.visual);
+    const pColor=visibleColor(p.visual_identity||p.visual);
     const visualState=pColor?'<span><b>Color activo</b> '+safe(pColor)+'</span>':'<span><b>Sin color</b> pago/evidencia pendiente</span>';
     return '<article class="bw-product"'+colorStyle(pColor)+'>'+
       '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.product_code||'PRODUCTO VENDIDO')+'</span><h3>'+safe(p.name||'Producto')+'</h3></div><span class="bw-economic active">Activo</span></div>'+
@@ -143,7 +147,7 @@ function renderClientBusinessCell(){
   root.innerHTML=[
     '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
-    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
+    '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
   $('#bw-close-client-cell').addEventListener('click',close);
@@ -204,9 +208,10 @@ function renderBusiness(){
 }
 function renderProduct(p){
   const e=productEconomics(p),profile=profileFor(p.responsibility_profile_id);
+  const pColor=visibleColor(p.metadata?.visual_identity||p.owned_facts?.visual_identity||p.visual_identity);
   const split=e.splitKnown?'<div class="bw-split"><span style="--v:'+e.clientShare+'%"><b>Cliente</b><strong>'+e.clientShare+'%</strong></span><span style="--v:'+e.linkShare+'%"><b>LINK</b><strong>'+e.linkShare+'%</strong></span></div>':'<p class="bw-soft">Distribución cliente/LINK todavía sin definir.</p>';
   const blocked=p.economic_state==='blocked'||e.blocked;
-  return '<article class="bw-product '+(blocked?'blocked':'')+'">'+
+  return '<article class="bw-product '+(blocked?'blocked':'')+'"'+colorStyle(pColor)+'>'+
     '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.code||p.category||'PRODUCTO')+'</span><h3>'+safe(p.name)+'</h3></div><span class="bw-economic '+safe(p.economic_state)+'">'+(blocked?'Bloqueado':safe(p.economic_state))+'</span></div>'+
     '<div class="bw-product-values"><div><small>Adquisición</small><strong>'+money(p.acquisition_price,p.currency)+'</strong></div><div><small>Precio público</small><strong>'+money(p.public_price,p.currency)+'</strong></div><div><small>Diferencia observada</small><strong>'+money(e.spread,p.currency)+'</strong></div></div>'+
     '<div class="bw-responsibility"><span><small>Responsabilidad</small><strong>'+(profile?safe(profile.label):'Por definir')+'</strong></span><b>'+(p.responsibility_percent==null?'—':safe(p.responsibility_percent)+'%')+'</b></div>'+
