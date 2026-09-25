@@ -1,3 +1,4 @@
+// deploy: director-link-expert-v1
 // LINK WORLD: real data first. No DEMO cells or simulated mission in active UI.
 import {flyGoogle,startGoogleWorld} from './googleMaps.js';
 import {createClient} from '@supabase/supabase-js';
