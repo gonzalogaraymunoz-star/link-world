@@ -10,7 +10,7 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
 });
 const $=(s,root=document)=>root.querySelector(s);
 const safe=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const tables={businesses:'link_world_businesses',clients:'link_world_clients',products:'link_world_products',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity',conversion:'link_conversion_queue',dailyReports:'link_daily_intelligence_reports'};
+const tables={businesses:'link_world_businesses',clients:'link_world_clients',products:'link_world_products',responsibility:'link_world_responsibility_profiles',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity',conversion:'link_conversion_queue',dailyReports:'link_daily_intelligence_reports',financial:'link_world_financial_followup',rules:'link_rules',skills:'link_skills',skillCapabilities:'link_skill_capabilities'};
 const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],selected:new Set(),activePlaceId:'',loading:false,pendingDraft:null};
 const statuses={draft:'Borrador',needs_review:'Revisar',verified:'Verificado'};
 const short=id=>String(id||'').slice(0,8);
@@ -271,12 +271,17 @@ export async function readDirectorAppContext(scope='selected'){
     publicOnly?safeEmpty:db.from(tables.relations).select('id,source_business_id,target_business_id,relation_type,state,rationale').order('created_at',{ascending:false}).limit(14),
     publicOnly?safeEmpty:db.from(tables.activity).select('action,target_type,note,created_at').order('created_at',{ascending:false}).limit(8),
     publicOnly?safeEmpty:db.from(tables.conversion).select('id,source_type,source_id,title,source_status,due_at,conversion_level,conversion_label,priority_score,conversion_reason,recommended_action,source_updated_at').limit(12),
-    publicOnly?safeEmpty:db.from(tables.dailyReports).select('id,report_date,report_type,activity_summary,conversion_summary,metrics,conversion_counts,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).order('generated_at',{ascending:false}).limit(2)
+    publicOnly?safeEmpty:db.from(tables.dailyReports).select('id,report_date,report_type,activity_summary,conversion_summary,metrics,conversion_counts,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).order('generated_at',{ascending:false}).limit(2),
+    db.from(tables.responsibility).select('id,label,description,min_percent,max_percent,sort_order').order('sort_order',{ascending:true}).limit(12),
+    publicOnly?safeEmpty:db.from(tables.financial).select('business_id,business_name,open_transactions,missing_documents,open_closures,open_financial_tasks,pending_income,pending_expense,last_financial_movement_at').limit(15),
+    publicOnly?safeEmpty:db.from(tables.rules).select('name,scope,severity,rule_text').eq('active',true).order('severity',{ascending:false}).limit(20),
+    publicOnly?safeEmpty:db.from(tables.skills).select('id,slug,name,description,status,current_version').eq('status','active').limit(20),
+    publicOnly?safeEmpty:db.from(tables.skillCapabilities).select('skill_id,capability_key,label,description,weight').order('weight',{ascending:false}).limit(30)
   ];
   const responses=await Promise.all(queries);
-  const problem=responses.find(r=>r.error);
+  const problem=responses.slice(0,7).find(r=>r.error);
   if(problem)throw new Error('No se pudieron leer los datos de LINK WORLD: '+problem.error.message);
-  const [clients,products,requests,relations,activity,conversion,dailyReports]=responses.map(r=>r.data||[]);
+  const [clients,products,requests,relations,activity,conversion,dailyReports,responsibility,financial,rules,skills,skillCapabilities]=responses.map(r=>r.data||[]);
   const detailed=isMember&&scope==='selected'&&chosen.length>0;
   const simplified=businesses.map(b=>({
     id:b.id,name:b.name,sector:b.sector,city:b.city,country:b.country,
@@ -312,6 +317,28 @@ export async function readDirectorAppContext(scope='selected'){
       blockers:Array.isArray(x.blockers)?x.blockers.slice(0,5):x.blockers,
       generated_at:x.generated_at
     })),
+    responsibility_profiles:responsibility.map(x=>({
+      id:x.id,label:x.label,description:(x.description||'').slice(0,160),
+      min_percent:x.min_percent,max_percent:x.max_percent
+    })),
+    financial_followup:financial.map(x=>({
+      business_id:x.business_id,business_name:x.business_name,
+      open_transactions:x.open_transactions,missing_documents:x.missing_documents,
+      open_closures:x.open_closures,open_financial_tasks:x.open_financial_tasks,
+      pending_income:x.pending_income,pending_expense:x.pending_expense,
+      last_financial_movement_at:x.last_financial_movement_at
+    })),
+    governance_rules:rules.map(x=>({
+      name:x.name,scope:x.scope,severity:x.severity,rule_text:(x.rule_text||'').slice(0,220)
+    })),
+    skill_registry:skills.map(x=>({
+      id:x.id,slug:x.slug,name:x.name,status:x.status,current_version:x.current_version,
+      description:(x.description||'').slice(0,180)
+    })),
+    skill_capabilities:skillCapabilities.map(x=>({
+      skill_id:x.skill_id,capability_key:x.capability_key,label:x.label,
+      description:(x.description||'').slice(0,180),weight:x.weight
+    })),
     truncated:false,
     note:publicOnly?
       'Modo abierto: solo negocios, clientes y productos marcados para lectura pública. Escritura, solicitudes, relaciones y actividad privada no se incluyen.':
@@ -320,6 +347,11 @@ export async function readDirectorAppContext(scope='selected'){
   while(JSON.stringify(payload).length>8200){
     payload.truncated=true;
     if(payload.activity.length)payload.activity.pop();
+    else if(payload.governance_rules.length>8)payload.governance_rules.pop();
+    else if(payload.skill_registry.length>6)payload.skill_registry.pop();
+    else if(payload.skill_capabilities.length>8)payload.skill_capabilities.pop();
+    else if(payload.financial_followup.length>5)payload.financial_followup.pop();
+    else if(payload.responsibility_profiles.length>6)payload.responsibility_profiles.pop();
     else if(payload.conversion_intelligence.length>5)payload.conversion_intelligence.pop();
     else if(payload.daily_intelligence_reports.length>1)payload.daily_intelligence_reports.pop();
     else if(payload.relations.length>3)payload.relations.pop();
