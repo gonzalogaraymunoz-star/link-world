@@ -150,3 +150,37 @@
  .bw-finance-row{grid-template-columns:1fr}
  .bw-finance-row-side{text-align:left;justify-items:start}
 }
+
+
+/* TaxiHotel · private live operations projection */
+.bw-taxi-ops-section{overflow:hidden}
+.bw-taxi-ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 14px}
+.bw-taxi-ops-metrics>div{display:grid;gap:4px;padding:13px;border:1px solid #e0e8dc;background:#f5f8f2;border-radius:11px}
+.bw-taxi-ops-metrics strong{font:600 20px 'Space Grotesk',system-ui,sans-serif;color:#34513a}
+.bw-taxi-ops-metrics span{font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#7d8e7e}
+.bw-taxi-ops-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.bw-taxi-op-card{display:grid;gap:11px;padding:14px;border:1px solid #dfe7db;background:#fbfcfa;border-radius:14px}
+.bw-taxi-op-card.status-requested{border-left:4px solid #7f8f7f}
+.bw-taxi-op-card.status-in_progress{border-left:4px solid #365d3f}
+.bw-taxi-op-card.status-completed{opacity:.78}
+.bw-taxi-op-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.bw-taxi-op-head h3{margin:3px 0 0;font-size:15px;color:#304c36}
+.bw-taxi-status{font-size:8px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-radius:999px;background:#edf3e9;color:#55705a;white-space:nowrap}
+.bw-taxi-op-main{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bw-taxi-op-main>div{display:grid;gap:4px;padding:9px;background:#f4f7f1;border-radius:9px}
+.bw-taxi-op-main small{font-size:7px;text-transform:uppercase;letter-spacing:.06em;color:#829083}
+.bw-taxi-op-main strong{font-size:10px;color:#405b44}
+.bw-taxi-legs{display:grid;gap:6px}
+.bw-taxi-leg{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 9px;border-top:1px solid #e7ece4}
+.bw-taxi-leg:first-child{border-top:0}
+.bw-taxi-leg b{font-size:9px;color:#39543f}
+.bw-taxi-leg small{font-size:9px;color:#798779}
+.bw-taxi-leg em{font-size:8px;font-style:normal;color:#56705a}
+.bw-taxi-director{justify-self:start;border:0;background:transparent;color:#4f6e54;font-size:9px;font-weight:700;padding:4px 0;cursor:pointer}
+@media(max-width:900px){.bw-taxi-ops-grid{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .bw-taxi-ops-metrics{grid-template-columns:1fr 1fr}
+ .bw-taxi-op-main{grid-template-columns:1fr}
+ .bw-taxi-leg{grid-template-columns:48px 1fr}
+ .bw-taxi-leg em{grid-column:2}
+}

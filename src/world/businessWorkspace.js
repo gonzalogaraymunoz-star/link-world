@@ -17,7 +17,7 @@ const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,financeTransactions:[],financeDocuments:[],busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -60,6 +60,13 @@ async function loadBusiness(businessId){
   state.products=p.data||[];
   state.profiles=r.data||[];
   state.houseStatus=s?.error?null:(s?.data||null);
+  state.taxiHotelOperations=[];
+  state.taxiHotelOperationsError=null;
+  if(state.canWrite&&state.business?.slug==='taxi-hotel'){
+    const {data:ops,error:opsError}=await db.rpc('link_world_taxi_hotel_operations',{p_limit:100});
+    if(opsError)state.taxiHotelOperationsError=opsError.message||String(opsError);
+    else state.taxiHotelOperations=Array.isArray(ops?.rows)?ops.rows:[];
+  }
   if(state.canWrite){
     const [tx,docs]=await Promise.all([
       db.from('link_world_transactions')
@@ -86,6 +93,68 @@ function businessMetrics(){
   const active=state.products.filter(x=>x.economic_state==='active'||x.stage==='active').length;
   const blocked=state.products.filter(x=>x.economic_state==='blocked').length;
   return {clients:state.clients.length,products:state.products.length,active,blocked};
+}
+const taxiStatusNames={
+  requested:'Solicitada',
+  availability_confirmed:'Disponibilidad confirmada',
+  awaiting_payment:'Esperando pago',
+  paid:'Pagada',
+  assigned:'Asignada',
+  in_progress:'En viaje',
+  completed:'Completada',
+  cancelled:'Cancelada',
+  no_show:'No show',
+  pending:'Pendiente',
+  scheduled:'Programado',
+  driver_assigned:'Conductor asignado',
+  en_route:'En camino',
+  arrived:'Llegó',
+  passenger_onboard:'Pasajero a bordo',
+  link_sent:'Link enviado',
+  failed:'Fallido',
+  refunded:'Reembolsado'
+};
+function taxiStatus(v){return taxiStatusNames[v]||String(v||'—').replaceAll('_',' ');}
+function taxiDateTime(v){
+  if(!v)return '—';
+  try{return new Intl.DateTimeFormat('es-CL',{timeZone:'America/Santiago',dateStyle:'medium',timeStyle:'short'}).format(new Date(v));}
+  catch{return String(v);}
+}
+function taxiHotelOperationsPanelMarkup(){
+  if(state.business?.slug!=='taxi-hotel')return '';
+  if(!state.canWrite){
+    return '<section class="bw-products-section bw-taxi-ops-section"><div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / PRIVADO</span><h2>TaxiHotel en tiempo real</h2><p>Reservas, tramos, asignaciones y pagos solo aparecen a miembros autenticados de LINK WORLD.</p></div><span class="bw-open-mode">Sesión LINK requerida</span></div></section>';
+  }
+  if(state.taxiHotelOperationsError){
+    return '<section class="bw-products-section bw-taxi-ops-section"><div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / ERROR DE LECTURA</span><h2>No pudimos leer el tablero</h2><p>'+safe(state.taxiHotelOperationsError)+'</p></div></div></section>';
+  }
+  const rows=Array.isArray(state.taxiHotelOperations)?state.taxiHotelOperations:[];
+  const requested=rows.filter(r=>r.reservation_status==='requested').length;
+  const running=rows.filter(r=>['availability_confirmed','awaiting_payment','paid','assigned','in_progress'].includes(r.reservation_status)).length;
+  const completed=rows.filter(r=>r.reservation_status==='completed').length;
+  const cards=rows.map(r=>{
+    const legs=Array.isArray(r.legs)?r.legs:[];
+    const assignments=Array.isArray(r.assignments)?r.assignments:[];
+    const payments=Array.isArray(r.payments)?r.payments:[];
+    const paid=payments.find(p=>p.status==='paid');
+    const payment=paid||payments[0]||null;
+    const assigned=assignments.filter(a=>a.status!=='cancelled');
+    const legHtml=legs.map(l=>'<span class="bw-taxi-leg"><b>'+safe(l.leg==='return'?'Vuelta':'Ida')+'</b><small>'+safe(taxiDateTime(l.scheduled_at))+'</small><em>'+safe(taxiStatus(l.status))+'</em></span>').join('');
+    const assignmentHtml=assigned.length?assigned.map(a=>'<span><b>'+safe(a.leg==='return'?'Vuelta':'Ida')+'</b>'+safe([a.vehicle_unit_ref,a.driver_name,taxiStatus(a.status)].filter(Boolean).join(' · '))+'</span>').join(''):'<span><b>Asignación</b>Pendiente</span>';
+    const paymentLabel=payment?taxiStatus(payment.status):'Sin pago registrado';
+    return '<article class="bw-taxi-op-card status-'+safe(r.reservation_status)+'">'+
+      '<div class="bw-taxi-op-head"><div><span class="bw-kicker">'+safe(r.reservation_code)+'</span><h3>'+safe(r.service_code)+' · '+safe(r.passenger_count)+' pax</h3></div><span class="bw-taxi-status">'+safe(taxiStatus(r.reservation_status))+'</span></div>'+
+      '<div class="bw-taxi-op-main"><div><small>Salida</small><strong>'+safe(taxiDateTime(r.outbound_at))+'</strong></div><div><small>Total</small><strong>'+money(r.quoted_total_clp,'CLP')+'</strong></div><div><small>Pago</small><strong>'+safe(paymentLabel)+'</strong></div></div>'+
+      '<div class="bw-taxi-legs">'+(legHtml||'<span class="bw-soft">Sin tramos generados.</span>')+'</div>'+
+      '<div class="bw-facts">'+assignmentHtml+'</div>'+
+      '<button class="bw-taxi-director" type="button" data-taxi-director="'+safe(r.reservation_code)+'">Gestionar con Director →</button>'+
+    '</article>';
+  }).join('');
+  return '<section class="bw-products-section bw-taxi-ops-section">'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / TAXI HOTEL</span><h2>Reservas vivas</h2><p>Lectura directa del núcleo operativo. Esta proyección no expone nombres, teléfonos, correos ni documentos de pasajeros.</p></div><span class="bw-open-mode">'+rows.length+' reservas visibles</span></div>'+
+    '<div class="bw-taxi-ops-metrics"><div><strong>'+rows.length+'</strong><span>En tablero</span></div><div><strong>'+requested+'</strong><span>Nuevas</span></div><div><strong>'+running+'</strong><span>En proceso</span></div><div><strong>'+completed+'</strong><span>Cerradas</span></div></div>'+
+    '<div class="bw-taxi-ops-grid">'+(cards||'<div class="bw-empty"><strong>No hay reservas todavía.</strong><span>La primera solicitud creada desde taxihotel.vercel.app aparecerá aquí inmediatamente después de sincronizar.</span></div>')+'</div>'+
+  '</section>';
 }
 function financePanelMarkup(){
   if(!state.canWrite){
@@ -304,6 +373,7 @@ function renderOperationalHouseBusinessCell(){
       '<article class="bw-panel"><span class="bw-kicker">FLUJO</span><h2>'+safe(flowTitle)+'</h2><div class="bw-cycle">'+flow.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
       '<article class="bw-panel span-2"><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta esta casa al ecosistema</h2><div class="bw-capabilities">'+capabilities.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
     '</section>',
+    taxiHotelOperationsPanelMarkup(),
     '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>'+safe(counterpartyTitle)+'</h2><p>Son proyecciones de identidad desde '+safe(counterpartySource)+'. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Las relaciones deben existir en la fuente o contar con evidencia antes de incorporarse a LINK WORLD.</span></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">CATÁLOGO / PROYECCIÓN</span><h2>'+safe(network.active_catalog_products??0)+' '+safe(productTitle.toLowerCase())+' sin duplicarlos</h2><p>El catálogo canónico sigue en '+safe(sourceName)+' ('+safe(catalogSource)+'). LINK WORLD observa identidad y capacidad de distribución; no mantiene una segunda copia de precios, reservas o estados transaccionales.</p></div></div><div class="bw-capabilities">'+Object.entries(categories).map(([k,v])=>'<div><b>'+safe(v)+'</b><span>'+safe(String(k).replaceAll('_',' '))+'</span></div>').join('')+'</div></section>'
   ].join('');
@@ -317,6 +387,12 @@ function renderOperationalHouseBusinessCell(){
   });
   $('#bw-open-sales')?.addEventListener('click',()=>{if(surfaces.sales_app)window.open(surfaces.sales_app,'_blank','noopener,noreferrer');});
   $('#bw-open-ops')?.addEventListener('click',()=>{if(surfaces.operations_app)window.open(surfaces.operations_app,'_blank','noopener,noreferrer');});
+  root.querySelectorAll('[data-taxi-director]').forEach(button=>button.addEventListener('click',()=>{
+    const code=button.dataset.taxiDirector||'';
+    const prompt='Gestiona la reserva '+code+' de TAXI HOTEL usando el núcleo operativo vigente. Revisa estado de reserva, tramos, asignación y pago antes de proponer o ejecutar cambios. No copies PII a LINK WORLD y confirma explícitamente cualquier cambio transaccional.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  }));
   root.querySelectorAll('[data-client]').forEach(b=>b.addEventListener('click',()=>openClient(b.dataset.client)));
 }
 
