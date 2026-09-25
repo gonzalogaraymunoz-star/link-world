@@ -1,0 +1,227 @@
+/* LINK WORLD · Territory responsive layer
+   Loaded last: only presentation/orientation behavior for the map workspace. */
+
+.lw-territory{position:relative;}
+
+/* Portrait gate: preserves a desktop-like spatial workspace on touch devices. */
+.lw-orientation-gate{
+  position:absolute;
+  inset:0;
+  z-index:80;
+  display:grid;
+  place-items:center;
+  padding:
+    max(28px,env(safe-area-inset-top))
+    max(22px,env(safe-area-inset-right))
+    max(28px,env(safe-area-inset-bottom))
+    max(22px,env(safe-area-inset-left));
+  background:rgba(255,255,255,.985);
+  color:#111;
+  backdrop-filter:blur(18px);
+}
+.lw-orientation-card{
+  width:min(440px,100%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+.lw-orientation-device{
+  position:relative;
+  width:86px;
+  height:54px;
+  margin:0 0 24px;
+  border:1.5px solid #111;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 14px 38px rgba(0,0,0,.08);
+  transform:rotate(-2deg);
+}
+.lw-orientation-device::before{
+  content:'';
+  position:absolute;
+  right:6px;
+  top:50%;
+  width:3px;
+  height:14px;
+  border-radius:3px;
+  background:#111;
+  transform:translateY(-50%);
+}
+.lw-orientation-device::after{
+  content:'';
+  position:absolute;
+  left:50%;
+  bottom:-15px;
+  width:28px;
+  height:1px;
+  background:#111;
+  transform:translateX(-50%);
+}
+.lw-orientation-card .lw-kicker{margin-top:5px;font-size:8px;color:#777;}
+.lw-orientation-card h2{
+  margin:11px 0 9px;
+  color:#111;
+  font:500 clamp(28px,8vw,44px)/1.02 'Space Grotesk',system-ui,sans-serif;
+  letter-spacing:-.055em;
+}
+.lw-orientation-card p{
+  max-width:385px;
+  margin:0;
+  color:#73736f;
+  font-size:12px;
+  line-height:1.65;
+}
+.lw-orientation-actions{
+  display:flex;
+  flex-direction:column;
+  width:min(310px,100%);
+  gap:7px;
+  margin-top:22px;
+}
+#lw-landscape-mode,.lw-orientation-skip{
+  width:100%;
+  min-height:42px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+}
+#lw-landscape-mode{border:1px solid #111;background:#111;color:#fff;padding:11px 16px;}
+#lw-landscape-mode:hover{background:#2b2b2b;}
+.lw-orientation-skip{border:1px solid transparent;background:transparent;color:#777;padding:9px 14px;}
+.lw-orientation-skip:hover{color:#111;background:#f3f3f1;border-color:#e6e6e2;}
+#lw-orientation-note{display:block;max-width:340px;margin-top:11px;color:#999;font-size:9px;line-height:1.5;}
+
+/* Landscape touch devices become a compact desktop-like territory console. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:900px){
+  .lw-app-header{
+    height:54px!important;
+    min-height:54px!important;
+    display:flex!important;
+    grid-template-columns:none!important;
+    grid-template-rows:none!important;
+    padding:
+      0 max(12px,env(safe-area-inset-right))
+      0 max(12px,env(safe-area-inset-left))!important;
+    gap:10px!important;
+  }
+  .lw-app-brand{gap:8px!important;}
+  .lw-brand-symbol{width:30px!important;height:30px!important;}
+  .lw-app-brand strong{font-size:10px!important;}
+  .lw-app-brand small{display:none!important;}
+  .lw-app-state{display:none!important;}
+  .lw-app-nav{
+    grid-column:auto!important;
+    grid-row:auto!important;
+    justify-content:flex-end!important;
+    margin-left:auto!important;
+    overflow:visible!important;
+    gap:3px!important;
+  }
+  .lw-app-nav button{
+    flex:0 0 auto!important;
+    padding:7px 11px!important;
+    font-size:9px!important;
+  }
+
+  .lw-landscape-board .lw-territory-top{
+    flex:0 0 auto!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+    min-height:55px;
+    padding:
+      6px max(10px,env(safe-area-inset-right))
+      6px max(10px,env(safe-area-inset-left))!important;
+  }
+  .lw-landscape-board .lw-territory-top>div:first-child{min-width:0;}
+  .lw-landscape-board .lw-kicker{font-size:7px!important;letter-spacing:.14em!important;}
+  .lw-landscape-board .lw-territory-top h1{
+    margin:2px 0 0!important;
+    font-size:16px!important;
+    line-height:1.05!important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .lw-landscape-board .lw-territory-top p{display:none!important;}
+  .lw-landscape-board .lw-map-locations{flex-wrap:nowrap!important;gap:4px!important;flex-shrink:0;}
+  .lw-landscape-board .lw-map-locations button{
+    padding:7px 9px!important;
+    font-size:8px!important;
+    white-space:nowrap;
+  }
+  .lw-landscape-board .lw-map-workspace{min-height:0!important;}
+  .lw-landscape-board .lw-map-workspace .google-search-panel{
+    top:8px!important;
+    left:max(8px,env(safe-area-inset-left))!important;
+    width:min(300px,38vw)!important;
+    max-height:calc(100% - 16px)!important;
+    padding:10px!important;
+    border-radius:12px!important;
+  }
+  .lw-landscape-board .google-search-title{font-size:8px!important;margin-bottom:8px!important;}
+  .lw-landscape-board .google-category-wrap{
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    gap:4px!important;
+    scrollbar-width:none;
+  }
+  .lw-landscape-board .google-category{flex:0 0 auto!important;padding:5px 7px!important;font-size:8px!important;}
+  .lw-landscape-board .google-text-form{gap:4px!important;margin-bottom:7px!important;}
+  .lw-landscape-board .google-text-fields input{padding:8px!important;font-size:9px!important;}
+  .lw-landscape-board .google-text-fields button{padding:0 8px!important;font-size:8px!important;}
+  .lw-landscape-board .google-search-btn{padding:8px!important;font-size:9px!important;}
+  .lw-landscape-board .google-feedback,.lw-landscape-board .google-powered{font-size:8px!important;}
+  .lw-landscape-board .google-results{max-height:110px!important;}
+  .lw-landscape-board .google-result{padding:7px!important;}
+  .lw-landscape-board .google-result strong{font-size:9px!important;}
+  .lw-landscape-board .google-result small{font-size:8px!important;}
+
+  .lw-landscape-board .lw-place-card{
+    top:8px!important;
+    right:max(8px,env(safe-area-inset-right))!important;
+    bottom:auto!important;
+    max-width:min(235px,30vw)!important;
+    padding:9px!important;
+    font-size:9px!important;
+  }
+  .lw-landscape-board .lw-place-card strong{font-size:11px!important;}
+  .lw-landscape-board .lw-map-foot{
+    flex:0 0 auto!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    padding:
+      5px max(9px,env(safe-area-inset-right))
+      calc(5px + env(safe-area-inset-bottom))
+      max(9px,env(safe-area-inset-left))!important;
+    gap:8px!important;
+    font-size:8px!important;
+    overflow:hidden!important;
+  }
+  .lw-landscape-board .lw-map-foot span{
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .lw-landscape-board .lw-map-foot #city-label{margin-left:auto;flex-shrink:0;}
+}
+
+/* Phone landscape: keep chrome extremely shallow so the map remains the main surface. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:520px){
+  .lw-app-header{height:46px!important;min-height:46px!important;}
+  .lw-brand-symbol{width:27px!important;height:27px!important;}
+  .lw-app-nav button{padding:6px 9px!important;font-size:8px!important;}
+  .lw-landscape-board .lw-territory-top{min-height:44px!important;padding-top:4px!important;padding-bottom:4px!important;}
+  .lw-landscape-board .lw-territory-top h1{font-size:13px!important;}
+  .lw-landscape-board .lw-map-locations button{padding:6px 8px!important;font-size:7px!important;}
+  .lw-landscape-board .lw-map-workspace .google-search-panel{width:min(270px,39vw)!important;}
+  .lw-landscape-board .lw-map-foot #places-status{display:none;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .lw-orientation-device{transform:none;}
+}

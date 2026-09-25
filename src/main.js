@@ -11,6 +11,7 @@ import './ai/chat.css';
 import './world/businessWorkspace.css';
 import './simple.css';
 import './brand.css';
+import './territory-responsive.css';
 
 const $=s=>document.querySelector(s);
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
@@ -31,11 +32,75 @@ $('#app').innerHTML=[
 "<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Panel de negocios</strong><small>Entrar a los negocios de LINK WORLD ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='director'><span>03</span><strong>Conversar con Director</strong><small>Trabajar sobre LINK WORLD ↗</small></button></section>",
 "<p class='lw-boundary'>Google Maps permite observar negocios externos. Solo los datos propios que registremos con autorización forman parte de LINK.</p>",
 "</section>",
-"<section id='lw-territory' class='lw-territory hidden'><div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / GOOGLE + LINK</span><h1>Nuestros negocios sobre el territorio real.</h1><p>Los negocios LINK vinculados aparecen automáticamente. Google completa datos en vivo; las búsquedas externas se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
+"<section id='lw-territory' class='lw-territory hidden'>",
+"<div id='lw-orientation-gate' class='lw-orientation-gate hidden' aria-live='polite'><div class='lw-orientation-card'><span class='lw-orientation-device' aria-hidden='true'></span><span class='lw-kicker'>TERRITORIO · MODO HORIZONTAL</span><h2>Gira tu dispositivo.</h2><p>Territorio es un tablero espacial. En teléfono o tablet funciona mejor en horizontal para conservar mapa, búsqueda y contexto como en el ordenador.</p><div class='lw-orientation-actions'><button id='lw-landscape-mode' type='button'>Activar modo horizontal</button><button id='lw-portrait-bypass' class='lw-orientation-skip' type='button'>Continuar en vertical</button></div><small id='lw-orientation-note'>Si el navegador no puede girar la pantalla automáticamente, gírala manualmente.</small></div></div>",
+"<div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / GOOGLE + LINK</span><h1>Nuestros negocios sobre el territorio real.</h1><p>Los negocios LINK vinculados aparecen automáticamente. Google completa datos en vivo; las búsquedas externas se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
 "<div class='workspace lw-map-workspace'><div id='cesiumContainer' aria-label='Mapa de Google'></div><div id='lw-place-card' class='lw-place-card hidden' role='status'></div><div class='notice'>Google Maps no muestra imágenes en vivo. Un resultado externo no es un negocio registrado en LINK.</div></div>",
 "<div class='lw-map-foot'><span id='imagery-status'>Google Maps · se abre al entrar en Territorio</span><span id='places-status'>Google Places · bajo demanda</span><span id='city-label'>SAN PEDRO DE ATACAMA · CHILE</span></div></section>",
 "</main></div>"
 ].join('');
+
+let territoryPortraitBypass=false;
+let territoryOrientationOwned=false;
+let territoryFullscreenOwned=false;
+
+function isPortableTerritoryDevice(){
+  const coarse=window.matchMedia?.('(pointer: coarse)').matches;
+  return Boolean(coarse&&Math.min(window.innerWidth,window.innerHeight)<=1100);
+}
+function isPortraitViewport(){
+  return window.innerHeight>window.innerWidth;
+}
+function syncTerritoryOrientation(){
+  const territory=$('#lw-territory'),gate=$('#lw-orientation-gate');
+  if(!territory||!gate)return;
+  const visible=!territory.classList.contains('hidden');
+  const portable=visible&&isPortableTerritoryDevice();
+  const portrait=portable&&isPortraitViewport();
+  if(portable&&!portrait)territoryPortraitBypass=false;
+  const gated=portrait&&!territoryPortraitBypass;
+  gate.classList.toggle('hidden',!gated);
+  territory.classList.toggle('lw-landscape-board',portable&&!portrait);
+  document.body.classList.toggle('lw-territory-portrait-gated',gated);
+}
+async function requestTerritoryLandscape(){
+  territoryPortraitBypass=false;
+  const note=$('#lw-orientation-note');
+  let locked=false;
+  try{
+    if(!document.fullscreenElement&&document.documentElement.requestFullscreen){
+      await document.documentElement.requestFullscreen({navigationUI:'hide'});
+      territoryFullscreenOwned=true;
+    }
+  }catch{}
+  try{
+    if(screen.orientation?.lock){
+      await screen.orientation.lock('landscape');
+      territoryOrientationOwned=true;
+      locked=true;
+    }
+  }catch{}
+  if(note){
+    note.textContent=locked
+      ?'Modo horizontal activo.'
+      :'Tu navegador no puede girar la pantalla automáticamente. Gira el dispositivo para entrar al Territorio.';
+  }
+  setTimeout(syncTerritoryOrientation,120);
+}
+function releaseTerritoryOrientation(){
+  if(territoryOrientationOwned){
+    try{screen.orientation?.unlock?.();}catch{}
+    territoryOrientationOwned=false;
+  }
+  if(territoryFullscreenOwned&&document.fullscreenElement){
+    try{
+      const result=document.exitFullscreen?.();
+      result?.catch?.(()=>{});
+    }catch{}
+  }
+  territoryFullscreenOwned=false;
+  document.body.classList.remove('lw-territory-portrait-gated');
+}
 
 async function loadOpenWorld(){
   $('#lw-data-state').textContent='Sincronizando LINK WORLD…';
@@ -64,9 +129,13 @@ function setView(next){
     return;
   }
   const territory=next==='territory';
+  const wasTerritory=!$('#lw-territory').classList.contains('hidden');
+  if(territory&&!wasTerritory)territoryPortraitBypass=false;
   document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
   $('#lw-businesses').classList.toggle('hidden',territory);
   $('#lw-territory').classList.toggle('hidden',!territory);
+  syncTerritoryOrientation();
+  if(!territory&&wasTerritory)releaseTerritoryOrientation();
   if(territory&&!state.map){
     state.map=true; // Google JS loads only on explicit territory visit.
     startGoogleWorld(()=>flyGoogle('atacama')).catch(()=>{
@@ -105,6 +174,12 @@ document.addEventListener('linkworld:director-state',event=>{
   document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===(open?'director':fallback)));
 });
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
+$('#lw-landscape-mode').addEventListener('click',requestTerritoryLandscape);
+$('#lw-portrait-bypass').addEventListener('click',()=>{territoryPortraitBypass=true;syncTerritoryOrientation();});
+window.addEventListener('resize',syncTerritoryOrientation,{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(syncTerritoryOrientation,60),{passive:true});
+screen.orientation?.addEventListener?.('change',()=>setTimeout(syncTerritoryOrientation,60));
+document.addEventListener('fullscreenchange',()=>setTimeout(syncTerritoryOrientation,60));
 $('#lw-open-bridge').addEventListener('click',()=>{$('#lw-real-businesses')?.scrollIntoView({behavior:'smooth',block:'center'});});
 $('#lw-sync').addEventListener('click',loadOpenWorld);
 $('#lw-new-business').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Quiero crear un nuevo negocio en LINK WORLD. Antes de registrarlo, pídeme nombre y si es físico o virtual. Si es físico, pídeme la dirección exacta y vincúlalo con Google Maps mediante Place ID; no cierres la ficha sin resolver su estado territorial.'}})));
