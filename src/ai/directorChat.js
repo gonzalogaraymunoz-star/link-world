@@ -25,7 +25,8 @@ const s={
   provider:PROVIDERS[stored.provider]?stored.provider:DEFAULT_PROVIDER,
   model:typeof stored.model==='string'&&stored.model.trim()?stored.model:DEFAULT_MODEL,
   endpoint:typeof stored.endpoint==='string'?stored.endpoint:'',
-  messages:[],history:[],lastStatus:'Sin conectar',context:null,activeModel:'',activeProvider:''
+  messages:[],history:[],lastStatus:'Sin conectar',context:null,activeModel:'',activeProvider:'',
+  sessionId:crypto.randomUUID(),turnIndex:0,lastArchiveId:null,archiveState:'Listo'
 };
 let getContext=()=>({});
 
@@ -49,6 +50,15 @@ function rememberConfig(){
   s.provider=p;s.model=m;s.endpoint=e;
   save(MODEL_KEY,{provider:p,model:m,endpoint:e});
   return true;
+}
+function archiveEnvelope(contextScope='none',contextBusinessCount=null){
+  s.turnIndex+=1;
+  return {
+    sessionId:s.sessionId,
+    turnIndex:s.turnIndex,
+    contextScope,
+    contextBusinessCount
+  };
 }
 function currentPayload(extra={}){
   return {
@@ -87,6 +97,12 @@ function refreshDirectorMeta(){
   }
   const saveState=$('#lw-save-state');
   if(saveState)saveState.textContent=$('#lw-save')?.checked?'Registro local activo':'No se guarda';
+  const archiveState=$('#lw-archive-state');
+  if(archiveState){
+    archiveState.textContent=s.archiveState==='saved'?(s.lastArchiveId?'Guardado · '+s.lastArchiveId.slice(0,8):'Guardado'):
+      s.archiveState==='failed'?'Error de archivo':'Activo';
+    archiveState.dataset.kind=s.archiveState;
+  }
 }
 function status(text,kind='idle'){
   s.lastStatus=text;
@@ -190,18 +206,24 @@ async function verifyConnection(){
   try{
     const r=await fetch('/api/director',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(currentPayload({action:'check'}))
+      body:JSON.stringify(currentPayload({action:'check',archive:archiveEnvelope('connection_check',null)}))
     });
     const data=await r.json().catch(()=>({error:'El servidor no devolvió una respuesta válida.'}));
-    if(!r.ok)throw Error(data.error||'La prueba falló.');
+    if(!r.ok){
+      const err=Error(data.error||'La prueba falló.');
+      err.archiveStatus=data.archiveStatus;err.archiveId=data.archiveId;
+      throw err;
+    }
+    s.lastArchiveId=data.archiveId||null;s.archiveState=data.archiveStatus||'failed';
     s.keyChecked=true;s.activeProvider=data.providerLabel||providerInfo().label;s.activeModel=data.model||model();
     status('Conectado · '+s.activeProvider,'ok');
     feedback('Conexión lista. El modelo respondió. Esta prueba puede haber consumido una cantidad mínima de cuota.');
     $('#lw-connect-note').textContent='Conexión probada con '+s.activeProvider+' · '+s.activeModel+'. La API key no se guarda.';
     setSettings(false);
   }catch(e){
+    if(e.archiveStatus){s.archiveState=e.archiveStatus;s.lastArchiveId=e.archiveId||null;}
     s.keyChecked=false;status('Conexión fallida','error');
-    feedback(e.message||'No fue posible probar el proveedor.',true);
+    feedback((e.message||'No fue posible probar el proveedor.')+(s.archiveState==='failed'?' · No se pudo archivar esta intervención.':''),true);
   }finally{
     s.checking=false;$('#lw-verify').disabled=false;refreshDirectorMeta();
   }
@@ -226,10 +248,12 @@ async function send(){
       demoSnapshot:(context.demoSnapshot||'').slice(0,3200),
       appDataStatus:'Datos LINK no compartidos con el proveedor de IA.'
     };
+    let archiveScope='none',archiveBusinessCount=null;
     if($('#lw-private').checked){
       feedback('Leyendo el contexto autorizado de LINK…');
       const scope=$('#lw-scope').value;
       const result=await readDirectorAppContext(scope);
+      archiveScope=scope;archiveBusinessCount=result.count;
       payload.approvedAppSnapshot=result.snapshot;
       payload.appDataStatus='LINK autorizado: '+result.count+' negocios; '+result.scope+(result.truncated?'; snapshot recortado por límite':'');
     }
@@ -237,11 +261,17 @@ async function send(){
     const response=await fetch('/api/director',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(currentPayload({
-        action:'chat',prompt,messages:previous,context:payload
+        action:'chat',prompt,messages:previous,context:payload,
+        archive:archiveEnvelope(archiveScope,archiveBusinessCount)
       }))
     });
     const answer=await response.json().catch(()=>({error:'El servidor no devolvió una respuesta interpretable.'}));
-    if(!response.ok)throw Error(answer.error||'No se pudo consultar el modelo.');
+    if(!response.ok){
+      const err=Error(answer.error||'No se pudo consultar el modelo.');
+      err.archiveStatus=answer.archiveStatus;err.archiveId=answer.archiveId;
+      throw err;
+    }
+    s.lastArchiveId=answer.archiveId||null;s.archiveState=answer.archiveStatus||'failed';
     typing.text=answer.answer;typing.pending=false;
     typing.model=answer.model||model();typing.provider=answer.providerLabel||providerInfo().label;
     typing.tokens=answer.usage?.outputTokens||0;
@@ -250,8 +280,10 @@ async function send(){
     $('#lw-connect-note').textContent='Última respuesta: '+typing.provider+' · '+typing.model+'. Ninguna operación real se ejecutó.';
     if($('#lw-save').checked)logEntry({prompt,answer:answer.answer,model:typing.model,provider:typing.provider});
   }catch(e){
+    if(e.archiveStatus){s.archiveState=e.archiveStatus;s.lastArchiveId=e.archiveId||null;}
     typing.role='error';typing.pending=false;
-    typing.text=(e.message||'No se recibió respuesta.')+'\n\nLINK WORLD no cambió automáticamente de proveedor ni de modelo.';
+    typing.text=(e.message||'No se recibió respuesta.')+'\n\nLINK WORLD no cambió automáticamente de proveedor ni de modelo.'+
+      (s.archiveState==='failed'?'\n\nAdvertencia: esta intervención no pudo guardarse en el archivo central.':'');
     $('#lw-composer').value=prompt;
     status('Consulta fallida · revisa proveedor','warn');
     feedback(e.message||'No se recibió respuesta.',true);
@@ -299,9 +331,9 @@ function render(){
         '<footer id="lw-compose" class="lw-compose"><div class="lw-compose-label"><span>Habla con el Director</span><small>Enter para enviar · Shift + Enter para salto de línea</small></div><div class="lw-composer-row"><textarea id="lw-composer" maxlength="3500" rows="3" aria-label="Escribe tu mensaje al Director" placeholder="Ej: revisa LINK Cupones y dime qué sabemos, qué falta y cuál debería ser el siguiente paso…"></textarea><button id="lw-send" class="lw-primary" type="button" aria-label="Enviar mensaje">↑</button></div><div id="lw-feedback" class="lw-feedback hidden" role="status"></div></footer>',
       '</section>',
       '<aside class="lw-director-rail lw-director-context">',
-        '<section class="lw-rail-card"><span class="lw-rail-kicker">ESTADO</span><div class="lw-meta-list"><div><span>Proveedor</span><strong id="lw-provider-state">—</strong></div><div><span>Conexión</span><strong id="lw-key-state">No conectada</strong></div><div><span>Modelo</span><strong id="lw-model-state">—</strong></div><div><span>Contexto LINK</span><strong id="lw-context-state">No compartido</strong></div><div><span>Memoria local</span><strong id="lw-save-state">No se guarda</strong></div></div></section>',
+        '<section class="lw-rail-card"><span class="lw-rail-kicker">ESTADO</span><div class="lw-meta-list"><div><span>Proveedor</span><strong id="lw-provider-state">—</strong></div><div><span>Conexión</span><strong id="lw-key-state">No conectada</strong></div><div><span>Modelo</span><strong id="lw-model-state">—</strong></div><div><span>Contexto LINK</span><strong id="lw-context-state">No compartido</strong></div><div><span>Memoria local</span><strong id="lw-save-state">No se guarda</strong></div><div><span>Archivo IA</span><strong id="lw-archive-state">Activo</strong></div></div></section>',
         '<section class="lw-rail-card"><span class="lw-rail-kicker">CONTEXTO QUE VERÁ</span><label class="lw-context-toggle"><input type="checkbox" id="lw-private"><span><strong>Incluir datos de LINK</strong><small>Actívalo solo cuando quieras compartir contexto real autorizado con el proveedor seleccionado.</small></span></label><label class="lw-scope-label" for="lw-scope">ALCANCE</label><select id="lw-scope" aria-label="Alcance de investigación"><option value="selected">Selección resumida · hasta 3 negocios</option><option value="all">Resumen global · hasta 15 negocios</option></select></section>',
-        '<section class="lw-rail-card"><span class="lw-rail-kicker">FUENTES</span><div class="lw-source-list"><div><i></i><span><strong>Conversación</strong><small>Disponible durante esta sesión.</small></span></div><div><i></i><span><strong>LINK WORLD</strong><small>Solo cuando autorizas datos.</small></span></div><div><i></i><span><strong>Proveedor IA</strong><small>Solo el proveedor/modelo que configuras.</small></span></div><div><i></i><span><strong>Google</strong><small>Manual. Nunca se consulta en silencio.</small></span></div></div></section>',
+        '<section class="lw-rail-card"><span class="lw-rail-kicker">FUENTES</span><div class="lw-source-list"><div><i></i><span><strong>Conversación</strong><small>Disponible durante esta sesión.</small></span></div><div><i></i><span><strong>LINK WORLD</strong><small>Solo cuando autorizas datos.</small></span></div><div><i></i><span><strong>Proveedor IA</strong><small>Solo el proveedor/modelo que configuras.</small></span></div><div><i></i><span><strong>Archivo IA</strong><small>Cada intervención se guarda en Supabase para auditoría y aprendizaje.</small></span></div><div><i></i><span><strong>Google</strong><small>Manual. Nunca se consulta en silencio.</small></span></div></div></section>',
         '<section class="lw-rail-card lw-rail-actions"><span class="lw-rail-kicker">HERRAMIENTAS</span><button id="lw-settings-btn" type="button" aria-expanded="false">Proveedor, modelo y API <span>→</span></button><button id="lw-log-btn" type="button" aria-pressed="false">Registro local <span>→</span></button><button id="lw-google" type="button">Abrir territorio / Google <span>→</span></button><label class="lw-save-toggle"><input type="checkbox" id="lw-save"><span>Guardar respuestas en registro local</span></label></section>',
         '<section id="lw-settings" class="lw-settings hidden"><div class="lw-settings-head"><div><span class="lw-rail-kicker">CONEXIÓN IA</span><strong>Proveedor y modelo</strong><small>La API key vive solo en esta pestaña. LINK WORLD no la guarda.</small></div><button id="lw-settings-close" type="button" aria-label="Cerrar configuración">×</button></div>',
           '<label for="lw-provider">PROVEEDOR</label><select id="lw-provider"><option value="openrouter">OpenRouter</option><option value="groq">Groq</option><option value="nvidia">NVIDIA NIM</option><option value="custom">Otro · OpenAI-compatible</option></select>',
@@ -344,7 +376,8 @@ function render(){
   });
   $('#lw-new').addEventListener('click',()=>{
     if(s.messages.length&&!confirm('¿Comenzar otra conversación? Exporta la actual si quieres conservarla.'))return;
-    s.messages=[];renderMessages();renderWelcome();feedback('Nueva conversación. La configuración del proveedor se conserva; la API key no se guarda al recargar.');
+    s.messages=[];s.sessionId=crypto.randomUUID();s.turnIndex=0;s.lastArchiveId=null;s.archiveState='Listo';
+    renderMessages();renderWelcome();feedback('Nueva conversación. Se abrió una nueva sesión de archivo. La configuración del proveedor se conserva; la API key no se guarda al recargar.');
   });
   $('#lw-export-chat').addEventListener('click',exportConversation);
   $('#lw-verify').addEventListener('click',verifyConnection);
