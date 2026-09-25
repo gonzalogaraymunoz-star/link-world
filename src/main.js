@@ -8,7 +8,8 @@ import './style.css';
 import './world/bridge.css';
 import './ai/chat.css';
 import './world/businessWorkspace.css';
-import './simple.css';\nimport './brand.css';
+import './simple.css';
+import './brand.css';
 
 const $=s=>document.querySelector(s);
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
