@@ -41,7 +41,7 @@ function notice(text,error=false){
 async function loadBusiness(businessId){
   await detectWriteAccess();
   const [b,c,p,r]=await Promise.all([
-    db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
+    db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
     db.from('link_world_clients').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_products').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_responsibility_profiles').select('*').order('sort_order',{ascending:true})
@@ -122,6 +122,8 @@ function renderClientBusinessCell(){
   const branches=Array.isArray(f.product_branches)&&f.product_branches.length?f.product_branches:fallback;
   const active=branches.filter(p=>p.status==='active');
   const commitments=branches.flatMap(p=>Array.isArray(p.commitments)?p.commitments:[]);
+  const territory=f.territory||{};
+  const territoryLinked=Boolean(state.business.google_place_id);
   const root=$('#bw-content');
   const branchCard=p=>{
     const perSession=p.billing_model==='per_session';
@@ -147,6 +149,7 @@ function renderClientBusinessCell(){
   root.innerHTML=[
     '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
+    '<section class="bw-grid"><article class="bw-panel span-2"><span class="bw-kicker">TERRITORIO</span><h2>'+(territoryLinked?'Vinculado a Google Maps':'Sin ubicación territorial')+'</h2><p>'+(territoryLinked?safe(territory.address_input||'Place ID vinculado. Los datos de Google se consultan en vivo.'):'Para un negocio físico, LINK WORLD debe pedir una dirección y resolver su Place ID antes de marcarlo en el mapa.')+'</p><div class="bw-facts">'+(territoryLinked?'<span><b>Place ID</b>'+safe(state.business.google_place_id)+'</span><span><b>Fuente</b>Google Maps en vivo</span>':'<span><b>Estado</b>Pendiente de dirección</span>')+'</div><button id="bw-territory-action" type="button">'+(territoryLinked?'Ver en Territorio':'Definir dirección')+'</button></article></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
@@ -155,6 +158,16 @@ function renderClientBusinessCell(){
     const prompt='Revisa la ficha completa de '+state.business.name+' en LINK WORLD: productos vendidos, compromisos, jornadas, evidencias, boletas, pagos y siguiente acción. No inventes pagos ni cierres.';
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  });
+  $('#bw-territory-action')?.addEventListener('click',()=>{
+    const id=state.business.id,name=state.business.name;
+    if(territoryLinked){
+      close();
+      document.dispatchEvent(new CustomEvent('linkworld:open-territory-business',{detail:{id}}));
+    }else{
+      close();
+      document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Necesito ubicar '+name+' en Territorio. Pregúntame si es un negocio físico o virtual. Si es físico, pídeme la dirección exacta, busca la coincidencia correcta en Google Maps y guarda su Place ID antes de cerrar la ficha.'}}));
+    }
   });
 }
 
@@ -167,6 +180,8 @@ function renderBusiness(){
   const caps=Array.isArray(f.capabilities)?f.capabilities:[];
   const cycle=Array.isArray(f.cycle)?f.cycle:['Detectar','Conversar','Acordar','Activar','Registrar','Aprender','Expandir'];
   const rule=f.economic_rule||{};
+  const territory=f.territory||{};
+  const territoryLinked=Boolean(state.business.google_place_id);
   const root=$('#bw-content');
   root.innerHTML=[
     '<section class="bw-business-head">',
@@ -182,6 +197,7 @@ function renderBusiness(){
       '<article class="bw-panel span-2"><div class="bw-panel-head"><div><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta al ecosistema</h2></div></div><div class="bw-capabilities">'+caps.map((x,i)=>'<div><b>0'+(i+1)+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
       '<article class="bw-panel"><span class="bw-kicker">REGLA ECONÓMICA</span><h2>Responsabilidad → porcentaje</h2><p>'+safe(rule.principle||'Cada producto define su economía según la responsabilidad real de LINK.')+'</p><div class="bw-profiles">'+state.profiles.map(p=>'<div><strong>'+safe(p.label)+'</strong><span>'+safe(p.min_percent)+'%'+(Number(p.max_percent)!==Number(p.min_percent)?'–'+safe(p.max_percent)+'%':'')+'</span><small>'+safe(p.description||'')+'</small></div>').join('')+'</div></article>',
       '<article class="bw-panel"><span class="bw-kicker">CICLO</span><h2>Cómo avanza</h2><div class="bw-cycle">'+cycle.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
+      '<article class="bw-panel span-2"><span class="bw-kicker">TERRITORIO</span><h2>'+(territoryLinked?'Vinculado a Google Maps':'Sin ubicación territorial')+'</h2><p>'+(territoryLinked?safe(territory.address_input||'Place ID vinculado. Google completa la información al abrir Territorio.'):'Define si este negocio es físico o virtual. Si es físico, necesitamos dirección exacta + Place ID.')+'</p><button id="bw-territory-action" type="button">'+(territoryLinked?'Ver en Territorio':'Definir dirección')+'</button></article>',
     '</section>',
     '<section class="bw-clients-section">',
       '<div class="bw-section-head"><div><span class="bw-kicker">ESCALA / CLIENTES</span><h2>Convenios y productos</h2><p>Cada cliente tiene su propia ficha y sus productos. El crecimiento se mide desde aquí.</p></div>'+(state.canWrite?'<button id="bw-add-client" class="bw-primary" type="button">+ Nuevo cliente</button>':'<span class="bw-open-mode">Modo abierto · cambios desde ChatGPT</span>')+'</div>',
@@ -198,6 +214,16 @@ function renderBusiness(){
     const prompt='Analiza '+state.business.name+' usando solo los datos autorizados de LINK WORLD. Distingue hechos, decisiones pendientes y próximos pasos.';
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  });
+  $('#bw-territory-action')?.addEventListener('click',()=>{
+    const id=state.business.id,name=state.business.name;
+    if(territoryLinked){
+      close();
+      document.dispatchEvent(new CustomEvent('linkworld:open-territory-business',{detail:{id}}));
+    }else{
+      close();
+      document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Quiero resolver el territorio de '+name+'. Pregúntame si es físico o virtual. Si es físico, pídeme la dirección exacta y vincúlalo a la coincidencia correcta de Google Maps mediante Place ID.'}}));
+    }
   });
   if(state.canWrite){
     $('#bw-add-client')?.addEventListener('click',()=>$('#bw-client-form').classList.remove('hidden'));
