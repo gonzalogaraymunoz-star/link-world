@@ -5,7 +5,8 @@ La experiencia principal ya no carga misiones, células ni relaciones de demostr
 
 [Aplicación](https://link-world-delta.vercel.app/) ·
 [Habilidad LINK WORLD](.agents/skills/link-world/SKILL.md) ·
-[Protocolo ChatGPT ↔ app](docs/LINK_WORLD_BRIDGE_PROTOCOL.md)
+[Protocolo ChatGPT ↔ app](docs/LINK_WORLD_BRIDGE_PROTOCOL.md) ·
+[Protocolo de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
 
 ## Tres espacios
 
@@ -20,11 +21,12 @@ espacio. La búsqueda de negocios es manual y conserva límites locales
 consulta. Esos límites NO son topes globales de facturación. Google Places
 no se importa masivamente ni se convierte automáticamente en negocio LINK.
 
-**Director IA** — conversación con OpenRouter, modelo gratuito
-\`nvidia/nemotron-3-ultra-550b-a55b:free\` por defecto. No altera datos ni
-hace búsquedas Google automáticamente. El usuario decide si comparte una
-instantánea acotada de datos LINK autorizados para esa consulta.
-No hay fallback a modelos pagados ni reintentos automáticos.
+**Director IA** — sala de inteligencia con proveedor y modelo configurables.
+Incluye presets para OpenRouter, Groq y NVIDIA NIM, más un endpoint público
+OpenAI-compatible personalizado. No altera datos ni hace búsquedas Google
+automáticamente. El usuario decide si comparte una instantánea acotada de
+datos LINK autorizados para esa consulta. No existe fallback automático:
+LINK usa exactamente el proveedor y modelo elegidos.
 
 ## Primer paso real
 
@@ -51,12 +53,14 @@ forman parte de la interfaz activa**. Rama de respaldo:
 
 La clave web de Google Maps debe estar restringida al dominio y a Maps
 JavaScript/Places API (New). Una clave de navegador es visible técnicamente
-en el navegador, aunque se guarde solo localmente. La clave privada
-OpenRouter no se guarda en GitHub ni localStorage.
+en el navegador, aunque se guarde solo localmente. Las claves privadas de proveedores IA no se guardan en GitHub, Supabase ni
+localStorage. El proveedor/modelo/endpoint personalizado sí pueden recordarse
+localmente sin credenciales.
 
-OpenRouter, Google Maps, Supabase y Vercel tienen cuotas independientes.
-La app no puede prometer un gasto global cero si una cuenta externa admite
-facturación. No habilitar modelos pagados o recargas automáticas.
+Los proveedores IA, Google Maps, Supabase y Vercel tienen cuotas
+independientes. La app no promete gasto cero: si el usuario elige un modelo o
+proveedor con costo, se aplican las reglas de esa cuenta. LINK WORLD nunca
+cambia automáticamente a otro proveedor/modelo.
 
 \`\`\`bash
 npm install
@@ -72,5 +76,6 @@ No se requiere instalar Node en el equipo antiguo para abrir la web.
 - [LINK WORLD / habilidad principal](.agents/skills/link-world/SKILL.md)
 - [Protocolo del puente](docs/LINK_WORLD_BRIDGE_PROTOCOL.md)
 - [Director IA](docs/LINK_DIRECTOR_MANUAL.md)
+- [Protocolo abierto de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
 - [Google Maps / LINK Geo](.agents/skills/link-geo/SKILL.md)
 - [Manual histórico de interfaz](docs/INTERFAZ_ESTRATEGICA_V0.4.md)
