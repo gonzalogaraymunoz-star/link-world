@@ -14,7 +14,7 @@ const money=(n,currency='CLP')=>{
   catch{return '$'+Math.round(x).toLocaleString('es-CL');}
 };
 const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',active:'Activar',recorded:'Registrar',learning:'Aprender',expanding:'Expandir',paused:'Pausado',closed:'Cerrado'};
-const visibleColor=(visual={})=>visual&&visual.color_visible===true&&/^#[0-9a-f]{6}$/i.test(visual.assigned_color||'')?visual.assigned_color:null;
+const resolveEntityColor=(visual={})=>visual&&visual.color_visible===true&&/^#[0-9a-f]{6}$/i.test(visual.assigned_color||'')?visual.assigned_color:null;
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
 const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,busy:false,canWrite:false};
@@ -92,7 +92,7 @@ function renderClientHub(){
         const products=state.products.filter(p=>p.client_id===c.id);
         const active=products.filter(p=>p.economic_state==='active'||p.stage==='active').length;
         const blocked=products.filter(p=>p.economic_state==='blocked'||productEconomics(p).blocked).length;
-        const cColor=visibleColor(c.owned_facts?.visual_identity||c.metadata?.visual_identity||c.visual_identity);
+        const cColor=resolveEntityColor(c.owned_facts?.visual_identity||c.metadata?.visual_identity||c.visual_identity);
         return '<button class="bw-client-card master"'+colorStyle(cColor)+' type="button" data-client="'+safe(c.id)+'">'+
           '<div class="bw-client-top"><span class="bw-client-icon">'+safe(c.name?.charAt(0)?.toUpperCase()||'C')+'</span><span class="bw-client-state">'+safe(stageNames[c.relationship_state]||c.relationship_state)+'</span></div>'+
           '<strong>'+safe(c.name)+'</strong>'+
@@ -130,7 +130,7 @@ function renderClientBusinessCell(){
       [Array.isArray(p.schedule.days)?p.schedule.days.join(' · '):'',p.schedule.start_local?('desde '+p.schedule.start_local):'',p.schedule.end_rule==='cierre_del_local'?'hasta cierre':''].filter(Boolean).join(' · '):'';
     const cs=Array.isArray(p.commitments)?p.commitments:[];
     const finance=p.financial_folder_url?'<a href="'+safe(p.financial_folder_url)+'" target="_blank" rel="noopener noreferrer">Abrir carpeta financiera ↗</a>':'';
-    const pColor=visibleColor(p.visual_identity||p.visual);
+    const pColor=resolveEntityColor(p.visual_identity||p.visual);
     const visualState=pColor?'<span><b>Color activo</b> '+safe(pColor)+'</span>':'<span><b>Sin color</b> pago/evidencia pendiente</span>';
     return '<article class="bw-product"'+colorStyle(pColor)+'>'+
       '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.product_code||'PRODUCTO VENDIDO')+'</span><h3>'+safe(p.name||'Producto')+'</h3></div><span class="bw-economic active">Activo</span></div>'+
@@ -208,7 +208,7 @@ function renderBusiness(){
 }
 function renderProduct(p){
   const e=productEconomics(p),profile=profileFor(p.responsibility_profile_id);
-  const pColor=visibleColor(p.metadata?.visual_identity||p.owned_facts?.visual_identity||p.visual_identity);
+  const pColor=resolveEntityColor(p.metadata?.visual_identity||p.owned_facts?.visual_identity||p.visual_identity);
   const split=e.splitKnown?'<div class="bw-split"><span style="--v:'+e.clientShare+'%"><b>Cliente</b><strong>'+e.clientShare+'%</strong></span><span style="--v:'+e.linkShare+'%"><b>LINK</b><strong>'+e.linkShare+'%</strong></span></div>':'<p class="bw-soft">Distribución cliente/LINK todavía sin definir.</p>';
   const blocked=p.economic_state==='blocked'||e.blocked;
   return '<article class="bw-product '+(blocked?'blocked':'')+'"'+colorStyle(pColor)+'>'+
