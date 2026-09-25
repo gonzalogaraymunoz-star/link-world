@@ -1,28 +1,116 @@
-# LINK WORLD · Director IA conversacional v3
+# LINK WORLD · Director IA conversacional v4
 
-El Director ahora es un **chat real** dentro de la web, no una pantalla de formularios. Código activo: `src/ai/directorChat.js` y `src/ai/chat.css`. El antiguo `directorPanel.js` queda fuera de la compilación.
+El Director es una **sala de inteligencia a pantalla completa** dentro de LINK WORLD. Ya no está amarrado a OpenRouter ni a un único modelo.
+
+Código activo:
+
+- `src/ai/directorChat.js`
+- `src/ai/chat.css`
+- `api/director.js`
+- `api/LINK_DIRECTOR_SYSTEM.md`
+- `docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md`
 
 ## Empezar
 
-1. Abre https://link-world-delta.vercel.app/ → **✦ Director IA**. Entras directamente al chat con bienvenida, ejemplos y campo de mensaje.
-2. Pulsa **Conexión / Modelo**, pega tu clave de OpenRouter y verifica, si quieres, mediante **Comprobar clave**. La comprobación consulta `/api/v1/key` sin generar texto. Si esa verificación de cuenta no funciona, **puedes enviar un mensaje igualmente**; el chat te dará el error real de generación.
-3. El modelo predeterminado es `nvidia/nemotron-3-ultra-550b-a55b:free`. Puedes introducir otro identificador `:free` o `openrouter/free`; la API rechaza automáticamente modelos de pago. La clave NO se persiste en localStorage, GitHub ni el registro.
-4. Escribe en el chat. **Enter** envía, **Mayús+Enter** añade línea. Verás tu mensaje, estado «Pensando», luego una burbuja de respuesta o un error visible con el motivo. Si hubo error, tu consulta se recupera en el campo para editarla. No hay reintentos automáticos.
-5. El chat mantiene contexto de hasta 12 mensajes anteriores, recortados a 1100 caracteres por mensaje, **solamente en memoria de esta pestaña**. Puedes exportarlo en JSON o abrir una conversación nueva. Recargar borra la conversación no exportada. El registro opcional está separado y nunca guarda la clave.
-6. Para autorizar una investigación de datos propios, marca «Incluir datos privados de LINK» antes de enviar. La app intenta leer una muestra actual de Supabase con tu sesión válida en ↔ LINK WORLD y comparte ese resumen con OpenRouter **solo porque lo marcaste**. Los negocios DEMO se identifican como simulación; no hay acceso automático a otras bases de datos.
-7. «Google manual» lleva al buscador sobre el mapa. El modelo no ejecuta búsquedas de Places sin interacción humana ni guarda fichas de Google. Máximo 8 búsquedas por sesión y 12 por día en este navegador, no un tope global de Google Cloud.
+1. Abre https://link-world-delta.vercel.app/ → **Director IA**.
+2. En la columna derecha entra a **Proveedor, modelo y API**.
+3. Selecciona:
+   - OpenRouter,
+   - Groq,
+   - NVIDIA NIM,
+   - u **Otro · OpenAI-compatible**.
+4. Escribe el identificador exacto del modelo.
+5. Pega la API key del proveedor. La clave vive solo en la pestaña y no se guarda.
+6. En proveedor custom, pega una URL pública HTTPS que termine en `/v1` o en `/chat/completions`.
+7. Puedes pulsar **Probar conexión**. Esta prueba hace una generación mínima real y puede consumir una pequeña cantidad de cuota.
+8. Escribe en el chat. **Enter** envía y **Mayús+Enter** añade línea.
 
-## Estados comprensibles
+## OpenRouter abierto
 
-- Sin conectar: clave no introducida en esta pestaña.
-- Comprobando clave: verificando cuenta sin generar texto.
-- Clave verificada · modelo por probar: OpenRouter aceptó la clave, pero aún no respondió el modelo.
-- Pensando · modelo gratuito: consulta enviada, esperando respuesta.
-- Conectado · modelo exacto: se recibió una respuesta efectiva.
-- Consulta fallida: la burbuja de error explica si fue clave, modelo no encontrado, cuota Free, crédito requerido, timeout o respuesta vacía.
+OpenRouter ya no está limitado a `:free`.
 
-El estado **no equivale a una promesa de gasto global $0**. Consultas Free no implican que Google Maps, Vercel o una cuenta OpenRouter con otras rutas habilitadas no puedan generar cargos. El Director no hace llamadas pagadas ni fallback y no impone su antiguo límite artificial de 5 consultas.
+Puedes escribir cualquier ID de modelo permitido por tu propia cuenta. LINK WORLD usa exactamente ese modelo y no cambia a otro automáticamente.
 
-## Respuestas y permisos
+Si OpenRouter exige crédito, limita cuota o rechaza el modelo, verás el error y la consulta se detiene.
 
-El prompt real se mantiene en `api/LINK_DIRECTOR_SYSTEM.md`. Responde según lo que se pregunta, estructurando análisis de negocios cuando corresponde y distinguiendo datos, hipótesis y DEMO. El Director es de solo lectura / propuesta: no actualiza operaciones, no crea reservas, no envía mensajes y no negocia alianzas. La habilidad maestra para construir desde ChatGPT es `.agents/skills/link-world/SKILL.md`.
+## Otros proveedores
+
+Groq y NVIDIA NIM tienen presets.
+
+Para otros hosts de modelos open source usa **Otro · OpenAI-compatible**. El backend normaliza una URL base `/v1` hacia `/chat/completions`.
+
+El endpoint debe ser público HTTPS. No se permiten localhost, redes privadas ni endpoints internos.
+
+## Estado comprensible
+
+- **Configuración incompleta:** falta modelo, endpoint custom o API key obligatoria.
+- **Proveedor modificado · pendiente de prueba:** cambiaste de proveedor.
+- **Modelo modificado · pendiente de prueba:** cambiaste el modelo.
+- **Probando proveedor…:** se está haciendo una generación mínima.
+- **Conectado · proveedor:** el proveedor y modelo respondieron.
+- **Pensando · proveedor:** una consulta real está en curso.
+- **Consulta fallida:** la interfaz muestra el error devuelto por proveedor/backend.
+
+## Sin fallback
+
+LINK WORLD nunca cambia automáticamente:
+
+- proveedor;
+- modelo;
+- endpoint;
+- plan de precio.
+
+Una falla no dispara un segundo proveedor ni un modelo de pago.
+
+## Contexto LINK
+
+Para compartir datos propios, marca **Incluir datos de LINK** antes de enviar.
+
+La app lee una muestra autorizada de Supabase LINK CONTROL CENTRAL y la entrega únicamente al proveedor seleccionado en esa consulta.
+
+Supabase sigue siendo la fuente de verdad. El modelo recibe una instantánea, no acceso directo a las tablas.
+
+## Privacidad de credenciales
+
+La API key:
+
+- no se guarda en localStorage;
+- no se guarda en Supabase;
+- no se guarda en GitHub;
+- no aparece en el registro local;
+- no forma parte del prompt del Director.
+
+Sí se pueden recordar localmente el proveedor, el modelo y el endpoint custom para no tener que configurarlos en cada apertura.
+
+## Conversación y registro
+
+El chat mantiene hasta 12 mensajes anteriores recortados para contexto durante la sesión.
+
+Puedes:
+
+- exportar la conversación;
+- iniciar una nueva;
+- activar **Guardar respuestas en registro local**;
+- registrar solicitudes locales manuales.
+
+El registro local no equivale a una escritura en LINK WORLD.
+
+## Google
+
+**Abrir territorio / Google** sale del Director y abre la herramienta territorial.
+
+El modelo no ejecuta búsquedas Google en silencio.
+
+## Costos
+
+LINK WORLD no promete costo cero.
+
+Cada proveedor conserva sus propias reglas de cuota, crédito, límites y precios. La prueba de conexión y cada consulta pueden consumir cuota del proveedor configurado.
+
+## Contrato completo
+
+Ver:
+
+`docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md`
+
+Ese protocolo separa la lógica del Director del proveedor de IA y permite ampliar el sistema sin rehacer la interfaz.
