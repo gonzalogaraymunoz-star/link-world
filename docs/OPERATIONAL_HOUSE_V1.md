@@ -163,26 +163,60 @@ Evitar copiar:
 - notas sensibles;
 - información duplicada sin función ecosistémica.
 
-## Creación de una nueva Casa
+## Instalador Operational House v1
 
-1. Revisar Supabase vigente y comprobar que no exista.
-2. Crear o identificar `link_world_businesses`.
-3. Confirmar que el negocio tenga `global_id` y `ecosystem_cells`.
-4. Aplicar `operational_house_v1`.
-5. Registrar configuración de instancia:
-   - tipo de Casa;
-   - etiqueta;
-   - sistema fuente;
-   - superficies;
-   - vocabulario de dominio.
-6. Registrar los seis roles de binding.
-7. Proyectar contrapartes verificadas.
-8. Proyectar identidad/capacidad de productos, no transacciones.
-9. Implementar `event_bridge`.
-10. Inicializar un baseline agregado sólo si puede verificarse sin copiar PII ni transacciones.
-11. Verificar `ecosystem_operational_house_status_v` y distinguir estructura, transporte y proyección.
-12. Recién entonces elevar `overall_status` a `ready`.
-13. Usar la vista genérica de Casa Operativa; no crear frontend especial por negocio.
+Desde la migración `20260925133026_operational_house_installer_v1.sql`, una nueva Casa se prepara con un flujo declarativo y verificable.
+
+Funciones privadas (solo `service_role`):
+
+- `private.operational_house_installation_plan_v1(global_id)`: inspecciona una célula y devuelve arquetipo, conexión, roles requeridos, roles registrados y vacíos.
+- `private.install_operational_house_v1(...)`: aplica el arquetipo, registra/rota la conexión del bridge usando **solo hash SHA-256**, inicializa la proyección y devuelve el siguiente estado.
+- `private.register_operational_house_binding_v1(...)`: registra cada binding real y valida que el `contract_role` pertenezca al contrato del arquetipo.
+
+Reglas del instalador:
+
+1. Nunca recibe ni persiste el secreto crudo del bridge; recibe únicamente su hash SHA-256.
+2. Nunca crea bindings ficticios para completar un checklist.
+3. Un binding queda `connected` sólo cuando existe evidencia real de esa conexión.
+4. Los tipos de evento permitidos deben ser subconjunto del contrato de `operational_house_v1`.
+5. Inicializar la Casa no copia transacciones, reservas, pagos ni PII.
+6. El estado inicial de proyección es `forward_only`; un baseline sólo se agrega después de verificación explícita.
+7. El instalador es idempotente: puede volver a ejecutarse para actualizar configuración/credencial sin duplicar la Casa.
+
+### Creación de una nueva Casa
+
+1. Consultar Supabase vigente y confirmar que el negocio/célula existe.
+2. Ejecutar `operational_house_installation_plan_v1` para leer el estado inicial.
+3. Generar una credencial independiente en el sistema fuente; guardar el secreto crudo sólo en Vault del origen.
+4. Calcular fuera de LINK WORLD su hash SHA-256 y pasar únicamente el hash a `install_operational_house_v1`.
+5. Registrar los bindings reales con `register_operational_house_binding_v1`.
+6. Implementar el outbox del sistema fuente y su productor de eventos.
+7. Conectar outbox → `ingest-operational-house-event` → `event_bus`.
+8. Verificar retry + deduplicación con evidencia controlada.
+9. Proyectar contrapartes/capacidades sólo cuando estén verificadas.
+10. Crear baseline agregado sólo si puede validarse sin PII ni copia transaccional.
+11. Revisar `ecosystem_operational_house_status_v`.
+12. Usar la vista genérica de Casa Operativa; no crear frontend especial por negocio.
+
+El resultado buscado es:
+
+```text
+negocio real
+  ↓
+instalador
+  ↓
+arquetipo + conexión + proyección
+  ↓
+bindings reales declarados
+  ↓
+outbox fuente
+  ↓
+event_bus
+  ↓
+Projection Engine
+  ↓
+LINK WORLD observa y aprende
+```
 
 ## HOTEL EXPERIENCE · instancia de referencia
 

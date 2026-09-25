@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
-version: 2.3.0
+version: 2.4.0
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -158,19 +158,28 @@ Estados de integración:
 - **registered_pending_sync:** todos los roles existen pero alguno aún no sincroniza;
 - **connected:** todos los roles obligatorios están conectados.
 
+Instalador canónico: `operational_house_installer_v1`.
+
+Funciones privadas para automatizar sin inventar infraestructura:
+
+- `private.operational_house_installation_plan_v1(global_id)` → leer estado y vacíos antes de escribir.
+- `private.install_operational_house_v1(...)` → aplicar arquetipo + conexión + proyección. Recibe sólo hash SHA-256 de la credencial.
+- `private.register_operational_house_binding_v1(...)` → declarar bindings reales uno por uno.
+
 Para incorporar una nueva Casa:
 
-1. registrar/identificar el negocio real;
-2. aplicar `operational_house_v1`;
-3. declarar configuración de la instancia;
-4. registrar bindings con `contract_role` y `contract_version`;
-5. proyectar sólo contrapartes/productos con evidencia;
+1. registrar/identificar el negocio real y volver a leer Supabase;
+2. ejecutar el plan de instalación;
+3. crear la credencial en el sistema fuente: secreto crudo sólo en Vault origen;
+4. instalar la Casa pasando únicamente el hash SHA-256 a WORLD;
+5. registrar bindings reales con `contract_role` / `contract_version`; nunca completar roles con placeholders ficticios;
 6. crear un outbox fuente idempotente;
-7. registrar una credencial independiente por Casa: secreto en Vault origen + hash en WORLD;
-8. conectar outbox → receptor autenticado → `event_bus` sin PII sensible;
-9. verificar transporte, retry y deduplicación con una prueba sintética que luego se elimina;
-10. verificar `ecosystem_operational_house_readiness_v`;
-11. usar la misma vista genérica de Casa Operativa: no crear frontend especial por negocio.
+7. conectar outbox → receptor autenticado → `event_bus` sin PII sensible;
+8. verificar transporte, retry y deduplicación;
+9. proyectar sólo contrapartes/productos con evidencia;
+10. inicializar baseline sólo después de verificar agregados sin PII/transacciones;
+11. verificar `ecosystem_operational_house_status_v`;
+12. usar la misma vista genérica de Casa Operativa: no crear frontend especial por negocio.
 
 HOTEL EXPERIENCE es la instancia de referencia inicial del arquetipo, no una excepción arquitectónica.
 
