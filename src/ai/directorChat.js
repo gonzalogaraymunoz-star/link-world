@@ -104,7 +104,7 @@ function setSettings(open){
   s.settings=open;
   $('#lw-settings').classList.toggle('hidden',!open);
   $('#lw-settings-btn').setAttribute('aria-expanded',String(open));
-  if(open){s.log=false;showLog(false);setTimeout(()=>$('#lw-key')?.focus(),0);}
+  if(open){s.log=false;showLog(false);setTimeout(()=>$('#lw-provider')?.focus(),0);}
 }
 function setOpen(open){
   s.open=open;
@@ -324,7 +324,7 @@ function render(){
         '<section class="lw-rail-card lw-rail-actions"><span class="lw-rail-kicker">HERRAMIENTAS</span><button id="lw-settings-btn" type="button" aria-expanded="false">Conectar IA <span>→</span></button><button id="lw-log-btn" type="button" aria-pressed="false">Registro local <span>→</span></button><button id="lw-google" type="button">Abrir territorio / Google <span>→</span></button><label class="lw-save-toggle"><input type="checkbox" id="lw-save"><span>Guardar respuestas en registro local</span></label></section>',
         '<section id="lw-settings" class="lw-settings hidden"><div class="lw-settings-head"><div><span class="lw-rail-kicker">CONEXIÓN IA</span><strong>Proveedor · modelo · API</strong><small>Elige dónde corre el modelo, escribe su ID exacto y pega tu API. Nada más.</small></div><button id="lw-settings-close" type="button" aria-label="Cerrar configuración">×</button></div>',
           '<label for="lw-provider">PROVEEDOR</label><select id="lw-provider"><option value="openrouter">OpenRouter</option><option value="groq">Groq</option><option value="nvidia">NVIDIA NIM</option></select>',
-          '<label for="lw-model">MODELO</label><input id="lw-model" type="text" spellcheck="false" maxlength="180" placeholder="Ej: qwen/qwen3-235b-a22b-2507">',
+          '<label for="lw-model">MODELO</label><input id="lw-model" type="text" spellcheck="false" maxlength="180" placeholder="ID exacto del modelo">',
           '<label for="lw-key">API</label><input id="lw-key" type="password" spellcheck="false" autocomplete="new-password" placeholder="Pega aquí tu API key">',
           '<button id="lw-verify" type="button" class="lw-primary lw-connect-main">Conectar</button>',
           '<small id="lw-connect-note">LINK WORLD prueba exactamente ese proveedor y ese modelo. La API no se guarda.</small></section>',
