@@ -70,9 +70,11 @@ Estados de `ecosystem_operational_house_readiness_v`:
 
 ## Eventos
 
-Transporte: `event_bus`.
+Transporte: **source outbox → authenticated Edge Function → `event_bus`**.
 
-Semántica: **at-least-once + dedupe_key**.
+Autenticación: token independiente por Casa; secreto crudo en Vault del origen y sólo hash SHA-256 en LINK WORLD.
+
+Semántica: **at-least-once + dedupe_key**. Recibir un evento no autoriza por sí solo a crear convenios, ventas o relaciones en WORLD.
 
 Eventos canónicos iniciales:
 
@@ -147,9 +149,11 @@ Evitar copiar:
 - Catálogo/operación permanecen en HOTEL EXPERIENCE.
 - LINK WORLD no almacena una segunda reserva ni PII sensible.
 - Outbox fuente: `public.link_world_event_outbox` en HOTEL EXPERIENCE.
-- Eventos fuente se generan desde cambios futuros en ventas confirmadas, cierres operacionales, comisiones devengadas, contrapartes activadas y productos activados.
+- Eventos fuente se generan desde cambios futuros en ventas confirmadas, cierres operacionales, comisiones devengadas, contrapartes activadas, productos activados y feedback respondido.
+- El transporte `outbox → Edge Function → event_bus` está conectado y fue verificado end-to-end con reintento idempotente; el evento sintético de prueba fue eliminado tras la comprobación.
+- El secreto crudo vive sólo en Vault de HOTEL EXPERIENCE. LINK WORLD almacena únicamente su hash SHA-256 en `integration_connections`.
 - No hay backfill automático de eventos históricos.
-- Estado actual: `registered_pending_sync`; los seis roles están registrados y el transporte outbox → `event_bus` sigue pendiente.
+- `event_bridge` está `connected`. El estado global continúa `registered_pending_sync` mientras las proyecciones de contrapartes/productos y las superficies sigan siendo bindings controlados y no sincronizaciones automáticas.
 
 ## Patrón de crecimiento
 
