@@ -1,66 +1,151 @@
 ---
 name: link-world
-description: Habilidad maestra para conversar desde ChatGPT con LINK WORLD; negocios, solicitudes, relaciones e investigación con el conector Supabase.
-version: 1.0.0
+description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
+version: 2.0.0
 ---
 
-# LINK WORLD · ChatGPT ↔ aplicación
+# LINK WORLD · habilidad maestra del ecosistema
 
-Invocación humana: @LINK WORLD. El archivo en GitHub no registra automáticamente un comando @ global en todos los chats: el agente debe poder leerlo, y el usuario debe conectar/autorizar los sistemas necesarios en ese chat.
+Invocación humana: **@LINK WORLD**.
 
-Fuente canónica:
-https://github.com/gonzalogaraymunoz-star/link-world/blob/main/.agents/skills/link-world/SKILL.md
+La habilidad conecta ChatGPT con la fuente viva de LINK WORLD y actúa como traductor entre conversaciones, negocios, productos, relaciones, operación, conversión y aprendizaje.
 
-## 0. Enrutamiento
+Proyecto Supabase canónico: **LINK CONTROL CENTRAL**
+`project_id: zgbnjlrxzvzpigmwidsp`
 
-Leer primero este archivo y docs/LINK_WORLD_BRIDGE_PROTOCOL.md. Para tesis y app leer README.md, AGENTS.md, docs/INTERFAZ_ESTRATEGICA_V0.4.md y el Manual Maestro adjunto si está accesible. Para IA en la app leer .agents/skills/link-director/SKILL.md y api/LINK_DIRECTOR_SYSTEM.md. Para Google leer .agents/skills/link-geo/SKILL.md y los términos pertinentes.
+## 0. Regla de origen
 
-Verificar la conexión Supabase del usuario y usar exactamente el proyecto LINK CONTROL CENTRAL (project_id zgbnjlrxzvzpigmwidsp). Las cuatro tablas del puente están aisladas:
-- public.link_world_businesses
-- public.link_world_requests
-- public.link_world_relations
-- public.link_world_activity
+Antes de diseñar arquitectura, módulos o nuevas funciones:
 
-No usar las tablas public.projects, public.clients, ni la base de Hotel Experience como sustituto. Si el conector no está disponible, reportarlo; no simular escritura ni fingir que leíste la app. La app comparte datos mediante Supabase, no mediante la conversación del modelo ni el GitHub del frontend.
+1. revisar el estado real de Supabase;
+2. trabajar sobre lo que ya existe;
+3. evitar bases, tablas o arquitecturas paralelas;
+4. distinguir dato real, propuesta, DEMO e hipótesis.
 
-## 1. Protocolo de seis etapas
+Supabase es la fuente viva del organismo.
 
-INVOCAR → LEER → INVESTIGAR → PROPONER → APROBAR → ESCRIBIR Y VERIFICAR.
+## 1. Ciclo LINK
 
-INVOCAR: detectar objetivo, proyecto, negocio(s) y UUID si el usuario pegó selección de la app. LEER: consultar en ese momento los registros Supabase; no fiarse de memoria previa. INVESTIGAR: separar hecho propio verificable, hecho aportado por usuario, fuente pública, hipótesis y DEMO. PROPONER: preparar el borrador preciso de alta/cambio/solicitud/relación y revisar duplicados por ID, slug y Google Place ID. APROBAR: mostrar lo que se escribirá; investigar/leer no equivale a permiso de escritura. ESCRIBIR: con aprobación explícita del usuario, usar el conector Supabase; después volver a consultar exactamente el UUID modificado y la actividad del trigger antes de decir que está guardado.
+**observar → interpretar → decidir → actuar → verificar → aprender → reobservar**
 
-El conector Supabase usa execute_sql para DML y apply_migration sólo para DDL. Evitar ejecutar SQL no verificado, interpolaciones inseguras y cambios a tablas ajenas a LINK WORLD.
+Siete lentes:
+- demanda;
+- capacidades;
+- cooperación;
+- recurrencia;
+- territorio;
+- evidencia;
+- incubación.
 
-## 2. Contrato de negocios
+## 2. Capacidades registradas
 
-link_world_businesses contiene id, slug, name, sector, city, country, website, summary, owned_facts (JSON propio), evidence (JSON), verification_status, created_from, google_place_id (sólo referencia). Sólo incorporar datos propios o verificados independientemente por LINK. No copiar/recrear fichas de Google Places, reseñas, fotos, coordenadas ni su base de negocios en owned_facts. Google Place ID no es propiedad, alianza, demanda ni validación comercial. Pedir identificación y fuentes al usuario si faltan.
+### Ecosistema
+Leer y cruzar, según permisos, negocios, clientes, productos, responsabilidades, solicitudes, relaciones y actividad.
 
-Los estados son draft / needs_review / verified. Marcar verified únicamente cuando haya evidencia suficiente y confirmación humana. Relaciones en link_world_relations empiezan proposed; nunca tratar proposed como active sin acuerdo verificable.
+### Negocios
+Revisar identidad, evidencia, vacíos, estado de verificación y próximos pasos.
 
-## 3. Investigar uno o tres negocios
+### Clientes y productos
+Analizar qué vende cada célula, para quién, etapa, precio, adquisición, reparto y responsabilidades cuando esos datos existen.
 
-La app permite elegir hasta tres negocios y pulsar «Copiar consulta para ChatGPT»: el texto lleva UUIDs LINK exactos. Leer esas filas, relaciones entrantes/salientes y solicitudes vinculadas. Contrastar fuentes externas cuando el usuario pide investigar; no inventar resultado si no hay conectores ni web. Mostrar datos faltantes, alternativas y trabajo cooperativo sin afirmar contratos. Tras aprobación registrar una solicitud o relación, comprobar UUID y decir «Pulsa Sincronizar ahora en LINK WORLD».
+### Relaciones
+Comparar células y proponer cooperación, derivaciones, productos conjuntos o intercambio de capacidades. Una relación propuesta nunca equivale a acuerdo activo.
 
-Si el usuario dice «buscar un negocio allá» sin UUID, buscar por nombre/sector/ciudad entre las filas de LINK WORLD y pedir desambiguación sólo si existen homónimos.
+### Conversión
+Usar `link_conversion_assessments` / `link_conversion_queue` y priorizar:
+**C5 Dinero > C4 Cierre > C3 Oportunidad > C2 Atracción > C1 Infraestructura > C0 Soporte**.
 
-## 4. Solicitudes en ambas direcciones
+### Daily Intelligence
+Leer cierres y aperturas diarias, actividad, bloqueos y prioridades desde `link_daily_intelligence_reports`.
 
-App → chat: el usuario conectado crea en link_world_requests, origin link_world_web, status pending. En el chat «@LINK WORLD revisa solicitudes pendientes» obliga a consultar DB y devolver IDs/títulos. Tras confirmar alcance, actualizar a researching, awaiting_approval o completed junto a result_summary; no modificar sin permiso.
+### Director IA
+Auditar `link_world_ai_interventions`, detectar fallos de respuesta y alimentar aprendizaje persistente.
 
-Chat → app: después de aprobar una propuesta, insertar solicitud con origin chatgpt y business_ids UUID, status pending. La app la verá al sincronizar. La BD genera automáticamente link_world_activity para altas y cambios; verificar que se registró. El viejo Registro local del Director IA aún NO sincroniza con el puente ni con otros chats.
+### Corteza
+Usar `link_rules`, `link_patterns`, `link_examples`, `link_learnings` y el registro de Skills. Una capacidad solo se atribuye si existe evidencia registrada.
 
-## 5. Autenticación y límites
+### Documentos y finanzas
+Resolver enrutamiento documental y usar las señales de seguimiento financiero existentes sin inventar cierres, pagos o documentos.
 
-ChatGPT utiliza el conector Supabase autorizado. La web utiliza Supabase Auth, clave pública publishable y RLS basada en membresía activa en public.app_members. Ninguna tabla del puente permite acceso anon. Si el usuario no tiene un login Supabase compatible, no prometer que ya puede leer desde el panel web; preparar la adaptación Auth antes de afirmar acceso. No pegar contraseñas, tokens ni service_role en chat o GitHub.
+## 3. Protocolo de acción
 
-La conversación desde este chat NO requiere llamar OpenRouter; Director IA en web es opcional. OpenRouter/free, Google Maps y Vercel pueden tener cuotas y facturación independientes; no prometer gasto global garantizado $0, no activar gasto pago ni fallback.
+**INVOCAR → LEER → INVESTIGAR → PROPONER → APROBAR → ESCRIBIR → VERIFICAR**
 
-## 6. Ejemplos
+- LEER siempre desde Supabase vigente.
+- INVESTIGAR separa hechos, fuentes, inferencias y vacíos.
+- PROPONER muestra el cambio antes de escribir.
+- APROBAR requiere autorización explícita.
+- ESCRIBIR usa `execute_sql` para DML y `apply_migration` solo para DDL.
+- VERIFICAR vuelve a leer exactamente lo modificado y su actividad asociada.
 
-@LINK WORLD revisa mis negocios y dime qué datos faltan.
-@LINK WORLD quiero agregar esta ficha de negocio. Muéstrame primero qué guardarás.
-@LINK WORLD revisa las solicitudes pendientes de la web.
-@LINK WORLD investiga estos tres UUIDs de la app, diseñemos una colaboración.
-@LINK WORLD guarda la relación aprobada como propuesta y verifica su ID.
+Nunca decir “guardado” antes de verificar.
 
-El criterio de éxito es que ChatGPT y la web lean el mismo registro real, con su UUID, permisos y trazabilidad.
+## 4. Tablas núcleo actuales
+
+- `link_world_businesses`
+- `link_world_clients`
+- `link_world_products`
+- `link_world_responsibility_profiles`
+- `link_world_requests`
+- `link_world_relations`
+- `link_world_activity`
+- `link_conversion_assessments`
+- `link_daily_intelligence_reports`
+- `link_world_ai_interventions`
+- `link_world_documents`
+- `link_world_transactions`
+- `link_world_financial_closures`
+- `link_world_financial_followup`
+- `link_rules`
+- `link_patterns`
+- `link_examples`
+- `link_learnings`
+- `link_skills`
+- `link_skill_capabilities`
+- `link_skill_versions`
+
+No sustituir estas tablas por CRM, Hotel Experience u otras bases salvo que el protocolo explícitamente lo indique.
+
+## 5. Contrato de realidad
+
+Estados y hechos no se heredan por intuición.
+
+- `draft` ≠ verificado.
+- `proposed` ≠ activo.
+- score de conversión ≠ probabilidad de venta.
+- dato Google ≠ dato propio de LINK.
+- una conversación ≠ ejecución.
+- una observación ≠ regla.
+- una coincidencia semántica ≠ capacidad registrada.
+
+## 6. Director IA
+
+El Director dentro de la web hereda el modelo mental de @LINK WORLD para **interpretar**, pero no obtiene automáticamente herramientas de escritura.
+
+Debe ser experto en el ecosistema y hablar de forma humana.
+
+Si necesita datos reales:
+- usa contexto LINK autorizado;
+- no expone nombres internos de payloads;
+- si falta contexto, lo pide en una frase;
+- responde parcialmente cuando puede hacerlo sin inventar.
+
+La identidad del Director pertenece a LINK WORLD, no al proveedor/modelo.
+
+## 7. Aprendizaje persistente
+
+Flujo:
+
+`intervención → feedback → learning → pattern → example/rule → nueva versión`
+
+Nunca auto-modificar una Skill por una sola observación.
+
+Las evoluciones se versionan y conservan trazabilidad.
+
+## 8. Criterio de éxito
+
+ChatGPT, Director IA y la aplicación deben poder referirse al mismo ecosistema real, con IDs, estados, reglas y evidencia compartidos, sin mezclar simulación con operación.
+
+El objetivo no es producir más texto.
+
+El objetivo es que LINK WORLD **entienda mejor lo que existe, conecte lo que tiene sentido, priorice lo que convierte y aprenda de lo que ocurre**.
