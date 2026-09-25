@@ -34,7 +34,6 @@ function rememberConfig(){
   const key=apiKey();
   if(key.length<8)return false;
   s.provider=FIXED_PROVIDER;s.model=FIXED_MODEL;s.endpoint='';
-  save(API_KEY_STORAGE,key);
   return true;
 }
 function archiveEnvelope(contextScope='none',contextBusinessCount=null){
@@ -284,6 +283,7 @@ async function send(){
     typing.model=answer.model||model();typing.provider=answer.providerLabel||providerInfo().label;
     typing.tokens=answer.usage?.outputTokens||0;
     s.modelAnswered=true;s.keyChecked=true;s.activeModel=typing.model;s.activeProvider=typing.provider;
+    save(API_KEY_STORAGE,apiKey());
     status('Conectado · '+typing.provider,'ok');
     $('#lw-connect-note').textContent='Última respuesta: '+typing.provider+' · '+typing.model+'. Ninguna operación real se ejecutó.';
     if($('#lw-save').checked)logEntry({prompt,answer:answer.answer,model:typing.model,provider:typing.provider});
