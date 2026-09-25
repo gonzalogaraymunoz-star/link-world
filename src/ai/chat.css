@@ -634,3 +634,41 @@ body.lw-director-open{overflow:hidden;}
   background:#2b2b2b!important;
   border-color:#2b2b2b!important;
 }
+
+
+/* Fixed LINK model · API-only connection */
+.lw-fixed-model{
+  display:grid;
+  gap:3px;
+  padding:10px 11px;
+  border:1px solid #343432;
+  border-radius:11px;
+  background:#181817;
+}
+.lw-fixed-model span{
+  font-size:6px;
+  font-weight:700;
+  letter-spacing:.14em;
+  color:#8f8f8a;
+}
+.lw-fixed-model strong{
+  font-size:11px;
+  color:#fff;
+}
+.lw-fixed-model small{
+  font-size:8px!important;
+  line-height:1.45;
+  color:#bdbdb7!important;
+  word-break:break-word;
+}
+#lw-forget-api{
+  width:100%;
+  border:1px solid #3e3e3c!important;
+  border-radius:999px!important;
+  background:#1c1c1b!important;
+  color:#bdbdb7!important;
+  padding:8px!important;
+  font-size:8px!important;
+  font-weight:700!important;
+}
+#lw-forget-api:hover{color:#fff!important;}

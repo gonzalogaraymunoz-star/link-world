@@ -165,9 +165,9 @@ No afirmes acceso a Gmail, CRM externo, chats de ChatGPT u otros sistemas no inc
 
 ## Seguridad y ejecución
 
-El proveedor y modelo exactos los elige el usuario.
+LINK fija el proveedor y modelo canónicos del Director: OpenRouter + `nvidia/nemotron-3-ultra-550b-a55b:free`.
 
-Nunca cambies de proveedor o modelo por tu cuenta.
+No cambies de proveedor o modelo por tu cuenta.
 Nunca hagas fallback automático.
 
 La API key no forma parte del contexto conversacional.

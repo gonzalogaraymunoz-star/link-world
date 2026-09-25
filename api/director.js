@@ -1,9 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { lookup } from 'node:dns/promises';
 import { randomUUID } from 'node:crypto';
 
-// LINK WORLD Director IA · provider-agnostic OpenAI-compatible gateway.
-// Exact provider + exact model are always selected by the user. No automatic fallback.
+// LINK WORLD Director IA · fixed OpenRouter gateway for the canonical LINK model.
+// The user provides only an API key. Provider/model stay constant; no automatic fallback.
 // Every model intervention is archived in Supabase without API keys or raw LINK snapshots.
 const INSTRUCTIONS=readFileSync(new URL('./LINK_DIRECTOR_SYSTEM.md',import.meta.url),'utf8');
 const PUBLIC_ORIGIN=process.env.PUBLIC_SITE_ORIGIN||'https://link-world-delta.vercel.app';
@@ -12,35 +11,12 @@ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_RE_eqhBaLeaUMHuBjLUY2Q_OZNBm9_A';
 const MAX_INPUT_CHARS=3500;
 const MAX_OUTPUT_TOKENS=2600;
 const MAX_CONTEXT_CHARS=8500;
-const MAX_ENDPOINT_CHARS=500;
 const MAX_MODEL_CHARS=180;
-
-const PROVIDERS={
-  openrouter:{
-    label:'OpenRouter',
-    endpoint:'https://openrouter.ai/api/v1/chat/completions',
-    keyRequired:true,
-    headers:{'HTTP-Referer':PUBLIC_ORIGIN,'X-OpenRouter-Title':'LINK WORLD'}
-  },
-  groq:{
-    label:'Groq',
-    endpoint:'https://api.groq.com/openai/v1/chat/completions',
-    keyRequired:true,
-    headers:{}
-  },
-  nvidia:{
-    label:'NVIDIA NIM',
-    endpoint:'https://integrate.api.nvidia.com/v1/chat/completions',
-    keyRequired:true,
-    headers:{}
-  },
-  custom:{
-    label:'OpenAI-compatible / custom',
-    endpoint:null,
-    keyRequired:false,
-    headers:{}
-  }
-};
+const FIXED_PROVIDER='openrouter';
+const FIXED_PROVIDER_LABEL='OpenRouter';
+const FIXED_ENDPOINT='https://openrouter.ai/api/v1/chat/completions';
+const FIXED_MODEL='nvidia/nemotron-3-ultra-550b-a55b:free';
+const FIXED_HEADERS={'HTTP-Referer':PUBLIC_ORIGIN,'X-OpenRouter-Title':'LINK WORLD'};
 
 function respond(res,status,payload){
   res.statusCode=status;
@@ -86,75 +62,17 @@ async function archiveIntervention(payload){
     return {ok:false,error:short(e?.message||'archive unavailable',300)};
   }
 }
-function privateV4(ip){
-  const p=ip.split('.').map(Number);
-  if(p.length!==4||p.some(n=>!Number.isInteger(n)||n<0||n>255))return true;
-  const [a,b]=p;
-  return a===0||a===10||a===127||a>=224||
-    (a===100&&b>=64&&b<=127)||
-    (a===169&&b===254)||
-    (a===172&&b>=16&&b<=31)||
-    (a===192&&b===168)||
-    (a===198&&(b===18||b===19));
-}
-function privateAddress(address){
-  const ip=String(address||'').toLowerCase();
-  if(/^\d+\.\d+\.\d+\.\d+$/.test(ip))return privateV4(ip);
-  if(ip.includes(':')){
-    if(ip==='::'||ip==='::1'||ip.startsWith('fc')||ip.startsWith('fd')||
-      /^fe[89ab]/.test(ip)||ip.startsWith('2001:db8:'))return true;
-    const mapped=ip.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if(mapped)return privateV4(mapped[1]);
-  }
-  return false;
-}
-function normalizedCustomUrl(raw){
-  const input=short(raw,MAX_ENDPOINT_CHARS);
-  if(!input)throw new Error('Falta la URL del proveedor.');
-  let url;
-  try{url=new URL(input);}catch{throw new Error('La URL del proveedor no es válida.');}
-  if(url.protocol!=='https:')throw new Error('El proveedor personalizado debe usar HTTPS.');
-  if(url.username||url.password)throw new Error('No pongas credenciales dentro de la URL.');
-  if(url.port&&url.port!=='443')throw new Error('El endpoint personalizado debe usar el puerto HTTPS estándar.');
-  url.search='';url.hash='';
-  const path=url.pathname.replace(/\/+$/,'');
-  if(/\/chat\/completions$/i.test(path))url.pathname=path;
-  else if(/\/(?:openai\/)?v1$/i.test(path))url.pathname=path+'/chat/completions';
-  else throw new Error('Usa una URL base que termine en /v1 o un endpoint que termine en /chat/completions.');
-  return url;
-}
-async function assertPublicEndpoint(url){
-  const host=url.hostname.toLowerCase();
-  if(host==='localhost'||host.endsWith('.localhost')||host.endsWith('.local')||
-    host.endsWith('.internal')||host.endsWith('.lan')||host==='metadata.google.internal'){
-    throw new Error('Ese host privado/local no puede usarse desde LINK WORLD.');
-  }
-  if(/^\d+\.\d+\.\d+\.\d+$/.test(host)&&privateV4(host)){
-    throw new Error('Las direcciones privadas o locales no están permitidas.');
-  }
-  let records=[];
-  try{records=await lookup(host,{all:true,verbatim:true});}
-  catch{throw new Error('No se pudo resolver el host del proveedor.');}
-  if(!records.length||records.some(r=>privateAddress(r.address))){
-    throw new Error('El endpoint resuelve a una red privada o no válida.');
-  }
-}
 async function providerConfig(raw){
-  const provider=short(raw.provider,40).toLowerCase()||'openrouter';
-  const preset=PROVIDERS[provider];
-  if(!preset)throw new Error('Proveedor no soportado.');
-  let endpoint=preset.endpoint;
-  if(provider==='custom'){
-    const url=normalizedCustomUrl(raw.endpoint);
-    await assertPublicEndpoint(url);
-    endpoint=url.toString();
-  }
   const apiKey=short(raw.apiKey,512);
-  if(preset.keyRequired&&!validKey(apiKey))throw new Error('Ingresa una API key válida para '+preset.label+'.');
-  if(apiKey&&!validKey(apiKey))throw new Error('La API key contiene un formato no válido.');
-  const model=short(raw.model,MAX_MODEL_CHARS);
-  if(!validModel(model))throw new Error('Ingresa el identificador exacto del modelo.');
-  return {provider,label:preset.label,endpoint,apiKey,headers:preset.headers,model};
+  if(!validKey(apiKey))throw new Error('Ingresa una API key válida de OpenRouter.');
+  return {
+    provider:FIXED_PROVIDER,
+    label:FIXED_PROVIDER_LABEL,
+    endpoint:FIXED_ENDPOINT,
+    apiKey,
+    headers:FIXED_HEADERS,
+    model:FIXED_MODEL
+  };
 }
 async function callProvider(config,body,timeoutMs=60000){
   const controller=new AbortController();
@@ -217,12 +135,11 @@ export default async function handler(req,res){
   if(req.method==='GET')return respond(res,200,{
     enabled:true,
     protocol:'openai-chat-compatible',
-    providers:Object.entries(PROVIDERS).map(([id,p])=>({id,label:p.label,endpoint:p.endpoint,keyRequired:p.keyRequired})),
-    customEndpoint:true,
-    exactModel:true,
-    simpleInstall:{fields:['provider','model','apiKey'],providers:['openrouter','groq','nvidia']},
+    provider:{id:FIXED_PROVIDER,label:FIXED_PROVIDER_LABEL,endpoint:FIXED_ENDPOINT},
+    model:FIXED_MODEL,
+    setup:{fields:['apiKey']},
     automaticFallback:false,
-    credentialsPersisted:false,
+    credentialsPersisted:'browser-local-by-client-choice',
     interventionArchive:true,
     interventionArchiveTable:'link_world_ai_interventions',
     outputTokenCap:MAX_OUTPUT_TOKENS,
