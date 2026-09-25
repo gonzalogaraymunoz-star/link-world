@@ -38,6 +38,22 @@ function notice(text,error=false){
   const el=$('#bw-notice');if(!el)return;
   el.textContent=text||'';el.classList.toggle('error',error);el.classList.toggle('hidden',!text);
 }
+async function signInLinkMember(event){
+  event.preventDefault();
+  const email=$('#bw-link-email')?.value.trim();
+  const password=$('#bw-link-password')?.value||'';
+  if(!email||!password){notice('Ingresa tu correo y contraseña LINK.',true);return;}
+  notice('Conectando sesión LINK…');
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){notice('No se pudo iniciar sesión: '+error.message,true);return;}
+  await refresh();
+  notice('');
+}
+async function signOutLinkMember(){
+  await db.auth.signOut();
+  await refresh();
+  notice('');
+}
 async function loadBusiness(businessId){
   await detectWriteAccess();
   const statusRead=state.canWrite
@@ -123,7 +139,7 @@ function taxiDateTime(v){
 function taxiHotelOperationsPanelMarkup(){
   if(state.business?.slug!=='taxi-hotel')return '';
   if(!state.canWrite){
-    return '<section class="bw-products-section bw-taxi-ops-section"><div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / PRIVADO</span><h2>TaxiHotel en tiempo real</h2><p>Reservas, tramos, asignaciones y pagos solo aparecen a miembros autenticados de LINK WORLD.</p></div><span class="bw-open-mode">Sesión LINK requerida</span></div></section>';
+    return '<section class="bw-products-section bw-taxi-ops-section"><div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / PRIVADO</span><h2>TaxiHotel en tiempo real</h2><p>Reservas, tramos, asignaciones y pagos solo aparecen a miembros autenticados de LINK WORLD.</p></div><span class="bw-open-mode">Sesión LINK requerida</span></div><form id="bw-link-login" class="bw-link-login"><label>Correo LINK<input id="bw-link-email" type="email" autocomplete="username" required></label><label>Contraseña<input id="bw-link-password" type="password" autocomplete="current-password" required></label><button class="bw-primary" type="submit">Entrar a operación</button><small>Usa una cuenta existente de LINK CONTROL CENTRAL. Este formulario no crea usuarios.</small></form></section>';
   }
   if(state.taxiHotelOperationsError){
     return '<section class="bw-products-section bw-taxi-ops-section"><div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / ERROR DE LECTURA</span><h2>No pudimos leer el tablero</h2><p>'+safe(state.taxiHotelOperationsError)+'</p></div></div></section>';
@@ -151,7 +167,7 @@ function taxiHotelOperationsPanelMarkup(){
     '</article>';
   }).join('');
   return '<section class="bw-products-section bw-taxi-ops-section">'+
-    '<div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / TAXI HOTEL</span><h2>Reservas vivas</h2><p>Lectura directa del núcleo operativo. Esta proyección no expone nombres, teléfonos, correos ni documentos de pasajeros.</p></div><span class="bw-open-mode">'+rows.length+' reservas visibles</span></div>'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">OPERACIÓN / TAXI HOTEL</span><h2>Reservas vivas</h2><p>Lectura directa del núcleo operativo. Esta proyección no expone nombres, teléfonos, correos ni documentos de pasajeros.</p></div><div class="bw-taxi-session"><span class="bw-open-mode">'+rows.length+' reservas visibles</span><button id="bw-link-logout" type="button">Cerrar sesión</button></div></div>'+
     '<div class="bw-taxi-ops-metrics"><div><strong>'+rows.length+'</strong><span>En tablero</span></div><div><strong>'+requested+'</strong><span>Nuevas</span></div><div><strong>'+running+'</strong><span>En proceso</span></div><div><strong>'+completed+'</strong><span>Cerradas</span></div></div>'+
     '<div class="bw-taxi-ops-grid">'+(cards||'<div class="bw-empty"><strong>No hay reservas todavía.</strong><span>La primera solicitud creada desde taxihotel.vercel.app aparecerá aquí inmediatamente después de sincronizar.</span></div>')+'</div>'+
   '</section>';
@@ -385,6 +401,8 @@ function renderOperationalHouseBusinessCell(){
     close();
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
+  $('#bw-link-login')?.addEventListener('submit',signInLinkMember);
+  $('#bw-link-logout')?.addEventListener('click',signOutLinkMember);
   $('#bw-open-sales')?.addEventListener('click',()=>{if(surfaces.sales_app)window.open(surfaces.sales_app,'_blank','noopener,noreferrer');});
   $('#bw-open-ops')?.addEventListener('click',()=>{if(surfaces.operations_app)window.open(surfaces.operations_app,'_blank','noopener,noreferrer');});
   root.querySelectorAll('[data-taxi-director]').forEach(button=>button.addEventListener('click',()=>{
