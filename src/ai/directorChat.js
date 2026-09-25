@@ -197,6 +197,17 @@ function explainMissingConfig(){
   if(providerInfo().keyRequired&&!keyReady())return 'Pega una API key válida para '+providerInfo().label+'.';
   return 'Revisa la configuración del proveedor.';
 }
+function setSimpleDefaults(){
+  $('#lw-provider').value='openrouter';
+  $('#lw-model').value=DEFAULT_MODEL;
+  $('#lw-endpoint').value='';
+  s.provider='openrouter';s.model=DEFAULT_MODEL;s.endpoint='';
+  rememberConfig();refreshProviderUI();
+}
+async function connectSimple(){
+  setSimpleDefaults();
+  await verifyConnection();
+}
 async function verifyConnection(){
   if(s.checking||s.busy)return;
   if(!configReady()){feedback(explainMissingConfig(),true);status('Configuración incompleta','warn');setSettings(true);return;}
@@ -384,7 +395,7 @@ function render(){
     renderMessages();renderWelcome();feedback('Nueva conversación. Se abrió una nueva sesión de archivo. La configuración del proveedor se conserva; la API key no se guarda al recargar.');
   });
   $('#lw-export-chat').addEventListener('click',exportConversation);
-  $('#lw-verify').addEventListener('click',verifyConnection);
+  $('#lw-verify').addEventListener('click',connectSimple);
   $('#lw-use').addEventListener('click',()=>{
     if(!configReady()){feedback(explainMissingConfig(),true);return;}
     rememberConfig();status('Configuración lista · puedes conversar','idle');
