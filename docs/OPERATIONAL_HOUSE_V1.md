@@ -87,6 +87,51 @@ Eventos canónicos iniciales:
 
 Los payloads deben llevar referencias mínimas. No incluir documentos, datos médicos, datos de pago completos ni otra PII sensible.
 
+## Projection Engine v1
+
+El bridge entrega evidencia a `event_bus`. El **Projection Engine** transforma esa evidencia en un estado de lectura persistente sin modificar la realidad comercial.
+
+Capas:
+
+```text
+Sistema fuente
+   ↓
+outbox
+   ↓
+event_bus                 ← evidencia / historial de señales
+   ↓
+projection ledger         ← consumo idempotente y reintentable
+   ↓
+projection state          ← lectura derivada y reconstruible
+   ↓
+status view               ← salud estructural / transporte / proyección
+```
+
+Reglas:
+
+- `event_bus` sigue siendo evidencia; no es CRM ni libro de ventas.
+- `operational_house_projection_state` es derivado y puede reconstruirse.
+- El ledger vive en schema `private`.
+- El consumidor corre cada minuto y no bloquea el ingreso de eventos.
+- Una proyección jamás crea automáticamente una venta, convenio, cliente o relación.
+- No sumar dinero desde eventos mientras el contrato no garantice correcciones/ajustes posteriores.
+- Un baseline agregado verificado puede dar contexto inicial sin copiar transacciones ni PII.
+- `baseline_metrics` y `event_counts` son dimensiones distintas: nunca se presentan como una sola serie histórica.
+- Los logs del cron del engine se retienen 14 días para evitar crecimiento indefinido.
+
+### Estado canónico
+
+La vista canónica es `ecosystem_operational_house_status_v`.
+
+Separa cuatro preguntas:
+
+1. **structure_status** — ¿están registrados todos los roles?
+2. **transport_status** — ¿el bridge real está conectado?
+3. **projection_status** — ¿el Projection Engine está corriendo sano?
+4. **overall_status** — lectura global de salud.
+
+`binding_sync_readiness` se conserva como diagnóstico técnico de bindings, pero no obliga a sincronizar superficies o catálogos que deliberadamente deben permanecer en su sistema fuente.
+
 ## Relaciones
 
 La Casa se relaciona con contrapartes mediante identidad global y evidencia:
@@ -134,9 +179,10 @@ Evitar copiar:
 7. Proyectar contrapartes verificadas.
 8. Proyectar identidad/capacidad de productos, no transacciones.
 9. Implementar `event_bridge`.
-10. Consultar `ecosystem_operational_house_readiness_v`.
-11. Recién entonces elevar salud/conectividad.
-12. Usar la vista genérica de Casa Operativa; no crear frontend especial por negocio.
+10. Inicializar un baseline agregado sólo si puede verificarse sin copiar PII ni transacciones.
+11. Verificar `ecosystem_operational_house_status_v` y distinguir estructura, transporte y proyección.
+12. Recién entonces elevar `overall_status` a `ready`.
+13. Usar la vista genérica de Casa Operativa; no crear frontend especial por negocio.
 
 ## HOTEL EXPERIENCE · instancia de referencia
 
@@ -153,7 +199,11 @@ Evitar copiar:
 - El transporte `outbox → Edge Function → event_bus` está conectado y fue verificado end-to-end con reintento idempotente; el evento sintético de prueba fue eliminado tras la comprobación.
 - El secreto crudo vive sólo en Vault de HOTEL EXPERIENCE. LINK WORLD almacena únicamente su hash SHA-256 en `integration_connections`.
 - No hay backfill automático de eventos históricos.
-- `event_bridge` está `connected`. El estado global continúa `registered_pending_sync` mientras las proyecciones de contrapartes/productos y las superficies sigan siendo bindings controlados y no sincronizaciones automáticas.
+- `event_bridge` está `connected`.
+- Projection Engine v1 está activo y saludable.
+- Baseline agregado verificado: 25 de septiembre de 2026; sin PII y separado de los eventos futuros.
+- Estado canónico actual: `structure=complete`, `transport=connected`, `projection=healthy`, `overall=ready`.
+- El diagnóstico legado de bindings puede seguir mostrando `registered_pending_sync` porque las superficies y proyecciones controladas no necesitan convertirse en sincronizaciones automáticas.
 
 ## Patrón de crecimiento
 
