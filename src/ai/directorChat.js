@@ -4,13 +4,12 @@ import { readDirectorAppContext } from '../world/bridge.js';
 const MODEL_KEY='linkworld_ai_provider_config_v2';
 const LOG_KEY='linkworld_local_requests_v1';
 const DEFAULT_PROVIDER='openrouter';
-const DEFAULT_MODEL='qwen/qwen3-235b-a22b-2507:free';
-const LEGACY_DEFAULT_MODEL='nvidia/nemotron-3-ultra-550b-a55b:free';
+const DEFAULT_MODEL='';
+const LEGACY_DEFAULT_MODELS=new Set(['nvidia/nemotron-3-ultra-550b-a55b:free','qwen/qwen3-235b-a22b-2507:free']);
 const PROVIDERS={
   openrouter:{label:'OpenRouter',detail:'Catálogo completo de OpenRouter · usa el ID exacto del modelo.',keyRequired:true},
   groq:{label:'Groq',detail:'API compatible con OpenAI · usa un modelo disponible en tu cuenta Groq.',keyRequired:true},
   nvidia:{label:'NVIDIA NIM',detail:'NVIDIA API Catalog / NIM · usa el identificador exacto del modelo.',keyRequired:true},
-  custom:{label:'Otro proveedor',detail:'Endpoint público HTTPS compatible con OpenAI Chat Completions.',keyRequired:false}
 };
 
 const $=(q,root=document)=>root.querySelector(q);
@@ -24,8 +23,8 @@ const s={
   open:false,settings:false,log:false,busy:false,checking:false,keyChecked:false,
   modelAnswered:false,
   provider:PROVIDERS[stored.provider]?stored.provider:DEFAULT_PROVIDER,
-  model:typeof stored.model==='string'&&stored.model.trim()&&stored.model!==LEGACY_DEFAULT_MODEL?stored.model:DEFAULT_MODEL,
-  endpoint:typeof stored.endpoint==='string'?stored.endpoint:'',
+  model:typeof stored.model==='string'&&stored.model.trim()&&!LEGACY_DEFAULT_MODELS.has(stored.model)?stored.model:DEFAULT_MODEL,
+  endpoint:'',
   messages:[],history:[],lastStatus:'Sin conectar',context:null,activeModel:'',activeProvider:'',
   sessionId:crypto.randomUUID(),turnIndex:0,lastArchiveId:null,archiveState:'Listo'
 };
@@ -35,21 +34,19 @@ function providerId(){return $('#lw-provider')?.value||s.provider||DEFAULT_PROVI
 function providerInfo(){return PROVIDERS[providerId()]||PROVIDERS.openrouter;}
 function apiKey(){return $('#lw-key')?.value.trim()||'';}
 function model(){return $('#lw-model')?.value.trim()||'';}
-function endpoint(){return $('#lw-endpoint')?.value.trim()||'';}
 function keyReady(){
   const info=providerInfo();
   return !info.keyRequired||apiKey().length>=8;
 }
 function configReady(){
   if(model().length<1)return false;
-  if(providerId()==='custom'&&!endpoint())return false;
   return keyReady();
 }
 function rememberConfig(){
-  const p=providerId(),m=model(),e=endpoint();
+  const p=providerId(),m=model();
   if(!PROVIDERS[p]||!m)return false;
-  s.provider=p;s.model=m;s.endpoint=e;
-  save(MODEL_KEY,{provider:p,model:m,endpoint:e});
+  s.provider=p;s.model=m;s.endpoint='';
+  save(MODEL_KEY,{provider:p,model:m});
   return true;
 }
 function archiveEnvelope(contextScope='none',contextBusinessCount=null){
@@ -64,22 +61,12 @@ function archiveEnvelope(contextScope='none',contextBusinessCount=null){
 function currentPayload(extra={}){
   return {
     provider:providerId(),
-    endpoint:providerId()==='custom'?endpoint():'',
     model:model(),
     apiKey:apiKey(),
     ...extra
   };
 }
-function refreshProviderUI(){
-  const custom=$('#lw-endpoint-wrap');
-  if(custom)custom.classList.toggle('hidden',providerId()!=='custom');
-  const note=$('#lw-provider-note');
-  if(note){
-    const info=providerInfo();
-    note.textContent=info.detail+(info.keyRequired?' La API key es obligatoria.':' La API key es opcional si tu endpoint no la requiere.');
-  }
-  refreshDirectorMeta();
-}
+function refreshProviderUI(){refreshDirectorMeta();}
 function refreshDirectorMeta(){
   const providerState=$('#lw-provider-state');
   if(providerState)providerState.textContent=providerInfo().label;
@@ -193,20 +180,8 @@ function historyForRequest(){
 }
 function explainMissingConfig(){
   if(!model())return 'Escribe el identificador exacto del modelo.';
-  if(providerId()==='custom'&&!endpoint())return 'Pega la URL base /v1 o el endpoint /chat/completions del proveedor.';
-  if(providerInfo().keyRequired&&!keyReady())return 'Pega una API key válida para '+providerInfo().label+'.';
-  return 'Revisa la configuración del proveedor.';
-}
-function setSimpleDefaults(){
-  $('#lw-provider').value='openrouter';
-  $('#lw-model').value=DEFAULT_MODEL;
-  $('#lw-endpoint').value='';
-  s.provider='openrouter';s.model=DEFAULT_MODEL;s.endpoint='';
-  rememberConfig();refreshProviderUI();
-}
-async function connectSimple(){
-  setSimpleDefaults();
-  await verifyConnection();
+  if(!keyReady())return 'Pega una API key válida para '+providerInfo().label+'.';
+  return 'Revisa proveedor, modelo y API.';
 }
 async function verifyConnection(){
   if(s.checking||s.busy)return;
@@ -325,7 +300,7 @@ function render(){
   panel.setAttribute('aria-label','Director IA de LINK WORLD');
   panel.innerHTML=[
     '<header class="lw-top">',
-      '<div class="lw-identity"><span class="lw-symbol"><img src="/link-world-mark.svg" alt=""></span><div><span class="lw-eyebrow">LINK WORLD / INTELIGENCIA</span><h2>Director IA</h2><small>Pega tu API y conecta · configuración avanzada opcional</small></div></div>',
+      '<div class="lw-identity"><span class="lw-symbol"><img src="/link-world-mark.svg" alt=""></span><div><span class="lw-eyebrow">LINK WORLD / INTELIGENCIA</span><h2>Director IA</h2><small>Proveedor · modelo · API</small></div></div>',
       '<div class="lw-top-actions"><button id="lw-new" type="button">Nueva conversación</button><button id="lw-export-chat" type="button">Exportar</button><button id="lw-close" type="button" aria-label="Cerrar Director">×</button></div>',
     '</header>',
     '<div class="lw-director-shell">',
@@ -347,10 +322,12 @@ function render(){
         '<section class="lw-rail-card"><span class="lw-rail-kicker">CONTEXTO QUE VERÁ</span><label class="lw-context-toggle"><input type="checkbox" id="lw-private"><span><strong>Incluir datos de LINK</strong><small>Actívalo solo cuando quieras compartir contexto real autorizado con el proveedor seleccionado.</small></span></label><label class="lw-scope-label" for="lw-scope">ALCANCE</label><select id="lw-scope" aria-label="Alcance de investigación"><option value="selected">Selección resumida · hasta 3 negocios</option><option value="all">Resumen global · hasta 15 negocios</option></select></section>',
         '<section class="lw-rail-card"><span class="lw-rail-kicker">FUENTES</span><div class="lw-source-list"><div><i></i><span><strong>Conversación</strong><small>Disponible durante esta sesión.</small></span></div><div><i></i><span><strong>LINK WORLD</strong><small>Solo cuando autorizas datos.</small></span></div><div><i></i><span><strong>Proveedor IA</strong><small>Solo el proveedor/modelo que configuras.</small></span></div><div><i></i><span><strong>Archivo IA</strong><small>Cada intervención se guarda en Supabase para auditoría y aprendizaje.</small></span></div><div><i></i><span><strong>Google</strong><small>Manual. Nunca se consulta en silencio.</small></span></div></div></section>',
         '<section class="lw-rail-card lw-rail-actions"><span class="lw-rail-kicker">HERRAMIENTAS</span><button id="lw-settings-btn" type="button" aria-expanded="false">Conectar IA <span>→</span></button><button id="lw-log-btn" type="button" aria-pressed="false">Registro local <span>→</span></button><button id="lw-google" type="button">Abrir territorio / Google <span>→</span></button><label class="lw-save-toggle"><input type="checkbox" id="lw-save"><span>Guardar respuestas en registro local</span></label></section>',
-        '<section id="lw-settings" class="lw-settings hidden"><div class="lw-settings-head"><div><span class="lw-rail-kicker">CONEXIÓN IA</span><strong>Conectar modelo abierto</strong><small>Solo necesitas tu API de OpenRouter. LINK WORLD usa un modelo abierto preconfigurado y no guarda la clave.</small></div><button id="lw-settings-close" type="button" aria-label="Cerrar configuración">×</button></div>',
-          '<div class="lw-simple-ai"><div class="lw-simple-ai-model"><span>MODELO PRECONFIGURADO</span><strong>Qwen3 235B Instruct</strong><small>Open-weight · gratuito en OpenRouter · respuesta de texto directa</small></div><label for="lw-key">API KEY OPENROUTER</label><input id="lw-key" type="password" spellcheck="false" autocomplete="new-password" placeholder="sk-or-v1-…"><button id="lw-verify" type="button" class="lw-primary lw-connect-main">Conectar IA</button><small id="lw-connect-note">Pega tu API y pulsa Conectar IA. La clave vive solo en esta pestaña.</small></div>',
-          '<button id="lw-advanced-toggle" class="lw-advanced-toggle" type="button" aria-expanded="false">Configuración avanzada <span>+</span></button>',
-          '<div id="lw-advanced-config" class="lw-advanced-config hidden"><label for="lw-provider">PROVEEDOR</label><select id="lw-provider"><option value="openrouter">OpenRouter</option><option value="groq">Groq</option><option value="nvidia">NVIDIA NIM</option><option value="custom">Otro · OpenAI-compatible</option></select><div id="lw-endpoint-wrap" class="hidden"><label for="lw-endpoint">URL BASE / ENDPOINT</label><input id="lw-endpoint" type="url" spellcheck="false" autocomplete="off" placeholder="https://proveedor.example/v1"></div><label for="lw-model">MODELO EXACTO</label><input id="lw-model" type="text" spellcheck="false" maxlength="180" placeholder="provider/model-id"><small id="lw-provider-note"></small><div class="lw-settings-buttons"><button id="lw-use" type="button">Usar configuración</button><button id="lw-forget" type="button">Olvidar API key</button></div></div></section>',
+        '<section id="lw-settings" class="lw-settings hidden"><div class="lw-settings-head"><div><span class="lw-rail-kicker">CONEXIÓN IA</span><strong>Proveedor · modelo · API</strong><small>Elige dónde corre el modelo, escribe su ID exacto y pega tu API. Nada más.</small></div><button id="lw-settings-close" type="button" aria-label="Cerrar configuración">×</button></div>',
+          '<label for="lw-provider">PROVEEDOR</label><select id="lw-provider"><option value="openrouter">OpenRouter</option><option value="groq">Groq</option><option value="nvidia">NVIDIA NIM</option></select>',
+          '<label for="lw-model">MODELO</label><input id="lw-model" type="text" spellcheck="false" maxlength="180" placeholder="Ej: qwen/qwen3-235b-a22b-2507">',
+          '<label for="lw-key">API</label><input id="lw-key" type="password" spellcheck="false" autocomplete="new-password" placeholder="Pega aquí tu API key">',
+          '<button id="lw-verify" type="button" class="lw-primary lw-connect-main">Conectar</button>',
+          '<small id="lw-connect-note">LINK WORLD prueba exactamente ese proveedor y ese modelo. La API no se guarda.</small></section>',
       '</aside>',
     '</div>'
   ].join('');
@@ -358,19 +335,12 @@ function render(){
 
   $('#lw-provider').value=s.provider;
   $('#lw-model').value=s.model;
-  $('#lw-endpoint').value=s.endpoint||'';
   refreshProviderUI();
 
   trigger.addEventListener('click',()=>setOpen(!s.open));
   $('#lw-close').addEventListener('click',()=>setOpen(false));
   $('#lw-settings-btn').addEventListener('click',()=>setSettings(!s.settings));
   $('#lw-settings-close').addEventListener('click',()=>setSettings(false));
-  $('#lw-advanced-toggle').addEventListener('click',()=>{
-    const box=$('#lw-advanced-config'),open=box.classList.contains('hidden');
-    box.classList.toggle('hidden',!open);
-    $('#lw-advanced-toggle').setAttribute('aria-expanded',String(open));
-    $('#lw-advanced-toggle span').textContent=open?'−':'+';
-  });
   $('#lw-log-btn').addEventListener('click',()=>showLog(!s.log));
   $('#lw-log-back').addEventListener('click',()=>showLog(false));
   $('#lw-private').addEventListener('change',refreshDirectorMeta);
@@ -380,7 +350,6 @@ function render(){
     s.keyChecked=false;s.activeProvider='';s.activeModel='';
     rememberConfig();refreshProviderUI();status('Proveedor modificado · pendiente de prueba','warn');
   });
-  $('#lw-endpoint').addEventListener('input',()=>{s.keyChecked=false;rememberConfig();refreshDirectorMeta();});
   $('#lw-model').addEventListener('input',()=>{
     s.keyChecked=false;s.modelAnswered=false;s.activeModel='';
     rememberConfig();status('Modelo modificado · pendiente de prueba','warn');
@@ -395,17 +364,7 @@ function render(){
     renderMessages();renderWelcome();feedback('Nueva conversación. Se abrió una nueva sesión de archivo. La configuración del proveedor se conserva; la API key no se guarda al recargar.');
   });
   $('#lw-export-chat').addEventListener('click',exportConversation);
-  $('#lw-verify').addEventListener('click',connectSimple);
-  $('#lw-use').addEventListener('click',()=>{
-    if(!configReady()){feedback(explainMissingConfig(),true);return;}
-    rememberConfig();status('Configuración lista · puedes conversar','idle');
-    setSettings(false);$('#lw-composer').focus();
-  });
-  $('#lw-forget').addEventListener('click',()=>{
-    $('#lw-key').value='';s.keyChecked=false;s.modelAnswered=false;
-    status(providerInfo().keyRequired?'Falta API key':'API key vacía','idle');
-    feedback('API key borrada de esta pestaña.');refreshDirectorMeta();
-  });
+  $('#lw-verify').addEventListener('click',verifyConnection);
   $('#lw-send').addEventListener('click',send);
   $('#lw-composer').addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}
@@ -441,14 +400,14 @@ function renderWelcome(){
       '<div class="lw-welcome-mark"><img src="/link-world-mark.svg" alt=""></div>'+
       '<div class="lw-eyebrow">DIRECTOR IA / LINK WORLD</div>'+
       '<h3>¿Qué quieres entender o construir?</h3>'+
-      '<p>Para empezar solo pega tu API de OpenRouter y conecta. LINK WORLD usa un modelo abierto preconfigurado; si algún día quieres otro proveedor o modelo, la configuración avanzada sigue disponible.</p>'+
+      '<p>Conecta la IA con tres datos: proveedor, modelo y API. LINK WORLD usa exactamente lo que elijas y no cambia de modelo por su cuenta.</p>'+
       '<div class="lw-starters">'+
         '<button type="button" data-start="Revisa un negocio real de LINK WORLD. Dime qué sabemos, qué no sabemos y qué deberíamos resolver a continuación."><b>01</b><span><strong>Revisar un negocio</strong><small>Hechos, vacíos y próximos pasos.</small></span></button>'+
         '<button type="button" data-start="Quiero diseñar un producto dentro de LINK WORLD. Ayúdame a definir oferta, operación, economía y datos faltantes antes de registrarlo."><b>02</b><span><strong>Diseñar un producto</strong><small>Oferta, operación y economía.</small></span></button>'+
         '<button type="button" data-start="Analiza relaciones posibles entre negocios reales de LINK WORLD y explica qué conexión tendría sentido, sin inventar datos."><b>03</b><span><strong>Conectar negocios</strong><small>Relaciones y oportunidades reales.</small></span></button>'+
         '<button type="button" data-start="Quiero preparar un cambio para LINK WORLD. Ordénalo como: estado actual, cambio propuesto, impacto, datos necesarios y acción que debo aprobar."><b>04</b><span><strong>Preparar un cambio</strong><small>De idea a decisión verificable.</small></span></button>'+
       '</div>'+
-      '<div class="lw-welcome-flow"><span><b>API</b><small>conectas una vez</small></span><i>→</i><span><b>Contexto</b><small>qué existe</small></span><i>→</i><span><b>Análisis</b><small>qué significa</small></span><i>→</i><span><b>Propuesta</b><small>qué haríamos</small></span><i>→</i><span><b>Decisión</b><small>tú autorizas</small></span></div>'+
+      '<div class="lw-welcome-flow"><span><b>Proveedor</b><small>dónde corre</small></span><i>→</i><span><b>Modelo</b><small>cuál usas</small></span><i>→</i><span><b>API</b><small>tu acceso</small></span><i>→</i><span><b>Director</b><small>conversa</small></span></div>'+
     '</div>';
   t.querySelectorAll('[data-start]').forEach(b=>b.addEventListener('click',()=>{
     $('#lw-composer').value=b.dataset.start;$('#lw-composer').focus();
