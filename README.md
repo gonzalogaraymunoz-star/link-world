@@ -21,9 +21,7 @@ espacio. La búsqueda de negocios es manual y conserva límites locales
 consulta. Esos límites NO son topes globales de facturación. Google Places
 no se importa masivamente ni se convierte automáticamente en negocio LINK.
 
-**Director IA** — sala de inteligencia con proveedor y modelo configurables.
-Incluye presets para OpenRouter, Groq y NVIDIA NIM, más un endpoint público
-OpenAI-compatible personalizado. No altera datos ni hace búsquedas Google
+**Director IA** — sala de inteligencia con instalación simple: pegar API de OpenRouter y conectar. Por defecto usa `qwen/qwen3-235b-a22b-2507:free`. La configuración avanzada conserva presets para OpenRouter, Groq y NVIDIA NIM, más un endpoint público OpenAI-compatible personalizado. No altera datos ni hace búsquedas Google
 automáticamente. El usuario decide si comparte una instantánea acotada de
 datos LINK autorizados para esa consulta. No existe fallback automático:
 LINK usa exactamente el proveedor y modelo elegidos.
