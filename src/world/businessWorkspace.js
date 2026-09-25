@@ -126,12 +126,14 @@ function renderClientBusinessCell(){
       [Array.isArray(p.schedule.days)?p.schedule.days.join(' · '):'',p.schedule.start_local?('desde '+p.schedule.start_local):'',p.schedule.end_rule==='cierre_del_local'?'hasta cierre':''].filter(Boolean).join(' · '):'';
     const cs=Array.isArray(p.commitments)?p.commitments:[];
     const finance=p.financial_folder_url?'<a href="'+safe(p.financial_folder_url)+'" target="_blank" rel="noopener noreferrer">Abrir carpeta financiera ↗</a>':'';
-    return '<article class="bw-product">'+
+    const pColor=visibleColor(p.visual);
+    const visualState=pColor?'<span><b>Color activo</b> '+safe(pColor)+'</span>':'<span><b>Sin color</b> pago/evidencia pendiente</span>';
+    return '<article class="bw-product"'+colorStyle(pColor)+'>'+
       '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.product_code||'PRODUCTO VENDIDO')+'</span><h3>'+safe(p.name||'Producto')+'</h3></div><span class="bw-economic active">Activo</span></div>'+
       '<div class="bw-product-values"><div><small>Precio acordado</small><strong>'+price+'</strong></div><div><small>Cobro</small><strong>'+safe(perSession?'Por jornada':'Mensual')+'</strong></div><div><small>Documento</small><strong>Boleta de honorarios</strong></div></div>'+
       (schedule?'<p class="bw-product-notes"><b>Compromiso horario:</b> '+safe(schedule)+'</p>':'')+
       (finance?'<p class="bw-product-notes">'+finance+'</p>':'')+
-      '<div class="bw-product-foot"><span>Compromisos: <b>'+cs.length+'</b></span><span>Estado: <b>Activo</b></span></div>'+
+      '<div class="bw-product-foot"><span>Compromisos: <b>'+cs.length+'</b></span><span>Estado: <b>Activo</b></span>'+visualState+'</div>'+
     '</article>';
   };
   const commitmentCard=(c,p)=>'<article class="bw-product"><div class="bw-product-head"><div><span class="bw-kicker">'+safe(c.code||'COMPROMISO')+'</span><h3>'+safe(c.title||'Compromiso')+'</h3></div><span class="bw-economic active">'+safe(c.status==='in_progress'?'En curso':c.status||'Activo')+'</span></div>'+
