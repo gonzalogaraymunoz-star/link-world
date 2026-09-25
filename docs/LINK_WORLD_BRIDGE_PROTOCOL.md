@@ -22,8 +22,9 @@ Tablas nuevas independientes del CRM y Hotel Experience:
 | public.link_world_requests | Solicitudes compartidas, estados e IDs asociados |
 | public.link_world_relations | Propuestas/relaciones empresariales y evidencia |
 | public.link_world_activity | Registro generado automáticamente al crear o actualizar |
+| public.link_world_ai_interventions | Archivo cronológico de preguntas, respuestas, errores, proveedor/modelo y metadata del Director IA |
 
-No se tocaron registros de la tabla antigua public.requests ni las reservas. Se crearon tablas aisladas con RLS, no un proyecto Supabase nuevo.
+El archivo del Director se consulta desde ChatGPT directamente en Supabase; no depende de un Markdown que pueda quedar desactualizado. No guarda API keys ni snapshots privados completos.\n\nNo se tocaron registros de la tabla antigua public.requests ni las reservas. Se crearon tablas aisladas con RLS, no un proyecto Supabase nuevo.
 
 ### Seguridad
 
