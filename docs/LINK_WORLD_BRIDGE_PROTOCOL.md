@@ -7,7 +7,7 @@ Una sola base de datos para dos superficies:
 - **Aquí (ChatGPT):** habilidad LINK WORLD + conector autorizado Supabase para leer, investigar, preparar borradores y escribir solo después de aprobación.
 - **Allá (app LINK WORLD):** pantalla ↔ LINK WORLD con autenticación de miembro, negocios, selección de hasta 3, solicitudes y actividad, sincronizada manualmente.
 
-No se crea un chat secreto entre dos IAs: la comunicación se realiza mediante **registros persistentes, IDs y eventos auditados**. El Director IA/OpenRouter dentro de la app es una capacidad complementaria y no se invoca automáticamente para mover datos.
+No se crea un chat secreto entre dos IAs: la comunicación se realiza mediante **registros persistentes, IDs y eventos auditados**. El Director IA dentro de la app es una capacidad complementaria, independiente del proveedor/modelo configurado, y no se invoca automáticamente para mover datos. Su protocolo de proveedores está en `docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md`.
 
 ## Fuente de verdad
 
@@ -91,7 +91,7 @@ Google Places muestra el mundo público en el mapa. LINK CONTROL CENTRAL almacen
 - No se han construido todavía modelos de negocio generativos autónomos, WhatsApp, Gmail, pagos ni escritura en otras células.
 - Para vincular un usuario web que no conozca las credenciales existentes de LINK CONTROL CENTRAL se deberá configurar autenticación compatible, sin dar acceso público.
 - La instalación de un SKILL.md en GitHub no lo registra por arte de magia en todos los chats; hacer accesible la habilidad e invocarla desde el entorno conectado.
-- Supabase, Google Maps, OpenRouter y Vercel conservan sus cuotas/costos independientes. No prometer uso global ilimitado a US$0.
+- Supabase, Google Maps, Vercel y el proveedor IA seleccionado conservan sus cuotas/costos independientes. No prometer uso global ilimitado a US$0.
 
 ## Verificación de aceptación
 
