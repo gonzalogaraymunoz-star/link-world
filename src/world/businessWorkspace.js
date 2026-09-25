@@ -17,7 +17,7 @@ const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,financeTransactions:[],financeDocuments:[],busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -60,6 +60,21 @@ async function loadBusiness(businessId){
   state.products=p.data||[];
   state.profiles=r.data||[];
   state.houseStatus=s?.error?null:(s?.data||null);
+  if(state.canWrite){
+    const [tx,docs]=await Promise.all([
+      db.from('link_world_transactions')
+        .select('id,direction,transaction_type,status,amount,currency,external_reference,documentary_status,occurred_at,metadata')
+        .eq('business_id',businessId).order('occurred_at',{ascending:false}),
+      db.from('link_world_documents')
+        .select('id,transaction_id,document_type,drive_url,file_name,issue_date,amount,currency')
+        .eq('business_id',businessId).order('issue_date',{ascending:false})
+    ]);
+    state.financeTransactions=tx.error?[]:(tx.data||[]);
+    state.financeDocuments=docs.error?[]:(docs.data||[]);
+  }else{
+    state.financeTransactions=[];
+    state.financeDocuments=[];
+  }
 }
 function facts(){
   return state.business?.owned_facts&&typeof state.business.owned_facts==='object'?state.business.owned_facts:{};
@@ -71,6 +86,53 @@ function businessMetrics(){
   const active=state.products.filter(x=>x.economic_state==='active'||x.stage==='active').length;
   const blocked=state.products.filter(x=>x.economic_state==='blocked').length;
   return {clients:state.clients.length,products:state.products.length,active,blocked};
+}
+function financePanelMarkup(){
+  if(!state.canWrite){
+    return '<section class="bw-products-section bw-finance-section"><div class="bw-section-head"><div><span class="bw-kicker">FINANZAS / PRIVADO</span><h2>Panel financiero</h2><p>Los montos financieros solo se muestran a miembros autenticados de LINK.</p></div><span class="bw-open-mode">Sesión LINK requerida</span></div></section>';
+  }
+  const rows=state.financeTransactions.filter(t=>t.direction==='income');
+  const totals=rows.reduce((a,t)=>{
+    const m=t.metadata&&typeof t.metadata==='object'?t.metadata:{};
+    const gross=Number(m.gross_amount??t.amount??0),ret=Number(m.withholding_amount??0),net=Number(m.net_amount??Math.max(0,gross-ret)),un=Number(m.unallocated_amount??net);
+    a.gross+=gross;a.retention+=ret;a.net+=net;a.unallocated+=un;return a;
+  },{gross:0,retention:0,net:0,unallocated:0});
+  const rowHtml=rows.map(t=>{
+    const m=t.metadata&&typeof t.metadata==='object'?t.metadata:{};
+    const gross=Number(m.gross_amount??t.amount??0),ret=Number(m.withholding_amount??0),net=Number(m.net_amount??Math.max(0,gross-ret)),un=Number(m.unallocated_amount??net);
+    const doc=state.financeDocuments.find(d=>d.transaction_id===t.id);
+    const date=t.occurred_at?new Date(t.occurred_at).toLocaleDateString('es-CL'):'—';
+    const service=m.service||t.transaction_type||'Ingreso';
+    const pay=m.payment_status==='unverified'?'Pago por verificar':(t.status||'');
+    const allocation=m.allocation_status==='pending'?'Por asignar':'Asignado';
+    return '<article class="bw-finance-row" data-finance-row data-gross="'+gross+'" data-retention="'+ret+'" data-net="'+net+'" data-unallocated="'+un+'" data-allocation="'+safe(allocation)+'">'+
+      '<div><small>'+safe(date)+' · '+safe(t.external_reference||'Sin referencia')+'</small><strong>'+safe(service)+'</strong><span>'+safe(pay)+'</span></div>'+
+      '<div class="bw-finance-row-side"><b class="bw-finance-row-value">'+money(gross,t.currency||'CLP')+'</b><small class="bw-finance-row-label">Bruto facturado</small>'+(doc?.drive_url?'<a href="'+safe(doc.drive_url)+'" target="_blank" rel="noopener noreferrer">Abrir respaldo ↗</a>':'')+'</div>'+
+    '</article>';
+  }).join('');
+  return '<section class="bw-products-section bw-finance-section">'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">FINANZAS / FLUJO REAL</span><h2>Qué entra y dónde queda</h2><p>Los ingresos se leen desde documentos reales. La retención no se mezcla con costos operacionales y el destino queda pendiente hasta registrar pagos o gastos.</p></div><span class="bw-open-mode">'+rows.length+' movimientos</span></div>'+
+    '<div class="bw-finance-metrics"><div><small>Bruto facturado</small><strong>'+money(totals.gross,'CLP')+'</strong></div><div><small>Retención</small><strong>'+money(totals.retention,'CLP')+'</strong></div><div><small>Líquido emitido</small><strong>'+money(totals.net,'CLP')+'</strong></div><div><small>Por asignar</small><strong>'+money(totals.unallocated,'CLP')+'</strong></div></div>'+
+    '<div class="bw-finance-tabs"><button class="active" data-finance-view="gross" type="button">Ingresos</button><button data-finance-view="retention" type="button">Retenciones</button><button data-finance-view="net" type="button">Líquido</button><button data-finance-view="unallocated" type="button">Destino</button></div>'+
+    '<div class="bw-finance-list">'+(rowHtml||'<div class="bw-empty"><strong>Sin movimientos financieros.</strong><span>Cuando registremos una boleta, factura o cobro aparecerá aquí.</span></div>')+'</div>'+
+  '</section>';
+}
+function bindFinancePanel(root){
+  const buttons=[...root.querySelectorAll('[data-finance-view]')];
+  const rows=[...root.querySelectorAll('[data-finance-row]')];
+  if(!buttons.length||!rows.length)return;
+  const labels={gross:'Bruto facturado',retention:'Retención',net:'Líquido emitido',unallocated:'Por asignar'};
+  for(const button of buttons){
+    button.addEventListener('click',()=>{
+      const view=button.dataset.financeView||'gross';
+      buttons.forEach(x=>x.classList.toggle('active',x===button));
+      rows.forEach(row=>{
+        const value=Number(row.dataset[view]||0);
+        row.querySelector('.bw-finance-row-value').textContent=money(value,'CLP');
+        row.querySelector('.bw-finance-row-label').textContent=view==='unallocated'?(row.dataset.allocation||'Destino'):labels[view];
+      });
+    });
+  }
 }
 function profileFor(id){return state.profiles.find(p=>p.id===id);}
 function productEconomics(p){
@@ -161,6 +223,7 @@ function renderClientBusinessCell(){
     '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
     '<section class="bw-grid"><article class="bw-panel span-2"><span class="bw-kicker">TERRITORIO</span><h2>'+(territoryLinked?'Vinculado a Google Maps':'Sin ubicación territorial')+'</h2><p>'+(territoryLinked?safe(territory.address_input||'Place ID vinculado. Los datos de Google se consultan en vivo.'):'Para un negocio físico, LINK WORLD debe pedir una dirección y resolver su Place ID antes de marcarlo en el mapa.')+'</p><div class="bw-facts">'+(territoryLinked?'<span><b>Place ID</b>'+safe(state.business.google_place_id)+'</span><span><b>Fuente</b>Google Maps en vivo</span>':'<span><b>Estado</b>Pendiente de dirección</span>')+'</div><button id="bw-territory-action" type="button">'+(territoryLinked?'Ver en Territorio':'Definir dirección')+'</button></article></section>',
+    financePanelMarkup(),
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
@@ -180,6 +243,7 @@ function renderClientBusinessCell(){
       document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Necesito ubicar '+name+' en Territorio. Pregúntame si es un negocio físico o virtual. Si es físico, pídeme la dirección exacta, busca la coincidencia correcta en Google Maps y guarda su Place ID antes de cerrar la ficha.'}}));
     }
   });
+  bindFinancePanel(root);
 }
 
 
