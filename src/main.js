@@ -8,7 +8,7 @@ import './style.css';
 import './world/bridge.css';
 import './ai/chat.css';
 import './world/businessWorkspace.css';
-import './simple.css';
+import './simple.css';\nimport './brand.css';
 
 const $=s=>document.querySelector(s);
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
@@ -16,7 +16,7 @@ const state={map:false,connected:true,businesses:[],requests:[],relations:[]};
 $('#app').innerHTML=[
 "<div class='lw-app'>",
 "<header class='lw-app-header'>",
-"<a href='/' class='lw-app-brand'><span class='lw-brand-symbol'>L•</span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
+"<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
 "<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='director'>Director IA</button></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Modo abierto</span>",
 "<div class='header-actions' id='lw-hidden-triggers'></div></header>",
