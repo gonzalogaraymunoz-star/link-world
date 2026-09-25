@@ -3,6 +3,8 @@ import { readDirectorAppContext } from '../world/bridge.js';
 
 const MODEL_KEY='linkworld_ai_provider_config_v2';
 const LOG_KEY='linkworld_local_requests_v1';
+const CONTEXT_KEY='linkworld_director_context_v1';
+const CONTEXT_SCOPE_KEY='linkworld_director_context_scope_v1';
 const DEFAULT_PROVIDER='openrouter';
 const DEFAULT_MODEL='';
 const LEGACY_DEFAULT_MODELS=new Set(['nvidia/nemotron-3-ultra-550b-a55b:free','qwen/qwen3-235b-a22b-2507:free']);
@@ -26,7 +28,7 @@ const s={
   model:typeof stored.model==='string'&&stored.model.trim()&&!LEGACY_DEFAULT_MODELS.has(stored.model)?stored.model:DEFAULT_MODEL,
   endpoint:'',
   messages:[],history:[],lastStatus:'Sin conectar',context:null,activeModel:'',activeProvider:'',
-  sessionId:crypto.randomUUID(),turnIndex:0,lastArchiveId:null,archiveState:'Listo'
+  sessionId:crypto.randomUUID(),turnIndex:0,lastArchiveId:null,archiveState:'Listo',pendingContextPrompt:''
 };
 let getContext=()=>({});
 
@@ -67,6 +69,14 @@ function currentPayload(extra={}){
   };
 }
 function refreshProviderUI(){refreshDirectorMeta();}
+function needsLinkContext(prompt){
+  const p=String(prompt||'').toLowerCase();
+  return /(link world|link cupones|negocios? reales?|nuestros? negocios?|nuestros? clientes?|nuestros? productos?|wine experience|supabase|corteza|solicitudes? pendientes?|relaciones? entre negocios|cola de conversi[oó]n|prioridades? de hoy|informe diario|actividad de hoy|c[3-5]\b)/i.test(p);
+}
+function persistContextPreference(){
+  save(CONTEXT_KEY,Boolean($('#lw-private')?.checked));
+  save(CONTEXT_SCOPE_KEY,$('#lw-scope')?.value||'all');
+}
 function refreshDirectorMeta(){
   const providerState=$('#lw-provider-state');
   if(providerState)providerState.textContent=providerInfo().label;
@@ -138,6 +148,23 @@ function renderMessages(){
     const bubble=document.createElement('div');bubble.className='lw-bubble';
     bubble.textContent=message.text;
     body.append(eyebrow,bubble);
+    if(message.action==='enable_link_context'){
+      const action=document.createElement('button');
+      action.type='button';action.className='lw-inline-action';
+      action.textContent='Usar contexto LINK y continuar';
+      action.addEventListener('click',()=>{
+        $('#lw-private').checked=true;
+        $('#lw-scope').value='all';
+        persistContextPreference();
+        s.pendingContextPrompt=message.prompt||'';
+        s.messages=s.messages.filter(m=>m!==message);
+        renderMessages();refreshDirectorMeta();
+        $('#lw-composer').value=s.pendingContextPrompt;
+        s.pendingContextPrompt='';
+        send();
+      });
+      body.append(action);
+    }
     if(message.model||message.provider){
       const meta=document.createElement('small');meta.className='lw-message-meta';
       meta.textContent=[message.provider,message.model,message.tokens?message.tokens+' tokens de salida':'','propuesta · no ejecución'].filter(Boolean).join(' · ');
@@ -221,6 +248,14 @@ async function send(){
   if(prompt.length<3||prompt.length>3500){feedback('Escribe un mensaje de entre 3 y 3500 caracteres.',true);return;}
   if(!configReady()){setSettings(true);status('Configuración incompleta','warn');feedback(explainMissingConfig(),true);return;}
   if(!rememberConfig()){setSettings(true);feedback('Revisa proveedor y modelo.',true);return;}
+  if(needsLinkContext(prompt)&&!$('#lw-private').checked){
+    s.pendingContextPrompt=prompt;
+    addMessage('assistant','Para responder con negocios y datos reales necesito leer el contexto de LINK WORLD. Puedes autorizarlo una vez y continuar con la misma pregunta.',{
+      action:'enable_link_context',prompt
+    });
+    feedback('La pregunta quedó preparada. Autoriza contexto LINK para continuar con datos reales.');
+    return;
+  }
   setSettings(false);feedback('');
   const previous=historyForRequest();
   addMessage('user',prompt);
@@ -319,7 +354,7 @@ function render(){
       '</section>',
       '<aside class="lw-director-rail lw-director-context">',
         '<section class="lw-rail-card"><span class="lw-rail-kicker">ESTADO</span><div class="lw-meta-list"><div><span>Proveedor</span><strong id="lw-provider-state">—</strong></div><div><span>Conexión</span><strong id="lw-key-state">No conectada</strong></div><div><span>Modelo</span><strong id="lw-model-state">—</strong></div><div><span>Contexto LINK</span><strong id="lw-context-state">No compartido</strong></div><div><span>Memoria local</span><strong id="lw-save-state">No se guarda</strong></div><div><span>Archivo IA</span><strong id="lw-archive-state">Activo</strong></div></div></section>',
-        '<section class="lw-rail-card"><span class="lw-rail-kicker">CONTEXTO QUE VERÁ</span><label class="lw-context-toggle"><input type="checkbox" id="lw-private"><span><strong>Incluir datos de LINK</strong><small>Actívalo solo cuando quieras compartir contexto real autorizado con el proveedor seleccionado.</small></span></label><label class="lw-scope-label" for="lw-scope">ALCANCE</label><select id="lw-scope" aria-label="Alcance de investigación"><option value="selected">Selección resumida · hasta 3 negocios</option><option value="all">Resumen global · hasta 15 negocios</option></select></section>',
+        '<section class="lw-rail-card"><span class="lw-rail-kicker">CONTEXTO LINK</span><label class="lw-context-toggle"><input type="checkbox" id="lw-private"><span><strong>Usar contexto LINK automáticamente</strong><small>Recuerda esta autorización en este navegador. El proveedor recibe solo una instantánea acotada cuando consultas al Director.</small></span></label><label class="lw-scope-label" for="lw-scope">ALCANCE</label><select id="lw-scope" aria-label="Alcance de investigación"><option value="all">Ecosistema · hasta 15 negocios</option><option value="selected">Selección · hasta 3 negocios</option></select></section>',
         '<section class="lw-rail-card"><span class="lw-rail-kicker">FUENTES</span><div class="lw-source-list"><div><i></i><span><strong>Conversación</strong><small>Disponible durante esta sesión.</small></span></div><div><i></i><span><strong>LINK WORLD</strong><small>Solo cuando autorizas datos.</small></span></div><div><i></i><span><strong>Proveedor IA</strong><small>Solo el proveedor/modelo que configuras.</small></span></div><div><i></i><span><strong>Archivo IA</strong><small>Cada intervención se guarda en Supabase para auditoría y aprendizaje.</small></span></div><div><i></i><span><strong>Google</strong><small>Manual. Nunca se consulta en silencio.</small></span></div></div></section>',
         '<section class="lw-rail-card lw-rail-actions"><span class="lw-rail-kicker">HERRAMIENTAS</span><button id="lw-settings-btn" type="button" aria-expanded="false">Conectar IA <span>→</span></button><button id="lw-log-btn" type="button" aria-pressed="false">Registro local <span>→</span></button><button id="lw-google" type="button">Abrir territorio / Google <span>→</span></button><label class="lw-save-toggle"><input type="checkbox" id="lw-save"><span>Guardar respuestas en registro local</span></label></section>',
         '<section id="lw-settings" class="lw-settings hidden"><div class="lw-settings-head"><div><span class="lw-rail-kicker">CONEXIÓN IA</span><strong>Proveedor · modelo · API</strong><small>Elige dónde corre el modelo, escribe su ID exacto y pega tu API. Nada más.</small></div><button id="lw-settings-close" type="button" aria-label="Cerrar configuración">×</button></div>',
@@ -335,6 +370,8 @@ function render(){
 
   $('#lw-provider').value=s.provider;
   $('#lw-model').value=s.model;
+  $('#lw-private').checked=read(CONTEXT_KEY,false)===true;
+  $('#lw-scope').value=read(CONTEXT_SCOPE_KEY,'all')||'all';
   refreshProviderUI();
 
   trigger.addEventListener('click',()=>setOpen(!s.open));
@@ -343,8 +380,8 @@ function render(){
   $('#lw-settings-close').addEventListener('click',()=>setSettings(false));
   $('#lw-log-btn').addEventListener('click',()=>showLog(!s.log));
   $('#lw-log-back').addEventListener('click',()=>showLog(false));
-  $('#lw-private').addEventListener('change',refreshDirectorMeta);
-  $('#lw-scope').addEventListener('change',refreshDirectorMeta);
+  $('#lw-private').addEventListener('change',()=>{persistContextPreference();refreshDirectorMeta();});
+  $('#lw-scope').addEventListener('change',()=>{persistContextPreference();refreshDirectorMeta();});
   $('#lw-save').addEventListener('change',refreshDirectorMeta);
   $('#lw-provider').addEventListener('change',()=>{
     s.keyChecked=false;s.activeProvider='';s.activeModel='';
@@ -400,7 +437,7 @@ function renderWelcome(){
       '<div class="lw-welcome-mark"><img src="/link-world-mark.svg" alt=""></div>'+
       '<div class="lw-eyebrow">DIRECTOR IA / LINK WORLD</div>'+
       '<h3>¿Qué quieres entender o construir?</h3>'+
-      '<p>Conecta la IA con tres datos: proveedor, modelo y API. LINK WORLD usa exactamente lo que elijas y no cambia de modelo por su cuenta.</p>'+
+      '<p>El Director conoce la lógica del ecosistema LINK. Con contexto autorizado puede cruzar negocios, clientes, productos, relaciones, conversión y actividad real sin exponerte la mecánica interna.</p>'+
       '<div class="lw-starters">'+
         '<button type="button" data-start="Revisa un negocio real de LINK WORLD. Dime qué sabemos, qué no sabemos y qué deberíamos resolver a continuación."><b>01</b><span><strong>Revisar un negocio</strong><small>Hechos, vacíos y próximos pasos.</small></span></button>'+
         '<button type="button" data-start="Quiero diseñar un producto dentro de LINK WORLD. Ayúdame a definir oferta, operación, economía y datos faltantes antes de registrarlo."><b>02</b><span><strong>Diseñar un producto</strong><small>Oferta, operación y economía.</small></span></button>'+
