@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -103,6 +103,11 @@ Nunca decir “guardado” antes de verificar.
 - `link_skills`
 - `link_skill_capabilities`
 - `link_skill_versions`
+- `ecosystem_cell_archetypes`
+- `ecosystem_cells`
+- `ecosystem_cell_organelle_bindings`
+- `integration_bindings`
+- `event_bus`
 
 No sustituir estas tablas por CRM, Hotel Experience u otras bases salvo que el protocolo explícitamente lo indique.
 
@@ -117,6 +122,50 @@ Estados y hechos no se heredan por intuición.
 - una conversación ≠ ejecución.
 - una observación ≠ regla.
 - una coincidencia semántica ≠ capacidad registrada.
+
+## 5.1 Casas Operativas replicables
+
+Arquetipo canónico: `operational_house_v1`.
+
+Se usa cuando una célula posee o coordina un sistema operacional propio y LINK WORLD debe conectarlo sin absorber su base transaccional.
+
+Contrato obligatorio:
+
+- **WORLD posee:** identidad, relaciones, capacidades, estado del ecosistema y eventos verificados.
+- **Sistema fuente posee:** transacciones, reservas, pasajeros/personas, pagos, operación, comisiones y registros específicos del dominio.
+- **No duplicar operación:** usar proyecciones de identidad/agregados y bindings, nunca una segunda reserva o pago.
+- **No copiar PII sensible:** los eventos usan referencias mínimas no sensibles.
+- **Costo operacional antes del margen:** no confundir costo de ejecutar con distribución comercial.
+- **Acuerdos explícitos:** un registro activo o una relación observada no crea por sí solo un convenio económico.
+- **Eventos idempotentes:** `event_bus` usa `dedupe_key` y semántica at-least-once.
+
+Roles mínimos de binding:
+
+1. `operational_core`
+2. `sales_apparatus`
+3. `operations_surface`
+4. `counterparty_projection`
+5. `product_projection`
+6. `event_bridge`
+
+Estados de integración:
+
+- **incomplete:** falta uno o más roles obligatorios;
+- **registered_pending_sync:** todos los roles existen pero alguno aún no sincroniza;
+- **connected:** todos los roles obligatorios están conectados.
+
+Para incorporar una nueva Casa:
+
+1. registrar/identificar el negocio real;
+2. aplicar `operational_house_v1`;
+3. declarar configuración de la instancia;
+4. registrar bindings con `contract_role` y `contract_version`;
+5. proyectar sólo contrapartes/productos con evidencia;
+6. implementar `event_bridge` sin PII sensible;
+7. verificar `ecosystem_operational_house_readiness_v`;
+8. usar la misma vista genérica de Casa Operativa: no crear frontend especial por negocio.
+
+HOTEL EXPERIENCE es la instancia de referencia inicial del arquetipo, no una excepción arquitectónica.
 
 ## 6. Director IA
 
