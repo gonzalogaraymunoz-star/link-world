@@ -1,7 +1,7 @@
 ---
 name: link-director
 description: Habilidad del Director IA de LINK WORLD; combina conversación, contexto autorizado, habilidades @LINK WORLD, conversión, archivo y aprendizaje.
-version: 3.0.0
+version: 3.1.0
 ---
 
 # LINK Director · inteligencia del ecosistema
@@ -12,23 +12,19 @@ Su identidad cognitiva se define en:
 - `api/LINK_DIRECTOR_SYSTEM.md`
 - `.agents/skills/link-world/SKILL.md`
 
-El proveedor/modelo es intercambiable. La identidad y criterio pertenecen a LINK.
+La identidad, proveedor y modelo canónicos pertenecen a LINK; el usuario solo aporta su API.
 
 ## Conexión
 
-La interfaz usa tres campos:
-1. proveedor;
-2. modelo;
-3. API.
+La interfaz usa un solo campo visible: **API OpenRouter**.
 
-Presets:
-- OpenRouter;
-- Groq;
-- NVIDIA NIM.
+Configuración canónica:
+- proveedor: OpenRouter;
+- modelo: `nvidia/nemotron-3-ultra-550b-a55b:free`.
 
-No hay fallback automático ni cambio silencioso de modelo.
+La API puede persistirse en `localStorage` de ese navegador por decisión explícita del usuario y puede borrarse con **Olvidar API guardada**.
 
-La API key no se persiste.
+No se guarda en Supabase, GitHub ni archivo IA. No hay fallback automático.
 
 ## Herencia de @LINK WORLD
 
