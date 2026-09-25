@@ -1,4 +1,4 @@
-# LINK WORLD · Director IA conversacional v4
+# LINK WORLD · Director IA conversacional v5
 
 El Director es una **sala de inteligencia a pantalla completa** dentro de LINK WORLD. Ya no está amarrado a OpenRouter ni a un único modelo.
 
@@ -12,20 +12,29 @@ Código activo:
 
 ## Empezar
 
-1. Abre https://link-world-delta.vercel.app/ → **Director IA**.
-2. En la columna derecha entra a **Proveedor, modelo y API**.
-3. Selecciona:
-   - OpenRouter,
-   - Groq,
-   - NVIDIA NIM,
-   - u **Otro · OpenAI-compatible**.
-4. Escribe el identificador exacto del modelo.
-5. Pega la API key del proveedor. La clave vive solo en la pestaña y no se guarda.
-6. En proveedor custom, pega una URL pública HTTPS que termine en `/v1` o en `/chat/completions`.
-7. Puedes pulsar **Probar conexión**. Esta prueba hace una generación mínima real y puede consumir una pequeña cantidad de cuota.
-8. Escribe en el chat. **Enter** envía y **Mayús+Enter** añade línea.
+### Camino normal
 
-## OpenRouter abierto
+1. Abre https://link-world-delta.vercel.app/ → **Director IA**.
+2. Pulsa **Conectar IA**.
+3. Pega tu API key de OpenRouter.
+4. Pulsa **Conectar IA**.
+5. Espera la confirmación **Conectado · OpenRouter**.
+6. Conversa.
+
+Eso es todo.
+
+LINK WORLD usa por defecto `qwen/qwen3-235b-a22b-2507:free`.
+
+### Camino avanzado
+
+Solo si quieres cambiar proveedor o modelo:
+
+1. Abre **Conectar IA**.
+2. Pulsa **Configuración avanzada**.
+3. Elige proveedor, modelo y endpoint cuando corresponda.
+4. Usa la misma API key temporal.
+
+## OpenRouter y modelos abiertos
 
 OpenRouter ya no está limitado a `:free`.
 
