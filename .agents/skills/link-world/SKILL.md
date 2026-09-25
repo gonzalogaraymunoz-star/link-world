@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
-version: 2.1.0
+version: 2.2.0
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -138,6 +138,8 @@ Contrato obligatorio:
 - **Costo operacional antes del margen:** no confundir costo de ejecutar con distribución comercial.
 - **Acuerdos explícitos:** un registro activo o una relación observada no crea por sí solo un convenio económico.
 - **Eventos idempotentes:** `event_bus` usa `dedupe_key` y semántica at-least-once.
+- **Credencial por Casa:** el secreto crudo vive sólo en Vault del sistema fuente; LINK WORLD conserva únicamente su hash en `integration_connections`.
+- **Evento ≠ mutación:** recibir una señal en `event_bus` no crea acuerdos, ventas ni relaciones automáticamente.
 
 Roles mínimos de binding:
 
@@ -161,9 +163,12 @@ Para incorporar una nueva Casa:
 3. declarar configuración de la instancia;
 4. registrar bindings con `contract_role` y `contract_version`;
 5. proyectar sólo contrapartes/productos con evidencia;
-6. implementar `event_bridge` sin PII sensible;
-7. verificar `ecosystem_operational_house_readiness_v`;
-8. usar la misma vista genérica de Casa Operativa: no crear frontend especial por negocio.
+6. crear un outbox fuente idempotente;
+7. registrar una credencial independiente por Casa: secreto en Vault origen + hash en WORLD;
+8. conectar outbox → receptor autenticado → `event_bus` sin PII sensible;
+9. verificar transporte, retry y deduplicación con una prueba sintética que luego se elimina;
+10. verificar `ecosystem_operational_house_readiness_v`;
+11. usar la misma vista genérica de Casa Operativa: no crear frontend especial por negocio.
 
 HOTEL EXPERIENCE es la instancia de referencia inicial del arquetipo, no una excepción arquitectónica.
 
