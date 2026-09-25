@@ -34,6 +34,9 @@ const GOOGLE_DAY_KEY='linkworld_places_daily_calls_v1';
 function dailyCalls(){try{const s=JSON.parse(localStorage.getItem(GOOGLE_DAY_KEY)||'null');return s?.day===new Date().toISOString().slice(0,10)?Math.max(0,Number(s.count)||0):0;}catch{return 0;}}
 function markDailyCall(){try{localStorage.setItem(GOOGLE_DAY_KEY,JSON.stringify({day:new Date().toISOString().slice(0,10),count:dailyCalls()+1}));return true;}catch{return false;}}
 let onReadyCallback = null;
+let linkedBusinesses = [];
+let linkedMarkers = new Map();
+let linkedRenderVersion = 0;
 
 function el(tag, className, value) {
   const item = document.createElement(tag);
@@ -75,6 +78,7 @@ function buildControls() {
   const panel = el('section', 'google-search-panel hidden');
   panel.id = 'google-search-panel';
   panel.innerHTML = '<div class="google-search-title"><span>EXPLORAR NEGOCIOS DE GOOGLE</span><span class="google-powered">Google Maps</span></div>' +
+    '<div class="google-search-title"><span>NEGOCIOS LINK VINCULADOS</span><b id="google-linked-count">0</b></div><div id="google-linked-results" class="google-results"></div>' +
     '<div class="google-category-wrap"></div><form id="google-text-form" class="google-text-form"><label for="google-text-query">BUSCAR POR NOMBRE O ACTIVIDAD</label><div class="google-text-fields"><input id="google-text-query" maxlength="100" autocomplete="off" placeholder="Hotel, restaurante, agencia…" /><button type="submit" aria-label="Buscar por nombre">Buscar</button></div></form><button type="button" class="google-search-btn" id="google-search-btn">⌖ Buscar negocios en esta zona</button>' +
     '<div id="google-feedback" class="google-feedback">Solo búsquedas manuales: 8 por sesión, 12 por día y máximo 20 fichas por búsqueda. No son topes de facturación.</div><button type="button" class="google-disconnect">Olvidar clave de este navegador</button>' +
     '<div id="google-results" class="google-results"></div>';
@@ -159,6 +163,8 @@ async function initializeMap(key) {
   const caption = document.querySelector('.world-caption span:last-child');
   if (caption) caption.textContent = 'MAPA DE GOOGLE · NO EN VIVO';
   setStatus('Google Maps · conectado', true);
+  refreshLinkedList();
+  renderLinkedBusinesses();
   if (onReadyCallback) onReadyCallback();
   return map;
 }
@@ -167,6 +173,127 @@ function clearMarkers() {
   markerList.forEach((marker) => { marker.map = null; });
   markerList = [];
   if (infoWindow) infoWindow.close();
+}
+function clearLinkedMarkers() {
+  linkedMarkers.forEach(({marker}) => { marker.map = null; });
+  linkedMarkers.clear();
+}
+function linkedColor(business) {
+  const visual = business?.owned_facts?.visual_identity || {};
+  const raw = String(visual.assigned_color || '').trim();
+  return visual.color_visible === true && /^#[0-9a-f]{6}$/i.test(raw) ? raw : '#e1e1e1';
+}
+function textValue(value) {
+  if (typeof value === 'string') return value;
+  if (value && typeof value.text === 'string') return value.text;
+  return value == null ? '' : String(value);
+}
+function refreshLinkedList() {
+  const host = document.getElementById('google-linked-results');
+  const count = document.getElementById('google-linked-count');
+  const physical = linkedBusinesses.filter(b => b.google_place_id);
+  if (count) count.textContent = String(physical.length);
+  if (!host) return;
+  host.replaceChildren();
+  if (!physical.length) {
+    host.append(el('div','google-feedback','Aún no hay negocios LINK vinculados a Google Maps.'));
+    return;
+  }
+  physical.forEach(business => {
+    const row = el('button','google-result');
+    row.type = 'button';
+    row.append(
+      el('strong','',business.name || 'Negocio LINK'),
+      el('small','',business.owned_facts?.territory?.address_input || 'Vinculado por Place ID')
+    );
+    row.style.borderLeft = '4px solid ' + linkedColor(business);
+    row.addEventListener('click',()=>flyToLinkBusiness(business.id));
+    host.append(row);
+  });
+}
+async function openLinkedBusinessInfo(business, place, marker) {
+  try {
+    await place.fetchFields({ fields: [
+      'displayName','formattedAddress','googleMapsURI','businessStatus','primaryTypeDisplayName',
+      'nationalPhoneNumber','websiteURI','regularOpeningHours'
+    ]});
+  } catch { /* Keep the basic card if optional detail fields are unavailable. */ }
+  const card = el('div','google-place-info');
+  card.append(
+    el('small','google-powered','NEGOCIO LINK · GOOGLE MAPS EN VIVO'),
+    el('strong','',business.name || textValue(place.displayName) || 'Negocio LINK'),
+    el('p','',place.formattedAddress || business.owned_facts?.territory?.address_input || '')
+  );
+  const type = textValue(place.primaryTypeDisplayName);
+  const meta = [type, place.businessStatus].filter(Boolean).join(' · ');
+  if (meta) card.append(el('small','',meta));
+  if (place.nationalPhoneNumber) card.append(el('p','',place.nationalPhoneNumber));
+  if (place.websiteURI) {
+    const web = el('a','','Sitio web ↗'); web.href=place.websiteURI; web.target='_blank'; web.rel='noopener noreferrer'; card.append(web);
+  }
+  const hours = place.regularOpeningHours?.weekdayDescriptions;
+  if (Array.isArray(hours) && hours.length) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary'); summary.textContent='Horarios de Google';
+    const list = document.createElement('div'); hours.forEach(x=>list.append(el('small','',x)));
+    details.append(summary,list); card.append(details);
+  }
+  const mapsLink = el('a','','Abrir en Google Maps ↗');
+  mapsLink.href = place.googleMapsURI || ('https://www.google.com/maps/search/?api=1&query_place_id=' + encodeURIComponent(business.google_place_id));
+  mapsLink.target='_blank'; mapsLink.rel='noopener noreferrer'; card.append(mapsLink);
+  const open = el('button','google-search-btn','Abrir ficha LINK →');
+  open.type='button';
+  open.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:business.id}})));
+  card.append(open);
+  infoWindow.setContent(card);
+  infoWindow.open({map,anchor:marker});
+  document.dispatchEvent(new CustomEvent('linkworld:owned-business-selected',{detail:{id:business.id,name:business.name,address:place.formattedAddress||''}}));
+}
+async function renderLinkedBusinesses() {
+  refreshLinkedList();
+  if (!map || !AdvancedMarkerElement || !PinElement) return;
+  const version = ++linkedRenderVersion;
+  clearLinkedMarkers();
+  const physical = linkedBusinesses.filter(b => b.google_place_id);
+  if (!physical.length) return;
+  try {
+    const { Place } = await importLibrary('places');
+    for (const business of physical) {
+      if (version !== linkedRenderVersion) return;
+      try {
+        const place = new Place({id: business.google_place_id, requestedLanguage:'es', requestedRegion:'CL'});
+        await place.fetchFields({ fields: ['displayName','location','formattedAddress','googleMapsURI','businessStatus','primaryTypeDisplayName'] });
+        if (!place.location) continue;
+        const color = linkedColor(business);
+        const pin = new PinElement({background:color,borderColor:'#111111',glyphColor:'#111111',glyph:(business.name||'L').charAt(0).toUpperCase(),scale:1.12});
+        const marker = new AdvancedMarkerElement({map,position:place.location,title:'LINK · '+(business.name||textValue(place.displayName)||'Negocio')});
+        marker.append(pin);
+        marker.addListener('click',()=>openLinkedBusinessInfo(business,place,marker));
+        linkedMarkers.set(business.id,{marker,place,business});
+      } catch (error) {
+        console.warn('LINK WORLD · no se pudo ubicar negocio vinculado',business?.name||business?.id,error?.message||'');
+      }
+    }
+  } catch (error) {
+    console.warn('LINK WORLD · Places no disponible para negocios vinculados',error?.message||'');
+  }
+}
+export function setLinkBusinesses(businesses=[]) {
+  linkedBusinesses = Array.isArray(businesses) ? businesses : [];
+  refreshLinkedList();
+  if (map) renderLinkedBusinesses();
+}
+export function flyToLinkBusiness(businessId) {
+  const item = linkedMarkers.get(businessId);
+  if (!item) {
+    renderLinkedBusinesses().then(()=>{
+      const retry=linkedMarkers.get(businessId);
+      if(retry){map.panTo(retry.marker.position);map.setZoom(18);openLinkedBusinessInfo(retry.business,retry.place,retry.marker);}
+    });
+    return;
+  }
+  map.panTo(item.marker.position); map.setZoom(18);
+  openLinkedBusinessInfo(item.business,item.place,item.marker);
 }
 function renderResults(places) {
   const results = document.getElementById('google-results');
@@ -186,7 +313,12 @@ function renderResults(places) {
     row.append(el('strong', '', name), el('small', '', place.formattedAddress || 'Ubicación registrada en Google'));
     const focus = () => {
       document.dispatchEvent(new CustomEvent('linkworld:place-selected', { detail: {
-        name, address: place.formattedAddress || '', uri: place.googleMapsURI || ''
+        placeId: place.id || '',
+        name,
+        address: place.formattedAddress || '',
+        uri: place.googleMapsURI || '',
+        lat: typeof place.location?.lat === 'function' ? place.location.lat() : null,
+        lng: typeof place.location?.lng === 'function' ? place.location.lng() : null
       }}));
       map.panTo(place.location);
       map.setZoom(Math.max(map.getZoom(), 16));
