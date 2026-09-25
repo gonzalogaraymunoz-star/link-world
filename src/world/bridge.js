@@ -10,7 +10,7 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
 });
 const $=(s,root=document)=>root.querySelector(s);
 const safe=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const tables={businesses:'link_world_businesses',clients:'link_world_clients',products:'link_world_products',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity'};
+const tables={businesses:'link_world_businesses',clients:'link_world_clients',products:'link_world_products',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity',conversion:'link_conversion_queue',dailyReports:'link_daily_intelligence_reports'};
 const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],selected:new Set(),activePlaceId:'',loading:false,pendingDraft:null};
 const statuses={draft:'Borrador',needs_review:'Revisar',verified:'Verificado'};
 const short=id=>String(id||'').slice(0,8);
@@ -269,12 +269,14 @@ export async function readDirectorAppContext(scope='selected'){
     visibleIds.length?db.from(tables.products).select('id,business_id,client_id,name,stage,currency,acquisition_price,public_price,responsibility_profile_id,responsibility_percent,client_benefit_share_percent,link_share_percent,minimum_link_share_percent,economic_state,responsibility_notes').in('business_id',visibleIds).limit(45):safeEmpty,
     publicOnly?safeEmpty:db.from(tables.requests).select('id,title,status,business_ids,result_summary').order('created_at',{ascending:false}).limit(10),
     publicOnly?safeEmpty:db.from(tables.relations).select('id,source_business_id,target_business_id,relation_type,state,rationale').order('created_at',{ascending:false}).limit(14),
-    publicOnly?safeEmpty:db.from(tables.activity).select('action,target_type,note,created_at').order('created_at',{ascending:false}).limit(8)
+    publicOnly?safeEmpty:db.from(tables.activity).select('action,target_type,note,created_at').order('created_at',{ascending:false}).limit(8),
+    publicOnly?safeEmpty:db.from(tables.conversion).select('id,source_type,source_id,title,source_status,due_at,conversion_level,conversion_label,priority_score,conversion_reason,recommended_action,source_updated_at').limit(12),
+    publicOnly?safeEmpty:db.from(tables.dailyReports).select('id,report_date,report_type,activity_summary,conversion_summary,metrics,conversion_counts,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).order('generated_at',{ascending:false}).limit(2)
   ];
   const responses=await Promise.all(queries);
   const problem=responses.find(r=>r.error);
   if(problem)throw new Error('No se pudieron leer los datos de LINK WORLD: '+problem.error.message);
-  const [clients,products,requests,relations,activity]=responses.map(r=>r.data||[]);
+  const [clients,products,requests,relations,activity,conversion,dailyReports]=responses.map(r=>r.data||[]);
   const detailed=isMember&&scope==='selected'&&chosen.length>0;
   const simplified=businesses.map(b=>({
     id:b.id,name:b.name,sector:b.sector,city:b.city,country:b.country,
@@ -293,6 +295,23 @@ export async function readDirectorAppContext(scope='selected'){
     requests:requests.map(x=>({...x,title:(x.title||'').slice(0,130),result_summary:(x.result_summary||'').slice(0,130)})),
     relations:relations.map(x=>({...x,rationale:(x.rationale||'').slice(0,110)})),
     activity:activity.map(x=>({...x,note:(x.note||'').slice(0,90)})),
+    conversion_intelligence:conversion.map(x=>({
+      id:x.id,source_type:x.source_type,source_id:x.source_id,title:x.title,
+      source_status:x.source_status,due_at:x.due_at,
+      conversion_level:x.conversion_level,conversion_label:x.conversion_label,
+      priority_score:x.priority_score,conversion_reason:(x.conversion_reason||'').slice(0,180),
+      recommended_action:(x.recommended_action||'').slice(0,180),
+      source_updated_at:x.source_updated_at
+    })),
+    daily_intelligence_reports:dailyReports.map(x=>({
+      id:x.id,report_date:x.report_date,report_type:x.report_type,
+      activity_summary:(x.activity_summary||'').slice(0,360),
+      conversion_summary:(x.conversion_summary||'').slice(0,360),
+      metrics:x.metrics,conversion_counts:x.conversion_counts,
+      priorities:Array.isArray(x.priorities)?x.priorities.slice(0,5):x.priorities,
+      blockers:Array.isArray(x.blockers)?x.blockers.slice(0,5):x.blockers,
+      generated_at:x.generated_at
+    })),
     truncated:false,
     note:publicOnly?
       'Modo abierto: solo negocios, clientes y productos marcados para lectura pública. Escritura, solicitudes, relaciones y actividad privada no se incluyen.':
@@ -301,6 +320,8 @@ export async function readDirectorAppContext(scope='selected'){
   while(JSON.stringify(payload).length>8200){
     payload.truncated=true;
     if(payload.activity.length)payload.activity.pop();
+    else if(payload.conversion_intelligence.length>5)payload.conversion_intelligence.pop();
+    else if(payload.daily_intelligence_reports.length>1)payload.daily_intelligence_reports.pop();
     else if(payload.relations.length>3)payload.relations.pop();
     else if(payload.requests.length>3)payload.requests.pop();
     else if(payload.products.length>5)payload.products.pop();
