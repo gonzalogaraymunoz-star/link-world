@@ -14,7 +14,7 @@ const money=(n,currency='CLP')=>{
   catch{return '$'+Math.round(x).toLocaleString('es-CL');}
 };
 const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',active:'Activar',recorded:'Registrar',learning:'Aprender',expanding:'Expandir',paused:'Pausado',closed:'Cerrado'};
-const resolveEntityColor=(visual={})=>visual&&visual.color_visible===true&&/^#[0-9a-f]{6}$/i.test(visual.assigned_color||'')?visual.assigned_color:null;
+const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
 const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,busy:false,canWrite:false};
