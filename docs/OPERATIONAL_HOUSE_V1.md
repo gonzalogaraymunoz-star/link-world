@@ -146,7 +146,10 @@ Evitar copiar:
 - Contrapartes proyectadas: Hotel Casa Solcor, Hotel Fauna, Hotel Habitas y LAMA Travelers.
 - Catálogo/operación permanecen en HOTEL EXPERIENCE.
 - LINK WORLD no almacena una segunda reserva ni PII sensible.
-- Estado esperado mientras no exista transporte de eventos: `incomplete` con `event_bridge` faltante.
+- Outbox fuente: `public.link_world_event_outbox` en HOTEL EXPERIENCE.
+- Eventos fuente se generan desde cambios futuros en ventas confirmadas, cierres operacionales, comisiones devengadas, contrapartes activadas y productos activados.
+- No hay backfill automático de eventos históricos.
+- Estado actual: `registered_pending_sync`; los seis roles están registrados y el transporte outbox → `event_bus` sigue pendiente.
 
 ## Patrón de crecimiento
 
