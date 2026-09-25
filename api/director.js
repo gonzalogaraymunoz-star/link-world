@@ -1,10 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { lookup } from 'node:dns/promises';
+import { randomUUID } from 'node:crypto';
 
 // LINK WORLD Director IA · provider-agnostic OpenAI-compatible gateway.
 // Exact provider + exact model are always selected by the user. No automatic fallback.
+// Every model intervention is archived in Supabase without API keys or raw LINK snapshots.
 const INSTRUCTIONS=readFileSync(new URL('./LINK_DIRECTOR_SYSTEM.md',import.meta.url),'utf8');
 const PUBLIC_ORIGIN=process.env.PUBLIC_SITE_ORIGIN||'https://link-world-delta.vercel.app';
+const SUPABASE_URL='https://zgbnjlrxzvzpigmwidsp.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_RE_eqhBaLeaUMHuBjLUY2Q_OZNBm9_A';
 const MAX_INPUT_CHARS=3500;
 const MAX_OUTPUT_TOKENS=2600;
 const MAX_CONTEXT_CHARS=8500;
@@ -50,6 +54,38 @@ function validModel(s){
   return typeof s==='string'&&s.trim().length>0&&s.trim().length<=MAX_MODEL_CHARS&&!/[\r\n\t]/.test(s);
 }
 function validKey(s){return typeof s==='string'&&s.trim().length>=8&&s.trim().length<=512&&!/[\r\n]/.test(s);}
+function validUuid(s){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(s||''));}
+function archiveMeta(raw){
+  const a=raw?.archive&&typeof raw.archive==='object'?raw.archive:{};
+  return {
+    sessionId:validUuid(a.sessionId)?a.sessionId:randomUUID(),
+    turnIndex:Number.isFinite(Number(a.turnIndex))?Math.max(0,Math.trunc(Number(a.turnIndex))):0,
+    contextScope:short(a.contextScope,80),
+    contextBusinessCount:Number.isFinite(Number(a.contextBusinessCount))?Math.max(0,Math.trunc(Number(a.contextBusinessCount))):null
+  };
+}
+async function archiveIntervention(payload){
+  try{
+    const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/archive_link_world_ai_intervention',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_PUBLISHABLE_KEY,
+        'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
+        'Origin':PUBLIC_ORIGIN
+      },
+      body:JSON.stringify({payload})
+    });
+    if(!response.ok){
+      const detail=short(await response.text().catch(()=>''),300);
+      return {ok:false,error:'archive '+response.status+(detail?': '+detail:'')};
+    }
+    const id=await response.json().catch(()=>null);
+    return {ok:true,id:typeof id==='string'?id:null};
+  }catch(e){
+    return {ok:false,error:short(e?.message||'archive unavailable',300)};
+  }
+}
 function privateV4(ip){
   const p=ip.split('.').map(Number);
   if(p.length!==4||p.some(n=>!Number.isInteger(n)||n<0||n>255))return true;
@@ -186,6 +222,8 @@ export default async function handler(req,res){
     exactModel:true,
     automaticFallback:false,
     credentialsPersisted:false,
+    interventionArchive:true,
+    interventionArchiveTable:'link_world_ai_interventions',
     outputTokenCap:MAX_OUTPUT_TOKENS,
     inputCharCap:MAX_INPUT_CHARS,
     contextCharCap:MAX_CONTEXT_CHARS
@@ -200,24 +238,39 @@ export default async function handler(req,res){
   }
   if(!raw||typeof raw!=='object'||JSON.stringify(raw).length>30000)return respond(res,413,{error:'Solicitud demasiado extensa.'});
 
+  const a=archiveMeta(raw);
   let config;
   try{config=await providerConfig(raw);}
   catch(e){return respond(res,400,{error:e.message||'Configuración de proveedor inválida.'});}
 
   if(raw.action==='check'){
+    const started=Date.now();
     try{
       const result=await runCompletion(config,[{role:'user',content:'Reply only OK.'}],4);
+      const usage=usageFrom(result.data);
+      const archived=await archiveIntervention({
+        session_id:a.sessionId,turn_index:a.turnIndex,event_type:'connection_check',
+        provider:config.provider,provider_label:config.label,model:short(result.data?.model||config.model,MAX_MODEL_CHARS),
+        assistant_response:result.text||'OK',status:'success',
+        context_included:false,input_tokens:usage.inputTokens,output_tokens:usage.outputTokens,
+        latency_ms:Date.now()-started,metadata:{probe:true}
+      });
       return respond(res,200,{
-        connected:true,
-        provider:config.provider,
-        providerLabel:config.label,
+        connected:true,provider:config.provider,providerLabel:config.label,
         model:short(result.data?.model||config.model,MAX_MODEL_CHARS),
-        probeUsed:true,
+        probeUsed:true,archiveId:archived.id||null,archiveStatus:archived.ok?'saved':'failed',
         message:'Proveedor y modelo respondieron. La prueba mínima puede consumir cuota del proveedor.'
       });
     }catch(e){
+      const message=e.name==='AbortError'?'La prueba tardó demasiado.':(e.message||'No se pudo probar el proveedor.');
+      const archived=await archiveIntervention({
+        session_id:a.sessionId,turn_index:a.turnIndex,event_type:'connection_check',
+        provider:config.provider,provider_label:config.label,model:config.model,
+        status:'error',error_message:message,context_included:false,
+        latency_ms:Date.now()-started,metadata:{probe:true}
+      });
       return respond(res,e.name==='AbortError'?504:(e.status||502),{
-        error:e.name==='AbortError'?'La prueba tardó demasiado.':(e.message||'No se pudo probar el proveedor.')
+        error:message,archiveId:archived.id||null,archiveStatus:archived.ok?'saved':'failed'
       });
     }
   }
@@ -246,24 +299,46 @@ export default async function handler(req,res){
     .map(m=>({role:m.role,content:m.content.trim().slice(0,1100)}))
     .filter(m=>m.content);
   const messages=[{role:'system',content:system},...history,{role:'user',content:prompt}];
+  const started=Date.now();
 
   try{
     const result=await runCompletion(config,messages,MAX_OUTPUT_TOKENS);
-    if(!result.text)return respond(res,502,{error:'El modelo respondió sin texto visible. Prueba otro modelo o una consulta más breve.'});
+    if(!result.text)throw Object.assign(new Error('El modelo respondió sin texto visible. Prueba otro modelo o una consulta más breve.'),{status:502});
+    const answer=result.text.slice(0,12500);
+    const usage=usageFrom(result.data);
+    const actualModel=short(result.data?.model||config.model,MAX_MODEL_CHARS);
+    const archived=await archiveIntervention({
+      session_id:a.sessionId,turn_index:a.turnIndex,event_type:'chat',
+      provider:config.provider,provider_label:config.label,model:actualModel,
+      user_prompt:prompt,assistant_response:answer,status:'success',
+      context_included:Boolean(context.approvedAppSnapshot),
+      context_scope:a.contextScope||null,
+      context_business_count:a.contextBusinessCount,
+      input_tokens:usage.inputTokens,output_tokens:usage.outputTokens,
+      latency_ms:Date.now()-started,
+      metadata:{history_messages:history.length,proposal_only:true}
+    });
     return respond(res,200,{
-      answer:result.text.slice(0,12500),
-      provider:config.provider,
-      providerLabel:config.label,
-      model:short(result.data?.model||config.model,MAX_MODEL_CHARS),
-      usage:usageFrom(result.data),
-      status:'proposal_only',
-      source:config.label+' / modelo seleccionado por el usuario',
+      answer,provider:config.provider,providerLabel:config.label,model:actualModel,
+      usage,status:'proposal_only',source:config.label+' / modelo seleccionado por el usuario',
+      archiveId:archived.id||null,archiveStatus:archived.ok?'saved':'failed',
       reminder:'Ninguna operación real se ejecutó.'
     });
   }catch(e){
+    const message=e.name==='AbortError'?'La consulta tardó demasiado. No se reintenta automáticamente.':(e.message||'No se pudo conectar con el proveedor.');
+    const archived=await archiveIntervention({
+      session_id:a.sessionId,turn_index:a.turnIndex,event_type:'chat',
+      provider:config.provider,provider_label:config.label,model:config.model,
+      user_prompt:prompt,status:'error',error_message:message,
+      context_included:Boolean(context.approvedAppSnapshot),
+      context_scope:a.contextScope||null,
+      context_business_count:a.contextBusinessCount,
+      latency_ms:Date.now()-started,
+      metadata:{history_messages:history.length,proposal_only:true}
+    });
     return respond(res,e.name==='AbortError'?504:(e.status||502),{
-      error:e.name==='AbortError'?'La consulta tardó demasiado. No se reintenta automáticamente.':(e.message||'No se pudo conectar con el proveedor.'),
-      noFallback:true
+      error:message,noFallback:true,
+      archiveId:archived.id||null,archiveStatus:archived.ok?'saved':'failed'
     });
   }
 }
