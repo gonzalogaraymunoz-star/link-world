@@ -225,3 +225,70 @@
 @media (prefers-reduced-motion:reduce){
   .lw-orientation-device{transform:none;}
 }
+
+
+/* Immersive Territory: on touch devices landscape becomes the whole visible browser viewport. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:900px){
+  html:has(#lw-territory.lw-landscape-board:not(.hidden)),
+  body:has(#lw-territory.lw-landscape-board:not(.hidden)){
+    width:100%;
+    height:100%;
+    margin:0;
+    overflow:hidden!important;
+    overscroll-behavior:none;
+  }
+  body:has(#lw-territory.lw-landscape-board:not(.hidden)) .lw-app-header{display:none!important;}
+  body:has(#lw-territory.lw-landscape-board:not(.hidden)) .lw-main{
+    position:fixed!important;
+    inset:0!important;
+    width:100dvw!important;
+    height:var(--lw-visual-height,100dvh)!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  #lw-territory.lw-landscape-board{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-rows:1fr!important;
+    overflow:hidden!important;
+    background:#f4f4f1;
+  }
+  #lw-territory.lw-landscape-board .lw-territory-top,
+  #lw-territory.lw-landscape-board .lw-map-foot{display:none!important;}
+  #lw-territory.lw-landscape-board .lw-map-workspace{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    margin:0!important;
+    border:0!important;
+    border-radius:0!important;
+    overflow:hidden!important;
+  }
+  #lw-territory.lw-landscape-board #cesiumContainer{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:100%!important;
+  }
+  #lw-territory.lw-landscape-board .notice{display:none!important;}
+  #lw-territory.lw-landscape-board .google-search-panel{
+    top:max(10px,env(safe-area-inset-top))!important;
+    left:max(10px,env(safe-area-inset-left))!important;
+    max-height:calc(100% - max(20px,env(safe-area-inset-top)) - max(10px,env(safe-area-inset-bottom)))!important;
+    overflow:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  #lw-territory.lw-landscape-board .lw-place-card{
+    top:max(10px,env(safe-area-inset-top))!important;
+    right:max(10px,env(safe-area-inset-right))!important;
+  }
+}
