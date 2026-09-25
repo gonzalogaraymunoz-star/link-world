@@ -184,3 +184,49 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .lw-home h1{font-size:36px;}
   .lw-overview{margin-top:24px;}
 }
+
+
+/* Director IA · final full-screen brand override */
+body .lw-chat{
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+.lw-chat .lw-symbol{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+}
+.lw-chat .lw-settings{
+  background:#111!important;
+  color:#fff!important;
+  border-color:#111!important;
+}
+.lw-chat .lw-settings input{
+  background:#1c1c1b!important;
+  color:#fff!important;
+  border-color:#3c3c3a!important;
+}
+.lw-chat .lw-settings-buttons button{
+  background:#1c1c1b!important;
+  color:#fff!important;
+  border-color:#3e3e3c!important;
+}
+.lw-chat .lw-settings-buttons .lw-primary{
+  background:#fff!important;
+  color:#111!important;
+  border-color:#fff!important;
+}
+.lw-chat .lw-starters button{
+  background:#fafaf8!important;
+  color:#111!important;
+  border-color:#e1e1dd!important;
+}
+.lw-chat .lw-starters button:hover{
+  background:#111!important;
+  color:#fff!important;
+  border-color:#111!important;
+}
