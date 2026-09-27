@@ -14,10 +14,11 @@ const money=(n,currency='CLP')=>{
   catch{return '$'+Math.round(x).toLocaleString('es-CL');}
 };
 const stageNames={detected:'Detectar',conversation:'Conversar',agreed:'Acordar',active:'Activar',recorded:'Registrar',learning:'Aprender',expanding:'Expandir',paused:'Pausado',closed:'Cerrado'};
+const RRSS_PANEL_URL='https://linkrrss.vercel.app';
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -62,20 +63,22 @@ async function loadBusiness(businessId){
         .eq('business_id',businessId)
         .maybeSingle()
     : Promise.resolve({data:null,error:null});
-  const [b,c,p,r,s]=await Promise.all([
+  const [b,c,p,r,s,rrss]=await Promise.all([
     db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
     db.from('link_world_clients').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_products').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_responsibility_profiles').select('*').order('sort_order',{ascending:true}),
-    statusRead
+    statusRead,
+    db.from('link_world_rrss_status_v').select('*').eq('business_id',businessId).maybeSingle()
   ]);
-  const problem=[b,c,p,r].find(x=>x.error);
+  const problem=[b,c,p,r,rrss].find(x=>x.error);
   if(problem)throw problem.error;
   state.business=b.data;
   state.clients=c.data||[];
   state.products=p.data||[];
   state.profiles=r.data||[];
   state.houseStatus=s?.error?null:(s?.data||null);
+  state.rrssStatus=rrss?.data||{business_id:businessId,rrss_status:'missing',profile_count:0,source_count:0,account_count:0,connected_account_count:0};
   state.taxiHotelOperations=[];
   state.taxiHotelOperationsError=null;
   if(state.canWrite&&state.business?.slug==='taxi-hotel'){
@@ -109,6 +112,42 @@ function businessMetrics(){
   const active=state.products.filter(x=>x.economic_state==='active'||x.stage==='active').length;
   const blocked=state.products.filter(x=>x.economic_state==='blocked').length;
   return {clients:state.clients.length,products:state.products.length,active,blocked};
+}
+
+function rrssApparatusMarkup(){
+  const r=state.rrssStatus||{rrss_status:'missing',profile_count:0,source_count:0,account_count:0,connected_account_count:0};
+  const labels={missing:'Sin configurar',mission:'Misión abierta',configuring:'Configurando',active:'Activo',attention:'Requiere atención'};
+  const status=labels[r.rrss_status]||r.rrss_status||'Sin configurar';
+  const active=r.rrss_status==='active';
+  const attention=r.rrss_status==='attention';
+  const cls=active?'active':attention?'attention':'missing';
+  return '<section class="bw-rrss-apparatus '+cls+'">'+
+    '<div class="bw-rrss-orbit"><span></span><span></span><b>RRSS</b></div>'+
+    '<div class="bw-rrss-copy"><span class="bw-kicker">APARATO / REDES SOCIALES</span><h2>LINK RRSS</h2><p>'+(active?'El sistema social está conectado. Abre el panel para revisar cuentas, conversaciones, contenido, analytics y automatizaciones.':'Este negocio todavía no tiene el aparato social completamente operativo. LINK WORLD puede convertirlo en una misión o abrir el panel para terminar la conexión.')+'</p>'+
+    '<div class="bw-rrss-stats"><span><b>'+safe(r.source_count||0)+'</b> fuentes</span><span><b>'+safe(r.account_count||0)+'</b> cuentas</span><span><b>'+safe(r.connected_account_count||0)+'</b> conectadas</span></div></div>'+
+    '<div class="bw-rrss-actions"><span class="bw-rrss-state">'+safe(status)+'</span>'+(active||Number(r.profile_count)>0?'<button id="bw-open-rrss" class="bw-primary" type="button">Abrir panel RRSS ↗</button>':'<button id="bw-create-rrss-mission" class="bw-primary" type="button">Generar misión RRSS</button>')+'</div>'+
+  '</section>';
+}
+async function createRrssMission(){
+  if(!state.business)return;
+  if(!state.canWrite){
+    const prompt='Crear la misión para construir el aparato LINK RRSS de '+state.business.name+': perfil, conexión Zernio segura, cuentas sociales, permisos y panel conectado a LINK WORLD.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+    return;
+  }
+  notice('Creando misión RRSS…');
+  const {error}=await db.rpc('link_rrss_create_mission',{p_business_id:state.business.id});
+  if(error){notice('No se pudo crear la misión RRSS: '+error.message,true);return;}
+  await refresh();
+  notice('Misión RRSS creada en LINK WORLD.');
+}
+function bindRrssApparatus(root){
+  root.querySelector('#bw-open-rrss')?.addEventListener('click',()=>{
+    const url=RRSS_PANEL_URL+'?business='+encodeURIComponent(state.business.id);
+    window.open(url,'_blank','noopener,noreferrer');
+  });
+  root.querySelector('#bw-create-rrss-mission')?.addEventListener('click',createRrssMission);
 }
 const taxiStatusNames={
   requested:'Solicitada',
@@ -307,11 +346,13 @@ function renderClientBusinessCell(){
   root.innerHTML=[
     '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
+    rrssApparatusMarkup(),
     '<section class="bw-grid"><article class="bw-panel span-2"><span class="bw-kicker">TERRITORIO</span><h2>'+(territoryLinked?'Vinculado a Google Maps':'Sin ubicación territorial')+'</h2><p>'+(territoryLinked?safe(territory.address_input||'Place ID vinculado. Los datos de Google se consultan en vivo.'):'Para un negocio físico, LINK WORLD debe pedir una dirección y resolver su Place ID antes de marcarlo en el mapa.')+'</p><div class="bw-facts">'+(territoryLinked?'<span><b>Place ID</b>'+safe(state.business.google_place_id)+'</span><span><b>Fuente</b>Google Maps en vivo</span>':'<span><b>Estado</b>Pendiente de dirección</span>')+'</div><button id="bw-territory-action" type="button">'+(territoryLinked?'Ver en Territorio':'Definir dirección')+'</button></article></section>',
     financePanelMarkup(),
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
+  bindRrssApparatus(root);
   $('#bw-close-client-cell').addEventListener('click',close);
   $('#bw-client-cell-director').addEventListener('click',()=>{
     const prompt='Revisa la ficha completa de '+state.business.name+' en LINK WORLD: productos vendidos, compromisos, jornadas, evidencias, boletas, pagos y siguiente acción. No inventes pagos ni cierres.';
@@ -382,6 +423,7 @@ function renderOperationalHouseBusinessCell(){
       '<div class="bw-head-actions"><button id="bw-operational-house-director" type="button">✦ Revisar con Director</button><button id="bw-refresh-operational-house" type="button">↻ Actualizar</button></div>',
     '</section>',
     '<section class="bw-metrics"><div><strong>'+partners.length+'</strong><span>Contrapartes observadas</span></div><div><strong>'+safe(network.active_catalog_products??'—')+'</strong><span>'+safe(productTitle)+'</span></div><div><strong>'+safe(network.supplier_records??'—')+'</strong><span>'+safe(providerTitle)+'</span></div><div><strong>'+safe(network.services??'—')+'</strong><span>'+safe(transactionTitle)+'</span></div></section>',
+    rrssApparatusMarkup(),
     '<section class="bw-grid">',
       '<article class="bw-panel span-2"><span class="bw-kicker">ARQUITECTURA / '+safe(f.cell_archetype||'operational_house_v1')+'</span><h2>Una casa · múltiples aparatos de venta</h2><p>Los canales comerciales pueden captar y convertir oportunidades, mientras la verdad transaccional permanece en '+safe(sourceName)+'. LINK WORLD conserva identidad, relaciones, capacidades, estado y eventos mínimos; no crea una segunda operación.</p><div class="bw-facts"><span><b>Fuente operacional</b>'+safe(sourceProject)+'</span><span><b>Política de copia</b>Proyección solamente · sin transacciones sensibles</span><span><b>Bridge</b>'+safe(bridgeLabel)+'</span></div></article>',
       live?'<article class="bw-panel span-2"><span class="bw-kicker">SALUD / PROJECTION ENGINE</span><h2>'+safe(overallLabel)+'</h2><p>La salud separa estructura, transporte y proyección. Un binding registrado no necesita copiar su sistema fuente para considerarse correcto.</p><div class="bw-facts"><span><b>Estructura</b>'+safe(live.structure_status)+'</span><span><b>Transporte</b>'+safe(live.transport_status)+'</span><span><b>Proyección</b>'+safe(live.projection_status)+'</span><span><b>Cobertura</b>'+safe(coverageLabel)+'</span><span><b>Eventos observados</b>'+safe(observedEvents)+'</span></div></article>':'',
@@ -393,6 +435,7 @@ function renderOperationalHouseBusinessCell(){
     '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>'+safe(counterpartyTitle)+'</h2><p>Son proyecciones de identidad desde '+safe(counterpartySource)+'. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Las relaciones deben existir en la fuente o contar con evidencia antes de incorporarse a LINK WORLD.</span></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">CATÁLOGO / PROYECCIÓN</span><h2>'+safe(network.active_catalog_products??0)+' '+safe(productTitle.toLowerCase())+' sin duplicarlos</h2><p>El catálogo canónico sigue en '+safe(sourceName)+' ('+safe(catalogSource)+'). LINK WORLD observa identidad y capacidad de distribución; no mantiene una segunda copia de precios, reservas o estados transaccionales.</p></div></div><div class="bw-capabilities">'+Object.entries(categories).map(([k,v])=>'<div><b>'+safe(v)+'</b><span>'+safe(String(k).replaceAll('_',' '))+'</span></div>').join('')+'</div></section>'
   ].join('');
+  bindRrssApparatus(root);
   $('#bw-close-operational-house').addEventListener('click',close);
   $('#bw-refresh-operational-house').addEventListener('click',refresh);
   $('#bw-operational-house-director').addEventListener('click',()=>{
@@ -437,6 +480,7 @@ function renderBusiness(){
       '<div class="bw-head-actions"><button id="bw-open-director" type="button">✦ Conversar con Director</button><button id="bw-refresh" type="button">↻ Actualizar</button></div>',
     '</section>',
     '<section class="bw-metrics"><div><strong>'+m.clients+'</strong><span>Clientes / convenios</span></div><div><strong>'+m.products+'</strong><span>Productos</span></div><div><strong>'+m.active+'</strong><span>Activos</span></div><div><strong>'+m.blocked+'</strong><span>Bloqueados</span></div></section>',
+    rrssApparatusMarkup(),
     '<section class="bw-grid">',
       '<article class="bw-panel span-2"><div class="bw-panel-head"><div><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta al ecosistema</h2></div></div><div class="bw-capabilities">'+caps.map((x,i)=>'<div><b>0'+(i+1)+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
       '<article class="bw-panel"><span class="bw-kicker">REGLA ECONÓMICA</span><h2>Responsabilidad → porcentaje</h2><p>'+safe(rule.principle||'Cada producto define su economía según la responsabilidad real de LINK.')+'</p><div class="bw-profiles">'+state.profiles.map(p=>'<div><strong>'+safe(p.label)+'</strong><span>'+safe(p.min_percent)+'%'+(Number(p.max_percent)!==Number(p.min_percent)?'–'+safe(p.max_percent)+'%':'')+'</span><small>'+safe(p.description||'')+'</small></div>').join('')+'</div></article>',
@@ -452,6 +496,7 @@ function renderBusiness(){
       }).join(''):'<div class="bw-empty"><strong>Aún no hay clientes.</strong><span>El primer convenio real que registremos aparecerá aquí; no se crearán fichas ficticias.</span></div>')+'</div>',
     '</section>'
   ].join('');
+  bindRrssApparatus(root);
   $('#bw-close-top').addEventListener('click',close);
   $('#bw-refresh').addEventListener('click',refresh);
   $('#bw-open-director').addEventListener('click',()=>{
