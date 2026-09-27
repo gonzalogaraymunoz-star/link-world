@@ -4,7 +4,7 @@ Micelio es una vista de lectura sobre la arquitectura existente de LINK WORLD. N
 
 ## Qué se tomó de Archify
 
-La interfaz adopta patrones de lectura del repositorio [tt-a1i/archify](https://github.com/tt-a1i/archify): un lienzo dominante, vistas guiadas, foco progresivo, navegación aguas arriba/abajo, pasaporte semántico y separación entre datos canónicos y estado del visor. No se integra su generador ni se copia su runtime; LINK conserva su modelo, permisos, identidad visual y componentes de ficha.
+La interfaz implementa una adaptación viva de las capacidades reader-facing de [tt-a1i/archify](https://github.com/tt-a1i/archify): Adaptive Reader, Camera con zoom/pan/pinch y Reset, Node Finder, Semantic Lens, Semantic Passport, Route Probe con recorrido dirigido, Guided Views/Story, Reading Depth y Semantic Radar. No se instala el generador estático porque Micelio se recompone desde Supabase; el adaptador conserva los contratos de identidad estable, geometría no canónica, rutas dirigidas y estado del visor separado de la fuente. LINK mantiene su modelo, RLS, identidad visual y fichas maestras.
 
 ## Contrato de verdad
 
