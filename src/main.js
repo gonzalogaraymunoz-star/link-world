@@ -5,6 +5,7 @@ import {createClient} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './world/connection.js';
 import {mountDirector} from './ai/directorChat.js';
 import {mountBusinessWorkspace} from './world/businessWorkspace.js';
+import {mountMicelioBeta} from './world/micelioBeta.js';
 import './style.css';
 import './world/bridge.css';
 import './ai/chat.css';
@@ -12,6 +13,7 @@ import './world/businessWorkspace.css';
 import './simple.css';
 import './brand.css';
 import './territory-responsive.css';
+import './world/micelioBeta.css';
 
 const $=s=>document.querySelector(s);
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
@@ -20,7 +22,7 @@ $('#app').innerHTML=[
 "<div class='lw-app'>",
 "<header class='lw-app-header'>",
 "<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
-"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='director'>Director IA</button></nav>",
+"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='director'>Director IA</button></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Modo abierto</span>",
 "<div class='header-actions' id='lw-hidden-triggers'></div></header>",
 "<main class='lw-main'>",
@@ -37,8 +39,11 @@ $('#app').innerHTML=[
 "<div class='lw-territory-top'><div><span class='lw-kicker'>TERRITORIO / GOOGLE + LINK</span><h1>Nuestros negocios sobre el territorio real.</h1><p>Los negocios LINK vinculados aparecen automáticamente. Google completa datos en vivo; las búsquedas externas se ejecutan solo cuando pulses Buscar.</p></div><div class='lw-map-locations'><button data-location='atacama'>San Pedro</button><button data-location='saopaulo'>São Paulo</button><button data-location='earth'>Planeta</button></div></div>",
 "<div class='workspace lw-map-workspace'><div id='cesiumContainer' aria-label='Mapa de Google'></div><div id='lw-place-card' class='lw-place-card hidden' role='status'></div><div class='notice'>Google Maps no muestra imágenes en vivo. Un resultado externo no es un negocio registrado en LINK.</div></div>",
 "<div class='lw-map-foot'><span id='imagery-status'>Google Maps · se abre al entrar en Territorio</span><span id='places-status'>Google Places · bajo demanda</span><span id='city-label'>SAN PEDRO DE ATACAMA · CHILE</span></div></section>",
+"<section id='lw-micelio' class='micelio-beta hidden' aria-label='Micelio LINK WORLD beta'></section>",
 "</main></div>"
 ].join('');
+
+const micelio=mountMicelioBeta();
 
 let territoryPortraitBypass=false;
 let territoryOrientationOwned=false;
@@ -124,16 +129,20 @@ async function loadOpenWorld(){
 }
 function setView(next){
   if(next==='director'){
+    micelio.close();
     document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='director'));
     $('#ai-toggle')?.click();
     return;
   }
   const territory=next==='territory';
+  const micelioView=next==='micelio';
   const wasTerritory=!$('#lw-territory').classList.contains('hidden');
   if(territory&&!wasTerritory)territoryPortraitBypass=false;
   document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
-  $('#lw-businesses').classList.toggle('hidden',territory);
+  $('#lw-businesses').classList.toggle('hidden',territory||micelioView);
   $('#lw-territory').classList.toggle('hidden',!territory);
+  $('#lw-micelio').classList.toggle('hidden',!micelioView);
+  if(micelioView)micelio.open();else micelio.close();
   syncTerritoryOrientation();
   if(!territory&&wasTerritory)releaseTerritoryOrientation();
   if(territory&&!state.map){
@@ -170,7 +179,7 @@ function renderBusinessList(){
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 document.addEventListener('linkworld:director-state',event=>{
   const open=Boolean(event.detail?.open);
-  const fallback=$('#lw-territory').classList.contains('hidden')?'businesses':'territory';
+  const fallback=!$('#lw-micelio').classList.contains('hidden')?'micelio':($('#lw-territory').classList.contains('hidden')?'businesses':'territory');
   document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===(open?'director':fallback)));
 });
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
