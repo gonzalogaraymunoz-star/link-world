@@ -203,8 +203,8 @@ function inspectorMarkup(state){
 }
 
 function shellMarkup(state){
-  if(state.loading&&!state.model)return `<div class="micelio-loading"><span></span><p>Componiendo el organismo desde LINK CONTROL CENTRAL…</p></div>`;
   if(state.fatal)return `<div class="micelio-loading is-error"><strong>No pudimos abrir el Micelio.</strong><p>${safe(state.fatal)}</p><button data-action="refresh" type="button">Reintentar</button></div>`;
+  if(!state.model)return `<div class="micelio-loading"><span></span><p>Componiendo el organismo desde LINK CONTROL CENTRAL…</p></div>`;
   const model=state.model,understood=model.edges.filter(edge=>state.readEdges.has(edge.id)).length,progress=model.edges.length?Math.round(understood/model.edges.length*100):0;
   return `<div class="micelio-shell">
     <header class="micelio-head"><div><span class="micelio-eyebrow">LINK WORLD / BETA OBSERVABLE</span><h1>Micelio</h1><p>Una lectura circular de cómo negocios, fichas y operación se sostienen entre sí.</p></div><div class="micelio-head-actions"><span class="micelio-sync-state"><i></i>${state.member?'Evento vivo + sincronización 90 s':'Vista abierta'}</span><button data-action="theme" type="button" aria-label="Cambiar tema">${state.theme==='dark'?'Día':'Noche'}</button><button data-action="refresh" type="button" ${state.loading?'disabled':''}>${state.loading?'Leyendo…':'Sincronizar'}</button></div></header>
