@@ -407,7 +407,7 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       if(!source||!target)state.route.error='Selecciona origen y destino.';
       else if(source===target)state.route.error='Origen y destino deben ser distintos.';
       else if(!result)state.route.error='No existe una ruta dirigida registrada entre esos puntos.';
-      else{state.route.result=result;state.route.index=0;state.camera=cameraForIds(graphContext(state),result.nodes);state.selectedNode=null;state.selectedEdge=null;}
+      else{state.route.result=result;state.route.index=0;state.view=result.nodes.some(id=>['client','product'].includes(state.model.nodes.find(node=>node.id===id)?.type))?'records':'organism';state.camera=cameraForIds(graphContext(state),result.nodes);state.selectedNode=null;state.selectedEdge=null;}
       render();return;
     }
     if(action==='open-record'){
@@ -465,10 +465,10 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       const action=event.target.closest('[data-action]');if(action){handleAction(action.dataset.action);return;}
       const view=event.target.closest('[data-micelio-view]');if(view){setView(view.dataset.micelioView);return;}
       const lens=event.target.closest('[data-lens-kind]');if(lens){const kind=lens.dataset.lensKind;state.lens=state.lens.includes(kind)?state.lens.filter(item=>item!==kind):[...state.lens.slice(-1),kind];render();return;}
-      const found=event.target.closest('[data-finder-node]');if(found){const id=found.dataset.finderNode,node=state.model.nodes.find(item=>item.id===id);if(node?.type==='client'||node?.type==='product')state.view='records';else if(node?.type==='control')state.view='organism';state.panel=null;selectNode(id);return;}
+      const found=event.target.closest('[data-finder-node]');if(found){const id=found.dataset.finderNode,node=state.model.nodes.find(item=>item.id===id);if(node?.type==='client'||node?.type==='product')state.view='records';else if(node?.type==='control'||node?.type==='business')state.view='organism';state.panel=null;selectNode(id);return;}
       const radar=event.target.closest('[data-radar-node]');if(radar){selectNode(radar.dataset.radarNode);return;}
       const step=event.target.closest('[data-route-step]');if(step){state.route.index=Number(step.dataset.routeStep)||0;routeStep(0);return;}
-      const reach=event.target.closest('[data-reach]');if(reach&&state.selectedNode){state.reach=reachable(state.model,state.selectedNode,reach.dataset.reach);state.reachDirection=reach.dataset.reach;state.camera=cameraForIds(graphContext(state),[...state.reach.nodes]);render();return;}
+      const reach=event.target.closest('[data-reach]');if(reach&&state.selectedNode){state.reach=reachable(state.model,state.selectedNode,reach.dataset.reach);state.reachDirection=reach.dataset.reach;if([...state.reach.nodes].some(id=>['client','product'].includes(state.model.nodes.find(node=>node.id===id)?.type)))state.view='records';state.camera=cameraForIds(graphContext(state),[...state.reach.nodes]);render();return;}
       const node=event.target.closest('[data-node-id]');if(node){selectNode(node.dataset.nodeId);return;}
       const edge=event.target.closest('[data-edge-id]');if(edge){selectEdge(edge.dataset.edgeId);return;}
     };
