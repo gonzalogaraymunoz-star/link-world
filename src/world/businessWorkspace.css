@@ -192,3 +192,29 @@
 .bw-taxi-session{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .bw-taxi-session button{border:0;background:transparent;color:#718272;font-size:8px;text-decoration:underline;cursor:pointer}
 @media(max-width:760px){.bw-link-login{grid-template-columns:1fr}.bw-link-login small{grid-column:auto}.bw-taxi-session{justify-content:flex-start}}
+
+
+/* LINK RRSS apparatus */
+.bw-rrss-apparatus{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;margin:18px 0;padding:18px 20px;border:1px solid #dfe7da;border-radius:16px;background:#fffefa;overflow:hidden;position:relative}
+.bw-rrss-apparatus:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:#b7c4b5}
+.bw-rrss-apparatus.active:before{background:#4f8059}
+.bw-rrss-apparatus.attention:before{background:#b88742}
+.bw-rrss-orbit{width:72px;height:72px;position:relative;display:grid;place-items:center;flex:none}
+.bw-rrss-orbit:before,.bw-rrss-orbit:after{content:"";position:absolute;border:1px solid #d7e1d3;border-radius:50%}
+.bw-rrss-orbit:before{inset:4px}.bw-rrss-orbit:after{inset:17px}
+.bw-rrss-orbit span{position:absolute;width:7px;height:7px;border-radius:50%;background:#6f8f72;top:7px;left:33px}
+.bw-rrss-orbit span:nth-child(2){top:auto;bottom:7px;left:14px;background:#aab8a8}
+.bw-rrss-orbit b{font-size:8px;letter-spacing:.08em;color:#48614c}
+.bw-rrss-copy h2{margin:5px 0 6px;font:600 23px 'Space Grotesk',system-ui,sans-serif;color:#314c36}
+.bw-rrss-copy p{margin:0;color:#748675;font-size:10px;line-height:1.55;max-width:760px}
+.bw-rrss-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;color:#809081;font-size:8px}
+.bw-rrss-stats b{color:#46634a}
+.bw-rrss-actions{display:grid;gap:9px;justify-items:end}
+.bw-rrss-state{display:inline-flex;align-items:center;border:1px solid #dae4d6;background:#f3f7f0;border-radius:999px;padding:6px 9px;font-size:8px;color:#667c67;font-weight:700}
+.bw-rrss-apparatus.active .bw-rrss-state{background:#eaf3e7;color:#4f6d51;border-color:#cfe0ca}
+.bw-rrss-apparatus.attention .bw-rrss-state{background:#fbf1df;color:#8a6a37;border-color:#ead7b6}
+@media(max-width:760px){
+  .bw-rrss-apparatus{grid-template-columns:auto 1fr}
+  .bw-rrss-actions{grid-column:1/-1;justify-items:stretch}
+  .bw-rrss-actions .bw-primary{width:100%}
+}
