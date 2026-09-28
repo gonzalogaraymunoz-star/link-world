@@ -57,6 +57,48 @@ async function readArchitecture(){
   return data;
 }
 
+async function readGameFacts(){
+  const {data,error}=await db.from('event_bus')
+    .select('id,event_type,payload,occurred_at')
+    .eq('source_provider','link_game')
+    .order('occurred_at',{ascending:false})
+    .limit(80);
+  if(error)throw error;
+  return data||[];
+}
+
+async function readGameStates(){
+  const {data,error}=await db.from('link_game_business_state_v')
+    .select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue')
+    .order('conversion_percent',{ascending:false});
+  if(error)throw error;
+  return data||[];
+}
+
+function gameIcon(type=''){
+  if(type.includes('converted'))return '💰';
+  if(type.includes('critical_frozen'))return '🔴🧊';
+  if(type.includes('red_close'))return '🔴';
+  if(type.includes('frozen'))return '🧊';
+  if(type.includes('heated'))return '🔥';
+  if(type.includes('cooled'))return '❄️';
+  if(type.includes('verified'))return '✅';
+  return '•';
+}
+function gameFactsMarkup(state){
+  const events=(state.gameFacts||[]).slice(0,12);
+  const states=state.gameStates||[];
+  if(!events.length&&!states.length)return '';
+  const stateCards=states.map(s=>'<article class="cj-game-state game-'+safe(s.game_state)+'"><header><b>'+safe(s.name)+'</b><span>'+safe(s.game_state_label)+'</span></header><div><strong>'+Math.round(Number(s.temperature||0))+'°</strong><i>·</i><strong>'+Math.round(Number(s.conversion_percent||0))+'%</strong><small>conversión</small></div>'+(Number(s.awaiting_evidence_count||0)?'<p>'+s.awaiting_evidence_count+' acción(es) esperan evidencia.</p>':'')+'</article>').join('');
+  const eventRows=events.map(e=>{
+    const p=e.payload||{};
+    const temp=p.temperature!=null?Math.round(Number(p.temperature))+'°':'';
+    const conv=p.conversion_percent!=null?Math.round(Number(p.conversion_percent))+'%':'';
+    return '<article class="cj-game-event"><span>'+gameIcon(e.event_type)+'</span><div><strong>'+safe(p.business_name||p.title||'LINK')+'</strong><p>'+safe(p.state_label||p.title||String(e.event_type).replaceAll('.',' · '))+'</p><small>'+safe([temp,conv,formatUpdated(e.occurred_at)].filter(Boolean).join(' · '))+'</small></div></article>';
+  }).join('');
+  return '<section class="cj-game-history"><div class="cj-section-title"><span>HECHOS DEL JUEGO</span><h2>Solo avanza lo que tiene evidencia.</h2><p>Temperatura, cierres, enfriamientos y conversiones vienen del mismo motor verificable de LINK.</p></div><div class="cj-game-states">'+stateCards+'</div><div class="cj-game-events">'+eventRows+'</div></section>';
+}
+
 async function readExecutions(registry){
   const kinds=[...new Set((registry||[]).map(item=>item.source_kind).filter(Boolean))];
   if(!kinds.length)return [];
@@ -104,6 +146,7 @@ function listViewMarkup(state){
   return '<div class="cj-shell">'+
     '<header class="cj-top"><div><span class="cj-eyebrow">LINK WORLD / BITÁCORA</span><h1>Cómo está evolucionando el sistema.</h1><p>Cada ejecución es un capítulo verificable: estado, misión, trayectoria, resultado y aprendizaje.</p></div><div class="cj-top-actions"><button type="button" data-cj-refresh>↻ Actualizar</button><button type="button" data-cj-signout>Cerrar sesión</button></div></header>'+
     '<section class="cj-summary"><div><strong>'+model.summary.cronCount+'</strong><span>crons registrados</span></div><div><strong>'+model.summary.executionCount+'</strong><span>ejecuciones</span></div><div><strong>'+model.summary.closedCount+'</strong><span>cierres</span></div><div><strong>'+model.summary.blockedCount+'</strong><span>bloqueadas</span></div></section>'+
+    gameFactsMarkup(state)+
     '<section class="cj-evolution"><div class="cj-section-title"><span>EVOLUCIÓN RECIENTE</span><h2>Estado → movimiento → siguiente estado</h2></div>'+evolutionMarkup(items)+'</section>'+
     '<div class="cj-workspace"><aside class="cj-crons"><span class="cj-eyebrow">CRONS</span>'+tabs+'</aside><section class="cj-list"><div class="cj-list-head"><div><span class="cj-eyebrow">EJECUCIONES</span><h2>'+safe(group?.label||'Cron')+'</h2></div><small>'+items.length+' capítulos persistidos</small></div><div class="cj-cards">'+(items.length?items.map(cardMarkup).join(''):'<div class="cj-empty-panel"><h3>Sin ejecuciones.</h3><p>Cuando este cron persista su primer registro aparecerá aquí automáticamente.</p></div>')+'</div></section></div>'+
     '<footer class="cj-foot">Fuente de verdad: deep_memories · La vista no modifica la memoria ni decide prioridades.</footer></div>';
@@ -132,7 +175,7 @@ function detailViewMarkup(item){
 
 export function mountCronJournal(){
   const root=document.querySelector('#lw-journal');
-  const state={opened:false,loading:false,member:false,error:null,architecture:null,model:null,cronId:null,selectedId:null};
+  const state={opened:false,loading:false,member:false,error:null,architecture:null,model:null,cronId:null,selectedId:null,gameFacts:[],gameStates:[]};
 
   function render(){
     if(!root)return;
@@ -152,8 +195,14 @@ export function mountCronJournal(){
       if(!state.member){state.loading=false;render();return;}
       const architecture=await readArchitecture();
       const registry=architecture?.structured_data?.registered_crons||[];
-      const rows=await readExecutions(registry.length?registry:undefined);
+      const [rows,gameFacts,gameStates]=await Promise.all([
+        readExecutions(registry.length?registry:undefined),
+        readGameFacts(),
+        readGameStates()
+      ]);
       state.architecture=architecture;
+      state.gameFacts=gameFacts;
+      state.gameStates=gameStates;
       state.model=buildCronJournal({architecture,rows});
       if(!state.cronId)state.cronId=state.model.groups[0]?.cron_id||null;
       if(state.selectedId&&!state.model.executions.some(item=>item.id===state.selectedId))state.selectedId=null;
