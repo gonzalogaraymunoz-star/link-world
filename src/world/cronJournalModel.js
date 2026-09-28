@@ -1,3 +1,5 @@
+import {readableValue} from './presentation.js';
+
 const arrayify=value=>{
   if(value==null||value==='')return [];
   if(Array.isArray(value))return value.filter(item=>item!=null&&item!=='');
@@ -5,12 +7,7 @@ const arrayify=value=>{
   return [value];
 };
 
-const textify=value=>{
-  if(value==null)return '';
-  if(typeof value==='string')return value;
-  if(typeof value==='number'||typeof value==='boolean')return String(value);
-  try{return JSON.stringify(value);}catch{return String(value);}
-};
+const textify=value=>readableValue(value,{maxMeta:6});
 
 const pick=(...values)=>values.find(value=>value!=null&&value!=='');
 
