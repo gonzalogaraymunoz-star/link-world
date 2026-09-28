@@ -526,7 +526,7 @@ function renderProduct(p){
   const pColor=resolveEntityColor(p.metadata?.visual_identity||p.owned_facts?.visual_identity||p.visual_identity);
   const split=e.splitKnown?'<div class="bw-split"><span style="--v:'+e.clientShare+'%"><b>Cliente</b><strong>'+e.clientShare+'%</strong></span><span style="--v:'+e.linkShare+'%"><b>LINK</b><strong>'+e.linkShare+'%</strong></span></div>':'<p class="bw-soft">Distribución cliente/LINK todavía sin definir.</p>';
   const blocked=p.economic_state==='blocked'||e.blocked;
-  return '<article class="bw-product '+(blocked?'blocked':'')+'"'+colorStyle(pColor)+'>'+
+  return '<article class="bw-product '+(blocked?'blocked':'')+'" data-product-id="'+safe(p.id)+'"'+colorStyle(pColor)+'>'+
     '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.code||p.category||'PRODUCTO')+'</span><h3>'+safe(p.name)+'</h3></div><span class="bw-economic '+safe(p.economic_state)+'">'+(blocked?'Bloqueado':safe(p.economic_state))+'</span></div>'+
     '<div class="bw-product-values"><div><small>Adquisición</small><strong>'+money(p.acquisition_price,p.currency)+'</strong></div><div><small>Precio público</small><strong>'+money(p.public_price,p.currency)+'</strong></div><div><small>Diferencia observada</small><strong>'+money(e.spread,p.currency)+'</strong></div></div>'+
     '<div class="bw-responsibility"><span><small>Responsabilidad</small><strong>'+(profile?safe(profile.label):'Por definir')+'</strong></span><b>'+(p.responsibility_percent==null?'—':safe(p.responsibility_percent)+'%')+'</b></div>'+
@@ -537,7 +537,7 @@ function renderProduct(p){
     (blocked?'<p class="bw-block-reason">No puede activarse: el reparto actual deja a LINK bajo su mínimo definido.</p>':'')+
   '</article>';
 }
-function openClient(id){
+function openClient(id,productId=null){
   state.client=state.clients.find(c=>c.id===id);if(!state.client)return;
   const products=state.products.filter(p=>p.client_id===id);
   const root=$('#bw-content'),active=products.filter(p=>p.economic_state==='active').length,blocked=products.filter(p=>p.economic_state==='blocked'||productEconomics(p).blocked).length;
@@ -562,6 +562,9 @@ function openClient(id){
     $('#bwp-client-share')?.addEventListener('input',previewSplit);
     $('#bwp-min-link')?.addEventListener('input',previewSplit);
     $('#bw-product-form')?.addEventListener('submit',createProductRecord);
+  }
+  if(productId){
+    requestAnimationFrame(()=>root.querySelector('[data-product-id="'+CSS.escape(String(productId))+'"]')?.scrollIntoView({behavior:'smooth',block:'center'}));
   }
 }
 function syncResponsibilityRange(){
@@ -632,13 +635,17 @@ function close(){
   const url=new URL(window.location.href);url.searchParams.delete('business');
   window.history.replaceState({},'',url.pathname+url.search+url.hash);
 }
-async function openBusiness(id){
+async function openBusiness(id,clientId=null,productId=null){
   const url=new URL(window.location.href);url.searchParams.set('business',id);
   window.history.replaceState({},'',url.pathname+url.search+url.hash);
   state.open=true;state.client=null;$('#business-workspace').classList.remove('hidden');
   $('#bw-content').innerHTML='<div class="bw-loading">Abriendo ficha real…</div>';
   notice('');
-  try{await loadBusiness(id);renderBusiness();}
+  try{
+    await loadBusiness(id);
+    if(clientId&&state.clients.some(client=>client.id===clientId))openClient(clientId,productId);
+    else renderBusiness();
+  }
   catch(e){notice(e.message||'No se pudo abrir la ficha.',true);$('#bw-content').innerHTML='<div class="bw-loading">No pudimos leer esta ficha.</div>';}
 }
 function mount(){
@@ -647,7 +654,10 @@ function mount(){
   shell.innerHTML='<div id="bw-notice" class="bw-notice hidden" role="status"></div><main id="bw-content"></main>';
   document.body.append(shell);
   document.addEventListener('linkworld:open-business',event=>{
-    const id=String(event.detail?.id||'');if(id)openBusiness(id);
+    const id=String(event.detail?.id||'');
+    const clientId=event.detail?.clientId?String(event.detail.clientId):null;
+    const productId=event.detail?.productId?String(event.detail.productId):null;
+    if(id)openBusiness(id,clientId,productId);
   });
   const deepLinkBusiness=new URLSearchParams(window.location.search).get('business');
   if(deepLinkBusiness&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deepLinkBusiness)){
