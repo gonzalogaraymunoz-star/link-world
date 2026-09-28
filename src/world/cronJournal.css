@@ -130,3 +130,20 @@
 .cj-game-events{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:7px}
 .cj-game-event{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start;border-top:1px solid #eceae1;padding:9px 0}
 .cj-game-event>span{font-size:16px}.cj-game-event strong{font-size:9px}.cj-game-event p{font-size:8.5px;margin:2px 0;color:#555}.cj-game-event small{font-size:7px;color:#929188}
+
+
+/* Game proof checkpoint */
+.cj-proof-queue{margin:14px 0;background:#fff;border:1px solid #e3e0d5;border-radius:22px;padding:16px}
+.cj-proof-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-top:12px}
+.cj-proof-card{border:1px solid #e1dfd4;border-radius:14px;padding:12px;background:#fbfaf5;display:grid;gap:7px;min-width:0}
+.cj-proof-card header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cj-proof-card header span{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#747168}
+.cj-proof-card header b{font-size:7px;text-transform:uppercase;background:#efece1;border-radius:999px;padding:4px 6px}
+.cj-proof-card h3{font-size:14px;line-height:1.15;margin:0;letter-spacing:-.025em}
+.cj-proof-card p{font-size:9px;line-height:1.45;color:#66645d;margin:0}
+.cj-proof-card small{font-size:7.5px;color:#9a978c;overflow-wrap:anywhere}
+.cj-proof-card button{appearance:none;border:0;background:#20201d;color:#f7f6ee;border-radius:999px;padding:8px 10px;font-size:8px;font-weight:800;justify-self:start;cursor:pointer}
+.cj-game-state.game-red_close,.cj-game-state.game-critical_frozen{border-color:#d8342f;box-shadow:inset 0 0 0 1px #d8342f}
+.cj-game-state.game-red_close header span,.cj-game-state.game-critical_frozen header span{color:#d8342f}
+.cj-game-state.game-frozen,.cj-game-state.game-cold{background:#f3f8fc;border-color:#c8dbea}
+@media(max-width:680px){.cj-proof-list{grid-template-columns:1fr}}
