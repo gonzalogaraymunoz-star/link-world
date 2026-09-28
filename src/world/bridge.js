@@ -12,7 +12,7 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
 const $=(s,root=document)=>root.querySelector(s);
 const safe=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tables={businesses:'link_world_businesses',clients:'link_world_clients',products:'link_world_products',responsibility:'link_world_responsibility_profiles',requests:'link_world_requests',relations:'link_world_relations',activity:'link_world_activity',conversion:'link_conversion_queue',dailyReports:'link_daily_intelligence_reports',financial:'link_world_financial_followup',rules:'link_rules',skills:'link_skills',skillCapabilities:'link_skill_capabilities'};
-const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],selected:new Set(),activePlaceId:'',loading:false,pendingDraft:null};
+const state={open:false,session:null,authorized:false,businesses:[],requests:[],relations:[],activity:[],gameStates:[],selected:new Set(),activePlaceId:'',loading:false,pendingDraft:null};
 const statuses={draft:'Borrador',needs_review:'Revisar',verified:'Verificado'};
 const short=id=>String(id||'').slice(0,8);
 function status(text,error=false){const n=$('#bridge-status');if(n){n.textContent=text;n.classList.toggle('error',error);}}
@@ -31,11 +31,12 @@ async function refresh(){
       db.from(tables.businesses).select('id,slug,name,sector,city,country,website,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').order('name',{ascending:true}).limit(250),
       db.from(tables.requests).select('id,title,instruction,origin,status,business_ids,created_at,result_summary').order('created_at',{ascending:false}).limit(60),
       db.from(tables.relations).select('id,source_business_id,target_business_id,relation_type,state,rationale').order('created_at',{ascending:false}).limit(100),
-      db.from(tables.activity).select('id,action,target_type,target_id,origin,note,created_at').order('created_at',{ascending:false}).limit(35)
+      db.from(tables.activity).select('id,action,target_type,target_id,origin,note,created_at').order('created_at',{ascending:false}).limit(35),
+      db.from('link_game_business_state_v').select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue')
     ]);
     const failed=results.find(r=>r.error);
     if(failed)throw failed.error;
-    [state.businesses,state.requests,state.relations,state.activity]=results.map(r=>r.data||[]);
+    [state.businesses,state.requests,state.relations,state.activity,state.gameStates]=results.map(r=>r.data||[]);
     state.selected=new Set([...state.selected].filter(id=>state.businesses.some(b=>b.id===id)));
     renderData();
     document.dispatchEvent(new CustomEvent('linkworld:workspace-data',{detail:{
@@ -53,11 +54,13 @@ function renderData(){
   if(!list)return;
   const query=($('#bridge-search')?.value||'').toLowerCase().trim();
   const businesses=state.businesses.filter(b=>[b.name,b.sector,b.city,b.slug].some(v=>String(v||'').toLowerCase().includes(query)));
-  list.innerHTML=businesses.length?businesses.map(b=>
-    '<article class="bridge-business"><label><input type="checkbox" class="bridge-pick" data-business="'+safe(b.id)+'" '+(state.selected.has(b.id)?'checked':'')+' />'+
-    '<span><strong>'+safe(b.name)+'</strong><small>'+safe([b.sector,b.city,b.country].filter(Boolean).join(' · '))+'</small></span></label>'+
-    '<span class="bridge-badge">'+safe(statuses[b.verification_status]||b.verification_status)+'</span>'+
-    '<button type="button" class="bridge-inspect" data-inspect="'+safe(b.id)+'">Ficha ↗</button></article>').join('')
+  list.innerHTML=businesses.length?businesses.map(b=>{
+    const gs=state.gameStates.find(x=>x.business_id===b.id);
+    return '<article class="bridge-business '+(gs?'game-'+safe(gs.game_state):'')+'"><label><input type="checkbox" class="bridge-pick" data-business="'+safe(b.id)+'" '+(state.selected.has(b.id)?'checked':'')+' />'+
+    '<span><strong>'+safe(b.name)+'</strong><small>'+safe([b.sector,b.city,b.country].filter(Boolean).join(' · '))+(gs?' · '+Math.round(Number(gs.temperature||0))+'° · '+Math.round(Number(gs.conversion_percent||0))+'%':'')+'</small></span></label>'+
+    '<span class="bridge-badge">'+safe(gs?.game_state_label||statuses[b.verification_status]||b.verification_status)+'</span>'+
+    '<button type="button" class="bridge-inspect" data-inspect="'+safe(b.id)+'">Ficha ↗</button></article>';
+  }).join('')
     : '<p class="bridge-muted">No hay negocios guardados que coincidan. Las fichas de Google no se convierten automáticamente en células LINK.</p>';
   list.querySelectorAll('[data-business]').forEach(b=>b.addEventListener('change',()=>{
     const id=b.dataset.business;
@@ -296,12 +299,13 @@ export async function readDirectorAppContext(scope='selected'){
     publicOnly?safeEmpty:db.from(tables.financial).select('business_id,business_name,open_transactions,missing_documents,open_closures,open_financial_tasks,pending_income,pending_expense,last_financial_movement_at').limit(15),
     publicOnly?safeEmpty:db.from(tables.rules).select('name,scope,severity,rule_text').eq('active',true).order('severity',{ascending:false}).limit(20),
     publicOnly?safeEmpty:db.from(tables.skills).select('id,slug,name,description,status,current_version').eq('status','active').limit(20),
-    publicOnly?safeEmpty:db.from(tables.skillCapabilities).select('skill_id,capability_key,label,description,weight').order('weight',{ascending:false}).limit(30)
+    publicOnly?safeEmpty:db.from(tables.skillCapabilities).select('skill_id,capability_key,label,description,weight').order('weight',{ascending:false}).limit(30),
+    publicOnly?safeEmpty:db.from('link_game_business_state_v').select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue').in('business_id',visibleIds)
   ];
   const responses=await Promise.all(queries);
   const problem=responses.slice(0,7).find(r=>r.error);
   if(problem)throw new Error('No se pudieron leer los datos de LINK WORLD: '+problem.error.message);
-  const [clients,products,requests,relations,activity,conversion,dailyReports,responsibility,financial,rules,skills,skillCapabilities]=responses.map(r=>r.data||[]);
+  const [clients,products,requests,relations,activity,conversion,dailyReports,responsibility,financial,rules,skills,skillCapabilities,gameStates]=responses.map(r=>r.data||[]);
   const detailed=isMember&&scope==='selected'&&chosen.length>0;
   const simplified=businesses.map(b=>({
     id:b.id,name:b.name,sector:b.sector,city:b.city,country:b.country,
@@ -359,6 +363,23 @@ export async function readDirectorAppContext(scope='selected'){
       skill_id:x.skill_id,capability_key:x.capability_key,label:x.label,
       description:(x.description||'').slice(0,180),weight:x.weight
     })),
+    game_state:gameStates.map(x=>({
+      business_id:x.business_id,name:x.name,
+      temperature:Number(x.temperature||0),
+      conversion_percent:Number(x.conversion_percent||0),
+      state:x.game_state,label:x.game_state_label,
+      awaiting_evidence_count:Number(x.awaiting_evidence_count||0),
+      last_verified_action_at:x.last_verified_action_at,
+      next_action_due_at:x.next_action_due_at,
+      overdue:Boolean(x.overdue),
+      rule:'No declarar avance sin evidencia verificada.'
+    })),
+    game_protocol:{
+      goal:'vender con mejor margen y menor esfuerzo',
+      proof_rule:'Acción sin evidencia verificada no modifica temperatura ni conversión.',
+      close_rule:'Conversión >= 90% es prioridad roja y enfría más rápido.',
+      handoff_rule:'Si la acción ocurre fuera de ChatGPT, pedir captura, comprobante, archivo, correo o enlace y validar antes de registrar avance.'
+    },
     truncated:false,
     note:publicOnly?
       'Modo abierto: solo negocios, clientes y productos marcados para lectura pública. Escritura, solicitudes, relaciones y actividad privada no se incluyen.':
@@ -369,6 +390,7 @@ export async function readDirectorAppContext(scope='selected'){
     if(payload.activity.length)payload.activity.pop();
     else if(payload.governance_rules.length>8)payload.governance_rules.pop();
     else if(payload.skill_registry.length>6)payload.skill_registry.pop();
+    else if(payload.game_state.length>4)payload.game_state.pop();
     else if(payload.skill_capabilities.length>8)payload.skill_capabilities.pop();
     else if(payload.financial_followup.length>5)payload.financial_followup.pop();
     else if(payload.responsibility_profiles.length>6)payload.responsibility_profiles.pop();
