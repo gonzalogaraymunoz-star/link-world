@@ -288,6 +288,24 @@ function gameIdeaCard(mission){
   return '<button class="micelio-game-idea" data-game-work="'+safe(mission.key)+'" type="button"><span>'+safe(mission.lane)+'</span><strong>'+safe(mission.title)+'</strong><small>'+safe(mission.unlock)+'</small><i>→</i></button>';
 }
 
+function recommendationBannerMarkup(state){
+  const recs=state.game?.recommendations||[];
+  if(!recs.length)return '<header class="micelio-reco-banner is-empty"><div><span class="micelio-eyebrow">RECOMENDADOR</span><h2>Todavía no hay una jugada priorizada.</h2><p>Sin señal suficiente, LINK no inventa una tarea. Sincroniza o abre una misión desde el ecosistema.</p></div></header>';
+  const index=((state.recommendationIndex||0)%recs.length+recs.length)%recs.length;
+  const rec=recs[index];
+  const saved=rec.accepted;
+  return '<header class="micelio-reco-banner '+(state.recommendationPaused?'is-paused':'')+'">'+
+    '<div class="micelio-reco-top"><div><span class="micelio-reco-priority">PRIORIDAD '+rec.priorityRank+'</span><span class="micelio-reco-lane">'+safe(rec.lane)+'</span></div><span class="micelio-reco-goal">META · MÁS MARGEN · MENOS ESFUERZO</span></div>'+
+    '<div class="micelio-reco-main"><div class="micelio-reco-copy"><small>'+safe(rec.business)+'</small><h2>'+safe(rec.business)+' <i>—</i> '+safe(rec.title)+'</h2><p>'+safe(rec.recommendation)+'</p><div class="micelio-reco-why"><b>Por qué ahora</b><span>'+safe(rec.why)+'</span></div></div>'+
+      '<aside class="micelio-reco-impact"><span>LECTURA DE LA JUGADA</span><b>'+safe(rec.moneyLabel)+'</b><b>'+safe(rec.marginLabel)+'</b><b>'+safe(rec.effortLabel)+'</b><small>Desbloquea · '+safe(rec.unlock)+'</small></aside>'+
+    '</div>'+
+    '<div class="micelio-reco-actions"><div><button class="is-primary" data-game-work="'+safe(rec.key)+'" type="button">Hacerlo conmigo</button><button data-game-copy="'+safe(rec.key)+'" type="button">Copiar prompt</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(rec.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'Misión guardada ✓':'Guardar misión')+'</button>':'')+'</div>'+
+      '<nav><button data-action="recommendation-prev" type="button" aria-label="Recomendación anterior">←</button><span>'+(index+1)+' / '+recs.length+'</span><button data-action="recommendation-pause" type="button" aria-label="'+(state.recommendationPaused?'Reanudar':'Pausar')+'">'+(state.recommendationPaused?'▶':'Ⅱ')+'</button><button data-action="recommendation-next" type="button" aria-label="Siguiente recomendación">→</button></nav>'+
+    '</div>'+
+    '<div class="micelio-reco-timer"><i></i></div>'+
+  '</header>';
+}
+
 function ecosystemGameMarkup(state,chapters){
   const g=state.game;
   if(!g)return '<div class="micelio-loading"><span></span><p>Preparando el juego con el estado real del ecosistema…</p></div>';
@@ -297,7 +315,7 @@ function ecosystemGameMarkup(state,chapters){
     : 'Todos los negocios reconocidos ya tienen célula en LINK WORLD.';
   return '<section class="micelio-game">'+
     '<div class="micelio-game-nav"><div>'+chapters+'</div><span>El grafo sigue disponible como mapa técnico</span></div>'+
-    '<header class="micelio-game-hero"><div><span class="micelio-eyebrow">ECOSISTEMA EN JUEGO</span><h2>'+s.knownBusinesses+' negocios reconocidos. Cada movimiento debe desbloquear algo real.</h2><p>'+safe(coverage)+' El objetivo no es llenar indicadores: es ayudar a cada negocio a vender, digitalizarse, automatizarse y reutilizar lo que aprende el resto del ecosistema.</p></div><div class="micelio-game-money"><span>RESULTADO VERIFICADO</span><strong>'+safe(g.moneyLabel)+'</strong><small>'+(s.realized>0?'Dinero respaldado por evidencia registrada.':'No significa que los negocios no vendan; significa que LINK aún no tiene una venta confirmada como evidencia.')+'</small></div></header>'+
+    recommendationBannerMarkup(state)+
     '<div class="micelio-game-stats">'+
       '<div><strong>'+s.knownBusinesses+'</strong><span>Negocios conocidos</span><small>'+s.modeledBusinesses+' ya viven en LINK WORLD</small></div>'+
       '<div><strong>'+s.capabilities+'</strong><span>Capacidades para ayudarte</span><small>'+s.skills+' skills registradas</small></div>'+
@@ -419,17 +437,27 @@ function shellMarkup(state){
 export function mountMicelioBeta(selector='#lw-micelio'){
   const root=document.querySelector(selector);
   if(!root)return {open(){},close(){},refresh(){}};
-  const state={open:false,loading:false,member:false,model:null,evolution:[],game:null,fatal:null,warnings:[],view:'evolution',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
-  let channel=null,pollTimer=null,refreshTimer=null,storyTimer=null,routeTimer=null;
+  const state={open:false,loading:false,member:false,model:null,evolution:[],game:null,fatal:null,warnings:[],view:'evolution',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,recommendationIndex:0,recommendationPaused:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
+  let channel=null,pollTimer=null,refreshTimer=null,storyTimer=null,routeTimer=null,recommendationTimer=null;
 
   const clearPlayback=()=>{
     clearTimeout(storyTimer);storyTimer=null;state.story.playing=false;
     clearTimeout(routeTimer);routeTimer=null;state.route.playing=false;
   };
+  const scheduleRecommendation=()=>{
+    clearTimeout(recommendationTimer);recommendationTimer=null;
+    const total=state.game?.recommendations?.length||0;
+    if(!state.open||state.view!=='evolution'||state.recommendationPaused||total<2)return;
+    recommendationTimer=setTimeout(()=>{
+      state.recommendationIndex=(state.recommendationIndex+1)%total;
+      render();
+    },5000);
+  };
   const render=()=>{
     root.dataset.micelioTheme=state.theme;
     root.innerHTML=shellMarkup(state);
     bind();
+    scheduleRecommendation();
   };
   const setView=view=>{
     clearPlayback();
@@ -492,7 +520,7 @@ export function mountMicelioBeta(selector='#lw-micelio'){
   };
   const openPanel=name=>{state.panel=state.panel===name?null:name;render();};
 
-  const gameMission=key=>state.game?.missions?.find(item=>item.key===key)||null;
+  const gameMission=key=>state.game?.missions?.find(item=>item.key===key)||state.game?.recommendations?.find(item=>item.key===key)||null;
   const workGameMission=key=>{
     const mission=gameMission(key);if(!mission)return;
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:mission.prompt}}));
@@ -527,6 +555,9 @@ export function mountMicelioBeta(selector='#lw-micelio'){
   };
 
   function handleAction(action){
+    if(action==='recommendation-prev'){const total=state.game?.recommendations?.length||1;state.recommendationIndex=(state.recommendationIndex-1+total)%total;render();return;}
+    if(action==='recommendation-next'){const total=state.game?.recommendations?.length||1;state.recommendationIndex=(state.recommendationIndex+1)%total;render();return;}
+    if(action==='recommendation-pause'){state.recommendationPaused=!state.recommendationPaused;render();return;}
     if(action==='refresh'){refresh({manual:true});return;}
     if(action==='theme'){state.theme=state.theme==='dark'?'light':'dark';try{sessionStorage.setItem('linkworld:micelio:theme',state.theme);}catch{}render();return;}
     if(action==='finder'){openPanel('finder');return;}
@@ -669,14 +700,14 @@ export function mountMicelioBeta(selector='#lw-micelio'){
     const coreFailure=results.find(result=>result.key==='businesses'&&result.error);
     if(coreFailure){state.fatal=coreFailure.error;state.loading=false;render();return;}
     const firstLoad=!state.model;
-    state.member=member;state.warnings=warnings;state.model=buildMicelioModel(rows,{member,capturedAt:new Date().toISOString(),warnings});state.evolution=member?buildEvolution(rows):[];state.game=buildMicelioGame(rows,state.evolution);state.lastRefresh=new Date().toISOString();state.loading=false;
+    state.member=member;state.warnings=warnings;state.model=buildMicelioModel(rows,{member,capturedAt:new Date().toISOString(),warnings});state.evolution=member?buildEvolution(rows):[];state.game=buildMicelioGame(rows,state.evolution);state.recommendationIndex=Math.min(state.recommendationIndex,Math.max(0,(state.game?.recommendations?.length||1)-1));state.lastRefresh=new Date().toISOString();state.loading=false;
     if(firstLoad)state.camera=cameraBase();
     if(state.selectedNode&&!state.model.nodes.some(node=>node.id===state.selectedNode))state.selectedNode=null;
     if(state.selectedEdge&&!state.model.edges.some(edge=>edge.id===state.selectedEdge))state.selectedEdge=null;
     syncRealtime();syncPolling();render();
   }
   const open=()=>{state.open=true;root.classList.remove('hidden');if(!state.model)refresh();else{syncRealtime();syncPolling();render();}};
-  const close=()=>{state.open=false;clearPlayback();clearInterval(pollTimer);pollTimer=null;if(channel){db.removeChannel(channel);channel=null;}};
+  const close=()=>{state.open=false;clearPlayback();clearTimeout(recommendationTimer);recommendationTimer=null;clearInterval(pollTimer);pollTimer=null;if(channel){db.removeChannel(channel);channel=null;}};
   db.auth.onAuthStateChange(event=>{if(state.open&&(event==='SIGNED_IN'||event==='SIGNED_OUT'))setTimeout(()=>refresh({quiet:true}),0);});
   render();
   return {open,close,refresh};
