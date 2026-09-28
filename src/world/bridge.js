@@ -300,12 +300,13 @@ export async function readDirectorAppContext(scope='selected'){
     publicOnly?safeEmpty:db.from(tables.rules).select('name,scope,severity,rule_text').eq('active',true).order('severity',{ascending:false}).limit(20),
     publicOnly?safeEmpty:db.from(tables.skills).select('id,slug,name,description,status,current_version').eq('status','active').limit(20),
     publicOnly?safeEmpty:db.from(tables.skillCapabilities).select('skill_id,capability_key,label,description,weight').order('weight',{ascending:false}).limit(30),
-    publicOnly?safeEmpty:db.from('link_game_business_state_v').select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue').in('business_id',visibleIds)
+    publicOnly?safeEmpty:db.from('link_game_business_state_v').select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue').in('business_id',visibleIds),
+    publicOnly?safeEmpty:db.from('link_game_evidence_queue_v').select('action_id,business_id,business_name,title,category,executor_type,evidence_requirement,status,conversion_before,conversion_after,prompt,evidence_count,pending_evidence_count,verified_evidence_count,latest_evidence_at').in('business_id',visibleIds).order('created_at',{ascending:false}).limit(20)
   ];
   const responses=await Promise.all(queries);
   const problem=responses.slice(0,7).find(r=>r.error);
   if(problem)throw new Error('No se pudieron leer los datos de LINK WORLD: '+problem.error.message);
-  const [clients,products,requests,relations,activity,conversion,dailyReports,responsibility,financial,rules,skills,skillCapabilities,gameStates]=responses.map(r=>r.data||[]);
+  const [clients,products,requests,relations,activity,conversion,dailyReports,responsibility,financial,rules,skills,skillCapabilities,gameStates,evidenceQueue]=responses.map(r=>r.data||[]);
   const detailed=isMember&&scope==='selected'&&chosen.length>0;
   const simplified=businesses.map(b=>({
     id:b.id,name:b.name,sector:b.sector,city:b.city,country:b.country,
@@ -380,6 +381,17 @@ export async function readDirectorAppContext(scope='selected'){
       close_rule:'Conversión >= 90% es prioridad roja y enfría más rápido.',
       handoff_rule:'Si la acción ocurre fuera de ChatGPT, pedir captura, comprobante, archivo, correo o enlace y validar antes de registrar avance.'
     },
+    evidence_queue:evidenceQueue.map(x=>({
+      action_id:x.action_id,business_id:x.business_id,business_name:x.business_name,
+      title:x.title,category:x.category,executor_type:x.executor_type,
+      evidence_requirement:x.evidence_requirement,status:x.status,
+      conversion_before:x.conversion_before,conversion_after:x.conversion_after,
+      evidence_count:Number(x.evidence_count||0),
+      pending_evidence_count:Number(x.pending_evidence_count||0),
+      verified_evidence_count:Number(x.verified_evidence_count||0),
+      latest_evidence_at:x.latest_evidence_at,
+      prompt:(x.prompt||'').slice(0,280)
+    })),
     truncated:false,
     note:publicOnly?
       'Modo abierto: solo negocios, clientes y productos marcados para lectura pública. Escritura, solicitudes, relaciones y actividad privada no se incluyen.':
@@ -390,6 +402,7 @@ export async function readDirectorAppContext(scope='selected'){
     if(payload.activity.length)payload.activity.pop();
     else if(payload.governance_rules.length>8)payload.governance_rules.pop();
     else if(payload.skill_registry.length>6)payload.skill_registry.pop();
+    else if(payload.evidence_queue.length>6)payload.evidence_queue.pop();
     else if(payload.game_state.length>4)payload.game_state.pop();
     else if(payload.skill_capabilities.length>8)payload.skill_capabilities.pop();
     else if(payload.financial_followup.length>5)payload.financial_followup.pop();
