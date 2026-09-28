@@ -58,7 +58,7 @@ function publicReads(){
       .select('id,global_id,business_id,slug,name,role,relationship_state,agreement_status,city,country,summary,evidence,updated_at')
       .order('name',{ascending:true})),
     readSource('products',db.from('link_world_products')
-      .select('id,global_id,business_id,client_id,name,category,stage,economic_state,responsibility_notes,agreement_notes,evidence,updated_at')
+      .select('id,global_id,business_id,client_id,name,category,stage,currency,acquisition_price,public_price,responsibility_percent,client_benefit_share_percent,link_share_percent,minimum_link_share_percent,economic_state,responsibility_notes,agreement_notes,evidence,metadata,updated_at')
       .order('name',{ascending:true}))
   ];
 }
@@ -96,7 +96,7 @@ function memberReads(){
     readSource('daily',db.from('link_daily_intelligence_reports')
       .select('id,report_date,report_type,metrics,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).limit(5)),
     readSource('transactions',db.from('link_world_transactions')
-      .select('id,business_id,business_global_id,counterparty_global_id,product_global_id,direction,transaction_type,status,amount,currency,payment_method,occurred_at,paid_at,settled_at,created_at').order('occurred_at',{ascending:false}).limit(240)),
+      .select('id,business_id,business_global_id,counterparty_global_id,product_global_id,direction,transaction_type,status,amount,currency,payment_method,occurred_at,paid_at,settled_at,notes,metadata,created_at').order('occurred_at',{ascending:false}).limit(240)),
     readSource('salesOutcomes',db.from('sales_cycle_outcomes')
       .select('id,business_id,outcome,amount,currency,verified,confirmed_at,learning_snapshot').eq('verified',true).order('confirmed_at',{ascending:false}).limit(240)),
     readSource('paymentIntents',db.from('link_payment_intents')
