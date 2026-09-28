@@ -218,3 +218,28 @@
   .bw-rrss-actions{grid-column:1/-1;justify-items:stretch}
   .bw-rrss-actions .bw-primary{width:100%}
 }
+
+
+/* Mercado Pago · payment evidence + operational formalization */
+.bw-mp-section{overflow:hidden}
+.bw-mp-score{font:600 28px 'Space Grotesk',system-ui,sans-serif;color:#33573b}
+.bw-mp-progress{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:8px 0 14px;padding-top:8px}
+.bw-mp-progress:before{content:"";position:absolute;left:2%;right:2%;top:20px;height:3px;background:#e2e9df;border-radius:99px}
+.bw-mp-progress>i{position:absolute;left:2%;top:20px;height:3px;width:calc(var(--progress) * .96);background:#4f7b57;border-radius:99px;z-index:1}
+.bw-mp-progress span{position:relative;z-index:2;display:grid;justify-items:center;gap:6px;text-align:center;font-size:8px;color:#829083}
+.bw-mp-progress span b{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;border:1px solid #d9e3d6;background:#fffefa;color:#8c9a8d}
+.bw-mp-progress span.done{color:#4d7052;font-weight:700}
+.bw-mp-progress span.done b{background:#e7f1e3;border-color:#bcd3b8;color:#426c49}
+.bw-mp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.bw-mp-grid article{display:grid;gap:6px;padding:13px;border:1px solid #dfe7db;background:#f7f9f5;border-radius:12px}
+.bw-mp-grid small{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:#819081}
+.bw-mp-grid strong{font-size:12px;color:#34513a}
+.bw-mp-grid span{font-size:9px;line-height:1.45;color:#718273}
+.bw-mp-grid button{justify-self:start;border:1px solid #cadbc7;background:#fffefa;color:#4d704f;border-radius:8px;padding:7px 9px;font-size:8px;font-weight:700;cursor:pointer}
+.bw-mp-guard{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.bw-mp-guard span{display:grid;gap:4px;padding:10px;border-left:3px solid #afc3ad;background:#f4f7f1;color:#6f806f;font-size:9px;line-height:1.45}
+.bw-mp-guard b{color:#3e5b43}
+.bw-taxi-card-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bw-mp-checkout{border:1px solid #c9d9c6;background:#edf5e9;color:#466b4b;border-radius:8px;padding:7px 9px;font-size:8px;font-weight:700;cursor:pointer}
+@media(max-width:900px){.bw-mp-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.bw-mp-grid,.bw-mp-guard{grid-template-columns:1fr}.bw-mp-progress{grid-template-columns:repeat(5,1fr);gap:3px}.bw-mp-progress span{font-size:7px}}
