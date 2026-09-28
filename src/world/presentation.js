@@ -96,6 +96,7 @@ export function humanizeToken(value){
 
 function formatByKey(key,value){
   if(value==null||value==='')return '—';
+  if(key==='code'||key==='ref'||key.endsWith('_id'))return String(value);
   if(typeof value==='number' && /(?:_clp|amount_clp)$/i.test(key)){
     return new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(value);
   }
