@@ -10,17 +10,24 @@ const daysSince=value=>{
 const money=value=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(Number(value)||0);
 
 function acceptedKeys(requests=[]){
-  return new Set(requests.filter(r=>!['completed','closed','done','cancelled'].includes(String(r.status||'').toLowerCase()))
-    .map(r=>r.evidence?.game_key).filter(Boolean));
+  const keys=[];
+  for(const r of requests){
+    if(['completed','closed','done','cancelled'].includes(String(r.status||'').toLowerCase()))continue;
+    const evidence=Array.isArray(r.evidence)?r.evidence:(r.evidence?[r.evidence]:[]);
+    for(const item of evidence)if(item?.game_key)keys.push(item.game_key);
+  }
+  return new Set(keys);
 }
 
-function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[]}={}){
+function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[],gameStates=[]}={}){
   const evoById=new Map(evolution.map(row=>[String(row.businessId),row]));
+  const gameById=new Map(gameStates.map(row=>[String(row.business_id),row]));
   const bySlug=new Map();
 
   for(const b of businesses){
     const slug=b.slug||slugify(b.name);
     const evo=evoById.get(String(b.id))||{};
+    const gs=gameById.get(String(b.id))||{};
     bySlug.set(slug,{
       key:'business:'+slug,
       name:b.name,
@@ -34,7 +41,16 @@ function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[]}=
       detectedLights:Number(evo.detectedLights||0),
       realized:Number(evo.realized||0),
       potential:Number(evo.potential||0),
-      opportunities:Number(evo.opportunities||0)
+      opportunities:Number(evo.opportunities||0),
+      temperature:Number(gs.temperature||0),
+      conversionPercent:Number(gs.conversion_percent||0),
+      gameState:gs.game_state||'frozen',
+      gameStateLabel:gs.game_state_label||'Congelado',
+      nextActionDueAt:gs.next_action_due_at||null,
+      overdue:Boolean(gs.overdue),
+      awaitingEvidence:Number(gs.awaiting_evidence_count||0),
+      lastVerifiedActionAt:gs.last_verified_action_at||null,
+      lastActionTitle:gs.last_action_title||null
     });
   }
 
@@ -62,7 +78,16 @@ function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[]}=
       detectedLights:0,
       realized:0,
       potential:0,
-      opportunities:0
+      opportunities:0,
+      temperature:0,
+      conversionPercent:0,
+      gameState:'frozen',
+      gameStateLabel:'Fuera del tablero',
+      nextActionDueAt:null,
+      overdue:false,
+      awaitingEvidence:0,
+      lastVerifiedActionAt:null,
+      lastActionTitle:null
     });
   }
 
@@ -214,10 +239,10 @@ function goalScore({proximity=0,margin=0,ease=0,reuse=0,evidence=0}={}){
   return Math.round(proximity*.35+margin*.25+ease*.20+reuse*.10+evidence*.10);
 }
 
-function recBase({key,business,businessId=null,title,recommendation,why,unlock,prompt,metrics={},kind='commercial',lane='Vender',accepted=false}){
+function recBase({key,business,businessId=null,title,recommendation,why,unlock,prompt,metrics={},kind='commercial',lane='Vender',accepted=false,category='organize'}){
   const score=goalScore(metrics);
   return {
-    key,kind,lane,business,businessId,title,recommendation,why,unlock,prompt,
+    key,kind,lane,business,businessId,title,recommendation,why,unlock,prompt,category,
     accepted,priority:score,
     proximity:metrics.proximity||0,margin:metrics.margin||0,ease:metrics.ease||0,reuse:metrics.reuse||0,evidence:metrics.evidence||0,
     moneyLabel:(metrics.proximity||0)>=90?'Dinero muy cerca':(metrics.proximity||0)>=70?'Dinero cerca':'Construye venta',
@@ -243,7 +268,7 @@ function buildRecommendations(rows,portfolio,accepted){
     if(pendingAmount>0){
       const key='rec:verify-income:'+b.id;
       recs.push(recBase({
-        key,business:b.name,businessId:b.id,title:'Verifica ingresos que ya están cerca del banco',
+        key,business:b.name,businessId:b.id,title:'Verifica ingresos que ya están cerca del banco',category:'financial_reconciliation',
         recommendation:'Revisa si los '+pending.length+' ingresos pendientes están realmente impagos o solo sin conciliar. Confirma evidencia y actualiza el estado antes de buscar más venta.',
         why:'Cobrar o conciliar dinero ya generado suele requerir menos esfuerzo que captar una venta nueva.',
         unlock:'Ingresos verificados + caja real + mejor lectura de margen',
@@ -259,7 +284,7 @@ function buildRecommendations(rows,portfolio,accepted){
     if(contractAmount>0&&['','unknown_not_inferred','unverified','pending','pending_payment_evidence'].includes(paymentState)){
       const key='rec:contract-cash:'+b.id;
       recs.push(recBase({
-        key,business:b.name,businessId:b.id,title:'Cierra el ciclo económico del contrato activo',
+        key,business:b.name,businessId:b.id,title:'Cierra el ciclo económico del contrato activo',category:'financial_reconciliation',
         recommendation:'Confirma facturación y pago del acuerdo vigente de '+money(contractAmount)+'. Si ya fue pagado, vincula la evidencia; si no, prepara el cobro.',
         why:'El servicio ya está vendido. Convertir acuerdo activo en caja verificada es más eficiente que abrir una venta nueva.',
         unlock:'Contrato → cobro → margen medible',
@@ -277,7 +302,7 @@ function buildRecommendations(rows,portfolio,accepted){
     if(leads>0){
       const key='rec:hotel-existing-demand';
       recs.push(recBase({
-        key,business:hotel.name,businessId:hotel.id,title:'Vende primero a la demanda que ya existe',
+        key,business:hotel.name,businessId:hotel.id,title:'Vende primero a la demanda que ya existe',category:'lead_qualified',
         recommendation:'Prioriza los '+leads+' leads existentes antes de captar más. Separa intención alta, cotiza lo más simple de operar y mueve primero los productos con ruta de ejecución clara.',
         why:'La adquisición ya ocurrió. Trabajar demanda existente reduce esfuerzo comercial y evita gastar en captar antes de convertir.',
         unlock:'Primeros cierres medibles usando '+productsCount+' productos y '+partners+' hoteles/canales ya observados',
@@ -294,7 +319,7 @@ function buildRecommendations(rows,portfolio,accepted){
     if(remaining.includes('payment_provider_wiring')){
       const key='rec:taxi-payment';
       recs.push(recBase({
-        key,business:taxi.name,businessId:taxi.id,title:'Conecta el cobro al flujo que ya captura reservas',
+        key,business:taxi.name,businessId:taxi.id,title:'Conecta el cobro al flujo que ya captura reservas',category:'checkout',
         recommendation:'Termina el proveedor de pago después de la confirmación operativa. La venta ya tiene web, pricing y reserva persistente; falta convertir la confirmación en pago.',
         why:'Es un cuello de botella muy cercano al dinero: no exige crear otro producto ni otra web.',
         unlock:'Reserva confirmada → pago → operación → evidencia económica',
@@ -307,7 +332,7 @@ function buildRecommendations(rows,portfolio,accepted){
     if(he){
       const key='rec:taxi-hotel-experience-bridge';
       recs.push(recBase({
-        key,business:'TAXI HOTEL × HOTEL EXPERIENCE',businessId:taxi.id,title:'Prueba un canal existente antes de buscar clientes nuevos',
+        key,business:'TAXI HOTEL × HOTEL EXPERIENCE',businessId:taxi.id,title:'Prueba un canal existente antes de buscar clientes nuevos',category:'agreement',
         recommendation:'Valida si TAXI HOTEL puede venderse como producto de transporte dentro de HOTEL EXPERIENCE y sus hoteles/canales. Haz una prueba pequeña antes de formalizar la relación.',
         why:'Combina un servicio ya operativo con una casa comercial que ya observa hoteles, leads y una categoría de transporte.',
         unlock:'Canal de distribución nuevo sin construir una audiencia desde cero',
@@ -327,7 +352,7 @@ function buildRecommendations(rows,portfolio,accepted){
       if(!salesEnabled||agreement==='pending'||p.acquisition_price==null){
         const key='rec:cupones-unit-economics:'+p.id;
         recs.push(recBase({
-          key,business:coupons.name,businessId:coupons.id,title:'No vendas antes de cerrar el margen del producto',
+          key,business:coupons.name,businessId:coupons.id,title:'No vendas antes de cerrar el margen del producto',category:'agreement',
           recommendation:'Completa costo de adquisición, convenio y participación mínima de LINK para '+p.name+' ('+money(p.public_price||0)+' público). Luego habilita ventas.',
           why:'El producto tiene precio visible, pero todavía no tiene economía vigente suficiente para asegurar que vender más mejore el margen.',
           unlock:'Producto vendible con margen protegido',
@@ -343,7 +368,7 @@ function buildRecommendations(rows,portfolio,accepted){
   if(caracol){
     const key='rec:caracol-efficiency';
     recs.push(recBase({
-      key,business:caracol.name,businessId:caracol.id,title:'Haz que el contenido cueste menos producir sin perder resultado',
+      key,business:caracol.name,businessId:caracol.id,title:'Haz que el contenido cueste menos producir sin perder resultado',category:'automation',
       recommendation:'Usa LINK RRSS para identificar formatos y piezas que mejor responden y convierte esos patrones en una biblioteca reutilizable. Reduce producción que no genera aprendizaje.',
       why:'CARACOL ya tiene contrato recurrente. Mejorar eficiencia de producción aumenta margen sin tener que subir precio ni vender más horas.',
       unlock:'Más margen por el mismo contrato + sistema reusable para otros clientes',
@@ -356,7 +381,7 @@ function buildRecommendations(rows,portfolio,accepted){
   for(const row of portfolio.filter(x=>!x.modeled)){
     const key='rec:incorporate:'+row.slug;
     recs.push(recBase({
-      key,business:row.name,businessId:row.linkWorldId||null,title:'Decide si este negocio merece entrar al tablero ahora',
+      key,business:row.name,businessId:row.linkWorldId||null,title:'Decide si este negocio merece entrar al tablero ahora',category:'integration',
       recommendation:'Audita su vigencia y potencial actual. Si está vivo, incorpóralo con una célula mínima; si está obsoleto, archívalo para no gastar atención.',
       why:'Un juego divertido también elimina ruido. No todo negocio conocido merece consumir energía hoy.',
       unlock:'Portafolio más limpio o nueva célula lista para vender',
@@ -370,7 +395,7 @@ function buildRecommendations(rows,portfolio,accepted){
   if(capCount){
     const key='rec:capability-leverage';
     recs.push(recBase({
-      key,business:'LINK',businessId:null,title:'Mejora una capacidad solo si reduce trabajo o aumenta conversión',
+      key,business:'LINK',businessId:null,title:'Mejora una capacidad solo si reduce trabajo o aumenta conversión',category:'capability',
       recommendation:'Compara las '+capCount+' capacidades existentes con los cuellos de botella de mayor prioridad y evoluciona solo la capacidad que quite más esfuerzo repetitivo o acerque más ventas.',
       why:'Crear más herramientas por sí mismo no mejora el juego. La evolución debe ahorrar trabajo o producir una ruta comercial mejor.',
       unlock:'Una capacidad reusable con retorno claro',
@@ -380,7 +405,33 @@ function buildRecommendations(rows,portfolio,accepted){
     }));
   }
 
-  const ranked=recs.sort((a,b)=>b.priority-a.priority).map((rec,index)=>({...rec,priorityRank:index+1}));
+  const stateByBusiness=new Map((rows.gameStates||[]).map(s=>[String(s.business_id),s]));
+  const policies=new Map((rows.actionPolicies||[]).map(p=>[p.category,p]));
+  const enriched=recs.map(rec=>{
+    const gs=rec.businessId?stateByBusiness.get(String(rec.businessId)):null;
+    const policy=policies.get(rec.category)||{base_heat:12};
+    const weighted=goalScore({proximity:rec.proximity,margin:rec.margin,ease:rec.ease,reuse:rec.reuse,evidence:rec.evidence});
+    const projectedHeat=Math.round(Number(policy.base_heat||12)*(0.50+weighted/200)*10)/10;
+    const urgencyBonus=gs?.game_state==='critical_frozen'?20:gs?.game_state==='red_close'?16:gs?.game_state==='frozen'?7:gs?.overdue?8:0;
+    const currentTemperature=Number(gs?.temperature||0);
+    const conversion=Number(gs?.conversion_percent||0);
+    const evidenceInstruction=rec.businessId
+      ? ' Esta misión solo modifica temperatura o conversión cuando la acción queda comprobada. Si yo no puedo verificarla con herramientas, te pediré captura, comprobante, archivo, correo o enlace y no registraré avance hasta validarlo.'
+      : '';
+    return {
+      ...rec,
+      priority:Math.min(100,rec.priority+urgencyBonus),
+      currentTemperature,
+      currentConversion:conversion,
+      gameState:gs?.game_state||null,
+      gameStateLabel:gs?.game_state_label||null,
+      projectedHeat,
+      projectedTemperature:Math.min(100,Math.round((currentTemperature+projectedHeat)*10)/10),
+      evidenceInstruction,
+      prompt:rec.prompt+evidenceInstruction
+    };
+  });
+  const ranked=enriched.sort((a,b)=>b.priority-a.priority).map((rec,index)=>({...rec,priorityRank:index+1}));
   const firstByBusiness=[],rest=[],seen=new Set();
   for(const rec of ranked){
     const group=rec.business||'LINK';
@@ -392,7 +443,7 @@ function buildRecommendations(rows,portfolio,accepted){
 
 export function buildMicelioGame(rows={},evolution=[]){
   const businesses=rows.businesses||[];
-  const portfolio=portfolioRows({businesses,portfolio:rows.portfolio||[],evolution,conversions:rows.conversions||[]});
+  const portfolio=portfolioRows({businesses,portfolio:rows.portfolio||[],evolution,conversions:rows.conversions||[],gameStates:rows.gameStates||[]});
   const accepted=acceptedKeys(rows.requests||[]);
   const skills=rows.skills||[];
   const capabilities=rows.skillCapabilities||[];
@@ -417,7 +468,9 @@ export function buildMicelioGame(rows={},evolution=[]){
   const detectedLights=evolution.reduce((sum,row)=>sum+Number(row.detectedLights||0),0);
   const activeRequests=(rows.requests||[]).filter(r=>r.evidence?.game_key&&!['completed','closed','done','cancelled'].includes(String(r.status||'').toLowerCase())).length;
 
+  const stateByBusiness=Object.fromEntries((rows.gameStates||[]).map(row=>[String(row.business_id),row]));
   return {
+    stateByBusiness,
     stats:{
       knownBusinesses:portfolio.length,
       modeledBusinesses:portfolio.filter(x=>x.modeled).length,
