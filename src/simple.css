@@ -105,3 +105,13 @@ button{font:inherit;}
  .lw-map-foot{font-size:9px;padding:6px 10px;}
  .lw-place-card{right:7px;top:auto;bottom:31px;max-width:200px;}
 }
+
+
+/* Shared verified game state · business directory */
+.lw-real-business.game-critical_frozen,.lw-real-business.game-red_close{border-color:#d8342f!important;box-shadow:inset 4px 0 0 #d8342f}
+.lw-real-business.game-critical_frozen .lw-business-status,.lw-real-business.game-red_close .lw-business-status{color:#b72e29;font-weight:750}
+.lw-real-business.game-frozen,.lw-real-business.game-cold{box-shadow:inset 4px 0 0 #78a9d4;background:#f7fbfe}
+.lw-real-business.game-frozen .lw-business-status,.lw-real-business.game-cold .lw-business-status{color:#527fa7}
+.lw-real-business.game-hot,.lw-real-business.game-very_hot{box-shadow:inset 4px 0 0 #ef7b38}
+.lw-real-business.game-converted{box-shadow:inset 4px 0 0 #52a06d}
+.google-game-state{display:block;margin-top:5px;font-weight:700;color:#4f4f49}
