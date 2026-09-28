@@ -18,7 +18,7 @@ const RRSS_PANEL_URL='https://linkrrss.vercel.app';
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -87,7 +87,7 @@ async function loadBusiness(businessId){
     else state.taxiHotelOperations=Array.isArray(ops?.rows)?ops.rows:[];
   }
   if(state.canWrite){
-    const [tx,docs,mpAccounts,taxProfiles,mpDashboard,bankProgress]=await Promise.all([
+    const [tx,docs,mpAccounts,taxProfiles,mpDashboard,bankProgress,financialCore]=await Promise.all([
       db.from('link_world_transactions')
         .select('id,direction,transaction_type,status,amount,currency,external_reference,documentary_status,occurred_at,metadata')
         .eq('business_id',businessId).order('occurred_at',{ascending:false}),
@@ -101,7 +101,8 @@ async function loadBusiness(businessId){
         .select('id,profile_key,country_code,tax_treatment,tax_code,tax_rate,document_type,price_includes_tax,status,notes,approved_at')
         .eq('business_id',businessId).order('valid_from',{ascending:false}),
       db.from('link_payment_dashboard_v').select('*').eq('business_id',businessId),
-      db.from('link_bancarization_progress_v').select('*').eq('business_id',businessId).maybeSingle()
+      db.from('link_bancarization_progress_v').select('*').eq('business_id',businessId).maybeSingle(),
+      db.from('link_financial_core_v').select('*').eq('business_id',businessId).maybeSingle()
     ]);
     state.financeTransactions=tx.error?[]:(tx.data||[]);
     state.financeDocuments=docs.error?[]:(docs.data||[]);
@@ -109,6 +110,7 @@ async function loadBusiness(businessId){
     state.taxProfiles=taxProfiles.error?[]:(taxProfiles.data||[]);
     state.paymentDashboard=mpDashboard.error?[]:(mpDashboard.data||[]);
     state.bancarizationProgress=bankProgress.error?null:(bankProgress.data||null);
+    state.financialCore=financialCore.error?null:(financialCore.data||null);
   }else{
     state.financeTransactions=[];
     state.financeDocuments=[];
@@ -116,6 +118,7 @@ async function loadBusiness(businessId){
     state.taxProfiles=[];
     state.paymentDashboard=[];
     state.bancarizationProgress=null;
+    state.financialCore=null;
   }
 }
 function facts(){
@@ -296,6 +299,31 @@ function bindMercadoPagoPanel(root){
   root.querySelectorAll('[data-mp-checkout]').forEach(button=>button.addEventListener('click',()=>createMercadoPagoSandboxCheckout(button.dataset.mpCheckout)));
 }
 
+function financialCorePanelMarkup(){
+  if(!state.canWrite||!state.financialCore)return '';
+  const f=state.financialCore;
+  const collectionLabels={link_collects:'LINK cobra',business_collects:'El negocio cobra',partner_collects:'El partner cobra',external:'Cobro externo',undecided:'Por definir'};
+  const settlementLabels={business_pays_suppliers:'Negocio paga proveedores',partner_pays_link_commission:'Partner liquida comisión LINK',link_distributes:'LINK distribuye',merchant_direct:'Liquidación directa',external:'Fuera de LINK',pending_definition:'Por definir'};
+  const routes=Array.isArray(f.payment_routes)?f.payment_routes:[];
+  const taxes=Array.isArray(f.tax_profiles)?f.tax_profiles:[];
+  const splits=Array.isArray(f.split_rules)?f.split_rules:[];
+  const test=routes.find(x=>x.environment==='test');
+  const prod=routes.find(x=>x.environment==='production');
+  const tax=taxes.find(x=>x.status==='verified')||taxes[0];
+  const productionReady=f.policy_status==='verified'&&f.production_enabled===true&&prod?.status==='active'&&prod?.real_charges_enabled===true&&tax?.status==='verified';
+  return '<section class="bw-products-section bw-financial-core">'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">NÚCLEO FINANCIERO / LINK</span><h2>'+safe(collectionLabels[f.collection_model]||f.collection_model||'Por definir')+'</h2><p>Mercado Pago es un riel de cobro. La política de este negocio define quién recauda, cómo se documenta y cómo se liquida; ninguna comisión propuesta se vuelve real sin evidencia o convenio.</p></div><span class="bw-open-mode">'+(productionReady?'Producción habilitada':'Producción bloqueada')+'</span></div>'+
+    '<div class="bw-financial-core-grid">'+
+      '<div><small>Recaudación</small><strong>'+safe(collectionLabels[f.collection_model]||'Por definir')+'</strong><span>'+safe(f.payment_provider||'—')+'</span></div>'+
+      '<div><small>Liquidación</small><strong>'+safe(settlementLabels[f.settlement_model]||f.settlement_model||'Por definir')+'</strong><span>'+splits.length+' reglas económicas registradas</span></div>'+
+      '<div><small>Sandbox</small><strong>'+safe(test?.status||'Sin ruta')+'</strong><span>'+safe(test?.webhook_status||'Webhook pendiente')+'</span></div>'+
+      '<div><small>Producción</small><strong>'+safe(prod?.status||'Bloqueada')+'</strong><span>'+(prod?.real_charges_enabled?'Seguro abierto':'Seguro cerrado')+'</span></div>'+
+      '<div><small>Tributación</small><strong>'+safe(tax?.status||'Pendiente')+'</strong><span>'+safe(tax?.tax_treatment||'Sin definir')+(tax?.tax_rate!=null?' · '+safe(tax.tax_rate)+'%':'')+'</span></div>'+
+      '<div><small>Política</small><strong>'+safe(f.policy_status||'proposed')+'</strong><span>'+safe(f.provider_connection_key||'Sin conexión compartida')+'</span></div>'+
+    '</div>'+
+  '</section>';
+}
+
 function financePanelMarkup(){
   if(!state.canWrite){
     return '<section class="bw-products-section bw-finance-section"><div class="bw-section-head"><div><span class="bw-kicker">FINANZAS / PRIVADO</span><h2>Panel financiero</h2><p>Los montos financieros solo se muestran a miembros autenticados de LINK.</p></div><span class="bw-open-mode">Sesión LINK requerida</span></div></section>';
@@ -432,7 +460,9 @@ function renderClientBusinessCell(){
     '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
     rrssApparatusMarkup(),
+    financialCorePanelMarkup(),
     '<section class="bw-grid"><article class="bw-panel span-2"><span class="bw-kicker">TERRITORIO</span><h2>'+(territoryLinked?'Vinculado a Google Maps':'Sin ubicación territorial')+'</h2><p>'+(territoryLinked?safe(territory.address_input||'Place ID vinculado. Los datos de Google se consultan en vivo.'):'Para un negocio físico, LINK WORLD debe pedir una dirección y resolver su Place ID antes de marcarlo en el mapa.')+'</p><div class="bw-facts">'+(territoryLinked?'<span><b>Place ID</b>'+safe(state.business.google_place_id)+'</span><span><b>Fuente</b>Google Maps en vivo</span>':'<span><b>Estado</b>Pendiente de dirección</span>')+'</div><button id="bw-territory-action" type="button">'+(territoryLinked?'Ver en Territorio':'Definir dirección')+'</button></article></section>',
+    financialCorePanelMarkup(),
     financePanelMarkup(),
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
@@ -516,6 +546,7 @@ function renderOperationalHouseBusinessCell(){
       '<article class="bw-panel"><span class="bw-kicker">FLUJO</span><h2>'+safe(flowTitle)+'</h2><div class="bw-cycle">'+flow.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
       '<article class="bw-panel span-2"><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta esta casa al ecosistema</h2><div class="bw-capabilities">'+capabilities.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
     '</section>',
+    financialCorePanelMarkup(),
     taxiHotelOperationsPanelMarkup(),
     mercadoPagoPanelMarkup(),
     '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>'+safe(counterpartyTitle)+'</h2><p>Son proyecciones de identidad desde '+safe(counterpartySource)+'. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Las relaciones deben existir en la fuente o contar con evidencia antes de incorporarse a LINK WORLD.</span></div>')+'</div></section>',
