@@ -49,3 +49,24 @@ test('journal uses persisted registry and groups matching executions',()=>{
   assert.equal(model.groups[0].items.length,1);
   assert.equal(model.summary.blockedCount,1);
 });
+
+
+test('renders structured evidence and blockers as human-readable text',()=>{
+  const item=normalizeCronExecution({
+    id:'d3',memory_key:'link_daily_mission:2026-09-28',kind:'daily_operating_mission',source:'link_daily_cron',
+    structured_data:{
+      status:'BLOCKED',
+      evidence:[{ref:'HE:SOL-2609-004',fact:'Cotización aceptada por 49.980 CLP.',type:'source_transaction'}],
+      blockers:[{code:'MP_TEST_CREDENTIALS_MISSING',fact:'Falta la credencial sandbox de Mercado Pago.'}],
+      money_movement:{note:'Monto reversible de prueba.',real_movement:false,test_amount_clp:49980}
+    }
+  });
+  assert.equal(item.evidence.length,1);
+  assert.match(item.evidence[0],/Cotización aceptada/);
+  assert.match(item.evidence[0],/Referencia: HE:SOL-2609-004/);
+  assert.doesNotMatch(item.evidence[0],/[{}]/);
+  assert.match(item.blockers[0],/Código: MP_TEST_CREDENTIALS_MISSING/);
+  assert.doesNotMatch(item.blockers[0],/[{}]/);
+  assert.match(item.money[0],/Movimiento real: No/);
+  assert.match(item.money[0],/49\.980/);
+});
