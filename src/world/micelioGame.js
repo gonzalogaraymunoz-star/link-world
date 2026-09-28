@@ -380,7 +380,14 @@ function buildRecommendations(rows,portfolio,accepted){
     }));
   }
 
-  return recs.sort((a,b)=>b.priority-a.priority).map((rec,index)=>({...rec,priorityRank:index+1}));
+  const ranked=recs.sort((a,b)=>b.priority-a.priority).map((rec,index)=>({...rec,priorityRank:index+1}));
+  const firstByBusiness=[],rest=[],seen=new Set();
+  for(const rec of ranked){
+    const group=rec.business||'LINK';
+    if(!seen.has(group)){seen.add(group);firstByBusiness.push(rec);}
+    else rest.push(rec);
+  }
+  return [...firstByBusiness,...rest];
 }
 
 export function buildMicelioGame(rows={},evolution=[]){
