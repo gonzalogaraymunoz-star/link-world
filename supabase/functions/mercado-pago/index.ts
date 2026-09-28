@@ -234,17 +234,24 @@ Deno.serve(async(req:Request)=>{
 
   if(action==="create_checkout"){
     const reservationId=clean(body.reservation_id,80);
+    const salesQuoteId=clean(body.sales_quote_id,80);
     const environment=clean(body.environment,20)||"test";
-    if(!/^[0-9a-f-]{36}$/i.test(reservationId)||!["test","production"].includes(environment))
-      return reply(req,400,{ok:false,error:"invalid_checkout_request"});
+    const reservationValid=/^[0-9a-f-]{36}$/i.test(reservationId);
+    const quoteValid=/^[0-9a-f-]{36}$/i.test(salesQuoteId);
+    if((reservationValid===quoteValid)||!["test","production"].includes(environment))
+      return reply(req,400,{ok:false,error:"invalid_checkout_request",hint:"provide exactly one reservation_id or sales_quote_id"});
 
     let prepared:any;
     try{
-      prepared=await rpc(
-        supabaseUrl,key,"link_prepare_mercado_pago_checkout_v1",
-        {p_reservation_id:reservationId,p_environment:environment},
-        req.headers.get("authorization")||""
-      );
+      prepared=reservationValid
+        ? await rpc(
+            supabaseUrl,key,"link_prepare_mercado_pago_checkout_v1",
+            {p_reservation_id:reservationId,p_environment:environment}
+          )
+        : await rpc(
+            supabaseUrl,key,"link_prepare_mercado_pago_quote_checkout_v1",
+            {p_sales_quote_id:salesQuoteId,p_environment:environment}
+          );
       if(prepared?.checkout_url)return reply(req,200,{ok:true,...prepared});
 
       const returnBase=Deno.env.get("MERCADO_PAGO_RETURN_BASE_URL")||"https://link-world-delta.vercel.app";
@@ -256,16 +263,23 @@ Deno.serve(async(req:Request)=>{
         headers:{"X-Idempotency-Key":String(prepared.payment_intent_id)},
         body:JSON.stringify({
           items:[{
-            id:String(prepared.service_code||"taxi-hotel-transfer"),
-            title:"Traslado Taxi Hotel · "+String(prepared.reservation_code||"reserva"),
+            id:String(prepared.service_code||prepared.product_key||"link-service"),
+            title:prepared.reservation_code
+              ? "Traslado Taxi Hotel · "+String(prepared.reservation_code)
+              : String(prepared.business_name||"LINK")+" · "+String(prepared.quote_number||"cotización"),
             quantity:1,currency_id:String(prepared.currency||"CLP"),unit_price:Number(prepared.gross_amount)
           }],
           external_reference:String(prepared.external_reference),
           notification_url:notificationUrl,
           back_urls:{success:returnUrl.toString(),pending:returnUrl.toString(),failure:returnUrl.toString()},
           auto_return:"approved",
-          statement_descriptor:"TAXI HOTEL",
-          metadata:{payment_intent_id:String(prepared.payment_intent_id),environment}
+          statement_descriptor:"LINK",
+          metadata:{
+            payment_intent_id:String(prepared.payment_intent_id),environment,
+            business_slug:String(prepared.business_slug||"taxi-hotel"),
+            sales_quote_id:salesQuoteId||null,
+            reservation_id:reservationId||null
+          }
         })
       });
       const recorded=await rpc(supabaseUrl,key,"link_record_mercado_pago_preference_v1",{
@@ -286,7 +300,11 @@ Deno.serve(async(req:Request)=>{
       const safeError=message.includes("credentials")?"mercado_pago_credentials_missing"
         :message.includes("tax profile")?"verified_tax_profile_required"
         :message.includes("safety latch")?"production_charges_disabled"
+        :message.includes("financial policy")?"financial_policy_not_ready"
+        :message.includes("collection model")?"collection_model_not_supported"
+        :message.includes("route is not configured")?"payment_route_not_configured"
         :message.includes("confirmed availability")?"availability_confirmation_required"
+        :message.includes("quote")?"sales_quote_not_ready"
         :"checkout_creation_failed";
       return reply(req,422,{ok:false,error:safeError,request_id:(error as any)?.requestId||null});
     }
