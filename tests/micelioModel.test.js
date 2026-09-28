@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildMicelioModel,layoutMicelio,reachable} from '../src/world/micelioModel.js';
+import {buildMicelioModel,layoutMicelio,reachable,localNeighborhood} from '../src/world/micelioModel.js';
 
 const fixture={
   businesses:[
@@ -50,4 +50,23 @@ test('Circular layout is deterministic and reachability follows edge direction',
   assert.ok(downstream.nodes.has('LNK-PRD-001'));
   const upstream=reachable(model,'LNK-CLI-001','upstream');
   assert.ok(upstream.nodes.has('LNK-BIZ-001'));
+});
+
+
+test('local graph expands by depth and keeps only registered neighborhood',()=>{
+  const model=buildMicelioModel(fixture,{member:true});
+  const depth1=localNeighborhood(model,'LNK-BIZ-001',1);
+  assert.ok(depth1.nodes.has('LNK-CLI-001'));
+  assert.ok(depth1.nodes.has('LNK-CTL-001'));
+  assert.ok(!depth1.nodes.has('LNK-PRD-001'));
+  const depth2=localNeighborhood(model,'LNK-BIZ-001',2);
+  assert.ok(depth2.nodes.has('LNK-PRD-001'));
+  assert.ok(depth2.edges.size>=depth1.edges.size);
+});
+
+test('force layout makes referenced nodes larger while staying deterministic',()=>{
+  const model=buildMicelioModel(fixture,{member:true});
+  const one=layoutMicelio(model,900,640),two=layoutMicelio(model,900,640);
+  assert.deepEqual(one.get('LNK-BIZ-001'),two.get('LNK-BIZ-001'));
+  assert.ok(one.get('LNK-BIZ-001').r>=one.get('LNK-CLI-001').r);
 });
