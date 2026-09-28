@@ -20,7 +20,21 @@ const formatUpdated=value=>{
 };
 const listMarkup=(items,empty='Sin evidencia registrada.')=>{
   const rows=(items||[]).filter(Boolean);
-  return rows.length?'<ul>'+rows.map(item=>'<li>'+safe(item)+'</li>').join('')+'</ul>':'<p class="cj-empty">'+safe(empty)+'</p>';
+  if(!rows.length)return '<p class="cj-empty">'+safe(empty)+'</p>';
+  return '<ul class="cj-readable-list">'+rows.map(item=>{
+    const parts=String(item).split(' · ').map(x=>x.trim()).filter(Boolean);
+    const primary=parts.shift()||'Dato';
+    const meta=parts.length?'<div class="cj-readable-meta">'+parts.map(part=>{
+      const i=part.indexOf(':');
+      if(i>0){
+        const label=part.slice(0,i).trim(),value=part.slice(i+1).trim();
+        const codeLike=/^[A-Z0-9][A-Z0-9_:\-.]{4,}$/.test(value);
+        return '<span'+(codeLike?' class="is-code"':'')+'><b>'+safe(label)+'</b>'+safe(value)+'</span>';
+      }
+      return '<span>'+safe(part)+'</span>';
+    }).join('')+'</div>':'';
+    return '<li><strong>'+safe(primary)+'</strong>'+meta+'</li>';
+  }).join('')+'</ul>';
 };
 const field=(label,value)=>value?'<div class="cj-field"><span>'+safe(label)+'</span><p>'+safe(value)+'</p></div>':'';
 const statusClass=status=>'status-'+String(status||'UNKNOWN').toLowerCase().replaceAll('_','-');
