@@ -4,6 +4,7 @@
 // No service-role key or unrestricted HTTP endpoint is exposed in the browser.
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './connection.js';
+import {describeValue,labelizeKey,humanizeToken} from './presentation.js';
 
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
@@ -67,16 +68,35 @@ function renderData(){
   list.querySelectorAll('[data-inspect]').forEach(b=>b.addEventListener('click',()=>inspect(b.dataset.inspect)));
   renderSelected();renderRequests();renderActivity();
 }
+function bridgeValueMarkup(value){
+  const d=describeValue(value,{maxMeta:5});
+  const meta=d.meta.length?'<small class="bridge-human-meta">'+d.meta.map(x=>'<span><b>'+safe(x.label)+'</b>'+safe(x.value)+'</span>').join('')+'</small>':'';
+  return '<span class="bridge-human-primary">'+safe(d.primary||'—')+'</span>'+meta;
+}
+function structuredFactMarkup(key,value,depth=0){
+  const label=safe(labelizeKey(key));
+  if(value==null||value==='')return '';
+  if(Array.isArray(value)){
+    const visible=value.slice(0,12);
+    return '<details class="bridge-fact-group" '+(depth===0?'':'open')+'><summary><b>'+label+'</b><span>'+value.length+' elementos</span></summary><div class="bridge-structured-list">'+visible.map(item=>'<div>'+bridgeValueMarkup(item)+'</div>').join('')+(value.length>visible.length?'<small class="bridge-muted">+'+(value.length-visible.length)+' elementos adicionales</small>':'')+'</div></details>';
+  }
+  if(typeof value==='object'){
+    const entries=Object.entries(value);
+    return '<details class="bridge-fact-group"><summary><b>'+label+'</b><span>'+entries.length+' datos</span></summary><div class="bridge-fact-tree">'+entries.slice(0,18).map(([k,v])=>structuredFactMarkup(k,v,depth+1)).join('')+(entries.length>18?'<small class="bridge-muted">+'+(entries.length-18)+' datos adicionales</small>':'')+'</div></details>';
+  }
+  return '<div class="bridge-fact"><b>'+label+'</b><span>'+safe(humanizeToken(value))+'</span></div>';
+}
+
 function inspect(id){
   const b=state.businesses.find(b=>b.id===id);if(!b)return;
-  const notes=Object.entries(b.owned_facts||{}).map(([k,v])=>'<div class="bridge-fact"><b>'+safe(k)+'</b><span>'+safe(typeof v==='object'?JSON.stringify(v):v)+'</span></div>').join('');
+  const notes=Object.entries(b.owned_facts||{}).map(([k,v])=>structuredFactMarkup(k,v)).join('');
   const box=$('#bridge-inspector');
   box.innerHTML='<div class="bridge-inspector-head"><strong>'+safe(b.name)+'</strong><button type="button" id="bridge-close-inspector">×</button></div>'+
     '<p>'+safe(b.summary||'Sin descripción propia aún.')+'</p>'+
-    '<div class="bridge-fact"><b>ID LINK</b><span>'+safe(b.id)+'</span></div>'+
-    '<div class="bridge-fact"><b>Identificador Google</b><span>'+safe(b.google_place_id||'No vinculado')+'</span></div>'+
+    '<div class="bridge-fact"><b>ID LINK</b><span class="bridge-code">'+safe(b.id)+'</span></div>'+
+    '<div class="bridge-fact"><b>Identificador Google</b><span class="bridge-code">'+safe(b.google_place_id||'No vinculado')+'</span></div>'+
     (b.website?'<a href="'+safe(b.website)+'" rel="noopener noreferrer" target="_blank">Website declarada ↗</a>':'')+
-    notes+'<p class="bridge-muted">Origen: ficha propia de LINK; Google Places se consulta por separado. Revisa evidencia antes de afirmar datos comerciales.</p>';
+    '<div class="bridge-structured">'+notes+'</div><p class="bridge-muted">Origen: ficha propia de LINK; Google Places se consulta por separado. Revisa evidencia antes de afirmar datos comerciales.</p>';
   box.classList.remove('hidden');
   $('#bridge-close-inspector').addEventListener('click',()=>box.classList.add('hidden'));
 }
@@ -93,14 +113,14 @@ function researchText(){
 function renderRequests(){
   const box=$('#bridge-requests');
   box.innerHTML=state.requests.length?state.requests.map(r=>
-    '<article class="bridge-request"><strong>'+safe(r.title)+'</strong><small>'+safe(r.status)+' · '+safe(r.origin)+' · '+safe(new Date(r.created_at).toLocaleString('es-CL'))+'</small>'+
+    '<article class="bridge-request"><strong>'+safe(r.title)+'</strong><small>'+safe(humanizeToken(r.status))+' · '+safe(humanizeToken(r.origin))+' · '+safe(new Date(r.created_at).toLocaleString('es-CL'))+'</small>'+
     (r.result_summary?'<p>'+safe(r.result_summary)+'</p>':'')+'</article>').join('')
     :'<p class="bridge-muted">Sin solicitudes compartidas. Las anotaciones antiguas del Director siguen locales y no se importaron automáticamente.</p>';
 }
 function renderActivity(){
   const box=$('#bridge-activity');
   box.innerHTML=state.activity.length?state.activity.map(a=>
-    '<div class="bridge-activity-line"><strong>'+safe(a.action)+' / '+safe(a.target_type)+'</strong><span>'+safe(a.note||'')+' · '+safe(a.origin)+'</span></div>').join('')
+    '<div class="bridge-activity-line"><strong>'+safe(humanizeToken(a.action))+' / '+safe(humanizeToken(a.target_type))+'</strong><span>'+safe(a.note||'')+' · '+safe(humanizeToken(a.origin))+'</span></div>').join('')
     :'<p class="bridge-muted">Sin actividad registrada todavía.</p>';
 }
 function setTab(tab){
