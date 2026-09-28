@@ -125,30 +125,87 @@ export function buildMicelioModel(data={},options={}){
 }
 
 export function layoutMicelio(model,width=1100,height=780){
-  const center={x:width/2,y:height/2+12},positions=new Map();
-  const control=model.nodes.find(node=>node.type==='control');if(control)positions.set(control.id,{...center,r:52});
-  const businesses=model.nodes.filter(node=>node.type==='business');
-  const inner=Math.min(width,height)*.285,outer=Math.min(width,height)*.43;
-  const ownerGlobal=new Map(businesses.map(node=>[String(node.businessId),node.id]));
-  businesses.forEach((node,index)=>{
-    const angle=(-135+(360/Math.max(1,businesses.length))*index)*Math.PI/180;
-    positions.set(node.id,{x:center.x+Math.cos(angle)*inner,y:center.y+Math.sin(angle)*inner,r:44,angle});
+  const nodes=model.nodes||[],edges=model.edges||[],center={x:width/2,y:height/2};
+  const degree=new Map(nodes.map(node=>[node.id,0]));
+  for(const edge of edges){
+    degree.set(edge.source,(degree.get(edge.source)||0)+1);
+    degree.set(edge.target,(degree.get(edge.target)||0)+1);
+  }
+  const seed=value=>{
+    let h=2166136261;
+    for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
+    return (h>>>0)/4294967295;
+  };
+  const point=new Map();
+  const minSide=Math.min(width,height);
+  nodes.forEach((node,index)=>{
+    const a=seed(node.id)*Math.PI*2;
+    const ring=minSide*(.13+.28*seed(node.id+'ring'));
+    const refs=degree.get(node.id)||0;
+    const floor=node.type==='control'?28:node.type==='business'?20:node.type==='client'?14:12;
+    const r=Math.min(node.type==='control'?48:42,floor+Math.sqrt(refs)*4.7);
+    point.set(node.id,{x:center.x+Math.cos(a)*ring,y:center.y+Math.sin(a)*ring,vx:0,vy:0,r,angle:a,index});
   });
-  const childrenByBusiness=new Map();
-  for(const node of model.nodes.filter(node=>node.type==='client'||node.type==='product')){
-    const owner=ownerGlobal.get(String(node.businessId))||'orphan';if(!childrenByBusiness.has(owner))childrenByBusiness.set(owner,[]);childrenByBusiness.get(owner).push(node);
+  const iterations=Math.min(220,90+nodes.length*2);
+  const repelBase=Math.max(1500,Math.min(8200,190000/Math.max(8,nodes.length)));
+  const linkDistance=Math.max(74,Math.min(150,122-Math.min(50,nodes.length)*.65));
+  for(let tick=0;tick<iterations;tick++){
+    const alpha=1-tick/iterations;
+    const list=[...point.entries()];
+    for(let i=0;i<list.length;i++){
+      const [idA,a]=list[i];
+      for(let j=i+1;j<list.length;j++){
+        const [idB,b]=list[j];
+        let dx=b.x-a.x,dy=b.y-a.y;
+        const d2=Math.max(120,dx*dx+dy*dy),d=Math.sqrt(d2);
+        const strength=repelBase/d2*alpha;
+        dx/=d;dy/=d;
+        a.vx-=dx*strength;b.vx+=dx*strength;
+        a.vy-=dy*strength;b.vy+=dy*strength;
+      }
+    }
+    for(const edge of edges){
+      const a=point.get(edge.source),b=point.get(edge.target);if(!a||!b)continue;
+      let dx=b.x-a.x,dy=b.y-a.y,d=Math.max(1,Math.hypot(dx,dy));
+      const target=linkDistance+(a.r+b.r)*.55;
+      const spring=(d-target)*.012*alpha*(edge.state==='proposed'?.7:1);
+      dx/=d;dy/=d;
+      a.vx+=dx*spring;b.vx-=dx*spring;
+      a.vy+=dy*spring;b.vy-=dy*spring;
+    }
+    for(const node of nodes){
+      const p=point.get(node.id);if(!p)continue;
+      const centerPull=node.type==='control'?.020:.008;
+      p.vx+=(center.x-p.x)*centerPull*alpha;
+      p.vy+=(center.y-p.y)*centerPull*alpha;
+      p.vx*=.84;p.vy*=.84;
+      p.x+=p.vx;p.y+=p.vy;
+      const pad=p.r+18;
+      p.x=Math.max(pad,Math.min(width-pad,p.x));
+      p.y=Math.max(pad,Math.min(height-pad,p.y));
+    }
   }
-  for(const [owner,children] of childrenByBusiness){
-    const parent=positions.get(owner),base=parent?.angle??Math.PI/2;
-    children.sort((a,b)=>a.type.localeCompare(b.type)||a.label.localeCompare(b.label));
-    children.forEach((node,index)=>{
-      const spread=Math.min(Math.PI*.72,.22*Math.max(0,children.length-1));
-      const angle=base-spread/2+(children.length===1?0:(spread*index/(children.length-1)));
-      const ring=outer+(index%2)*28;
-      positions.set(node.id,{x:center.x+Math.cos(angle)*ring,y:center.y+Math.sin(angle)*ring,r:node.type==='product'?25:27,angle});
-    });
+  return new Map([...point.entries()].map(([id,p])=>[id,{x:p.x,y:p.y,r:p.r,angle:p.angle}]));
+}
+
+export function localNeighborhood(model,origin,depth=1){
+  const limit=Math.max(1,Math.min(3,Number(depth)||1));
+  const nodes=new Set(origin?[origin]:[]),edges=new Set();
+  if(!origin)return {nodes,edges};
+  let frontier=new Set([origin]);
+  for(let level=0;level<limit;level++){
+    const next=new Set();
+    for(const edge of model.edges||[]){
+      if(frontier.has(edge.source)||frontier.has(edge.target)){
+        edges.add(edge.id);
+        if(!nodes.has(edge.source)){nodes.add(edge.source);next.add(edge.source);}
+        if(!nodes.has(edge.target)){nodes.add(edge.target);next.add(edge.target);}
+      }
+    }
+    frontier=next;
+    if(!frontier.size)break;
   }
-  return positions;
+  return {nodes,edges};
 }
 
 export function reachable(model,origin,direction='downstream'){
