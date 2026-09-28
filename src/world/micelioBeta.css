@@ -231,3 +231,66 @@
   .micelio-canvas{height:calc(100dvh - 238px);min-height:440px}
   .micelio-popover{width:calc(100% - 16px)}
 }
+
+
+/* MICELIO · CONNECTION READER v1
+   Research-backed interaction model: global graph, local graph, hover neighborhood,
+   navigable nodes and explicit relation labels. */
+.micelio-canvas::before{display:none!important}
+.micelio-canvas{
+  background-image:
+    radial-gradient(circle at center,color-mix(in srgb,var(--my-ink) 8%,transparent) .6px,transparent .75px);
+  background-size:22px 22px;
+}
+.micelio-svg{overflow:visible}
+.micelio-edge{opacity:.72}
+.micelio-edge-line{stroke-width:1.35}
+.micelio-edge-label{
+  fill:color-mix(in srgb,var(--my-ink) 62%,var(--my-muted));
+  font-size:8px;font-weight:650;letter-spacing:.02em;pointer-events:none;
+  paint-order:stroke;stroke:var(--my-bg);stroke-width:5px;stroke-linejoin:round;
+  opacity:.74;transition:opacity .16s ease
+}
+.micelio-edge:hover .micelio-edge-label,.micelio-edge.is-selected .micelio-edge-label,.micelio-edge.is-route .micelio-edge-label{opacity:1;fill:var(--my-ink)}
+.micelio-node-core{stroke-width:1.5}
+.micelio-node.is-business .micelio-node-core{stroke-width:2.3}
+.micelio-node-label{
+  font-size:11px;font-weight:650;fill:color-mix(in srgb,var(--my-ink) 68%,var(--my-muted));
+  paint-order:stroke;stroke:var(--my-bg);stroke-width:4px;stroke-linejoin:round
+}
+.micelio-node-initial{font-size:13px}
+.micelio-node.is-control .micelio-node-initial{font-size:19px}
+.micelio-node.is-hover .micelio-node-core{stroke:var(--my-ink);stroke-width:3;transform:scale(1.08)}
+.micelio-node.is-hover .micelio-node-label{fill:var(--my-ink);font-weight:800}
+.micelio-node.is-hover-dim,.micelio-edge.is-hover-dim{opacity:.08!important}
+.micelio-node,.micelio-edge{transition:opacity .12s ease}
+.micelio-local-depth{
+  display:flex!important;align-items:center!important;gap:4px!important;overflow:visible!important;
+  border-left:1px solid var(--my-line);padding-left:9px;margin-left:auto
+}
+.micelio-local-depth>span{color:var(--my-muted);font-size:7px;font-weight:760;letter-spacing:.12em;margin-right:2px}
+.micelio-local-depth button{
+  width:28px;height:28px;padding:0!important;display:grid;place-items:center;border:1px solid var(--my-line)!important;
+  background:var(--my-panel)!important;color:var(--my-muted)!important
+}
+.micelio-local-depth button.active{background:var(--my-ink)!important;color:var(--my-paper)!important;border-color:var(--my-ink)!important}
+.micelio-canvas-status span:first-child{font-weight:760;color:var(--my-ink)}
+.micelio-stage{grid-template-columns:170px minmax(0,1fr) 260px}
+.micelio-overview-rail{padding:14px}
+.micelio-empty-inspector p::after{content:" Haz clic en una ficha para abrirla; usa Grafo local para aislar su vecindario.";display:block;margin-top:8px}
+@media(max-width:820px){
+  .micelio-stage{display:block}
+  .micelio-canvas{height:calc(100dvh - 218px);min-height:520px}
+  .micelio-chapter-rail{height:44px;padding:5px 7px;gap:4px}
+  .micelio-chapter-rail button{padding:6px 8px;font-size:7px}
+  .micelio-local-depth{position:sticky;right:38px;background:var(--my-paper);padding-left:5px}
+  .micelio-local-depth>span{display:none}
+  .micelio-local-depth button{width:26px;height:26px}
+  .micelio-node-label{font-size:9px;stroke-width:3px}
+  .micelio-edge-label{font-size:6.5px;stroke-width:4px}
+  .micelio-viewer-nav{background:color-mix(in srgb,var(--my-paper) 90%,transparent);backdrop-filter:blur(18px)}
+}
+@media(max-width:430px){
+  .micelio-canvas{height:calc(100dvh - 210px);min-height:500px}
+  .micelio-edge-label{opacity:.58}
+}
