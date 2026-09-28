@@ -287,11 +287,17 @@ function gameMissionCard(mission,state){
 function gameBusinessCard(row,state){
   const integration=state.game?.missions?.find(m=>m.key==='integration:'+row.slug);
   const moneyText=row.realized>0?new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(row.realized):'Sin venta verificada';
-  const status=row.modeled?(row.status==='verified'?'En juego':'En juego · por completar'):'Falta incorporar';
-  return '<article class="micelio-game-business-card '+(row.modeled?'is-modeled':'is-pending')+'">'+
-    '<header><span>'+safe(status)+'</span><i></i></header><h3>'+safe(row.name)+'</h3>'+
-    '<p>'+(row.modeled?(row.activeLights+' capacidades conectadas · '+moneyText):'Control Central ya lo conoce. Falta convertirlo en una célula jugable de LINK WORLD.')+'</p>'+
-    '<div class="micelio-game-business-actions">'+(row.modeled&&row.linkWorldId?'<button data-game-business="'+safe(row.linkWorldId)+'" type="button">Abrir negocio →</button>':(integration?'<button data-game-work="'+safe(integration.key)+'" type="button">Crear célula conmigo →</button>':''))+'</div>'+
+  const status=row.modeled?(row.gameStateLabel||'En juego'):'Falta incorporar';
+  const temp=Math.round(Number(row.temperature||0));
+  const conv=Math.round(Number(row.conversionPercent||0));
+  const thermometer=row.modeled
+    ?'<div class="micelio-thermometer"><div><i style="width:'+Math.max(0,Math.min(100,temp))+'%"></i></div><strong>'+temp+'°</strong><span>'+conv+'% conversión</span></div>'
+    :'';
+  const coldPrompt='Revisa '+row.name+' porque Micelio lo detecta '+String(row.gameStateLabel||'frío').toLowerCase()+'. Comprueba primero si el negocio sigue vigente. Identifica la causa real de la inactividad y elige la acción verificable de menor esfuerzo que más lo acerque a una conversión rentable. Ejecuta lo que puedas tú dentro de este entorno; para cualquier acción externa, dime exactamente qué evidencia debo subir. No actualices temperatura ni conversión sin evidencia.';
+  return '<article class="micelio-game-business-card '+(row.modeled?'is-modeled':'is-pending')+' game-'+safe(row.gameState||'none')+'">'+
+    '<header><span>'+safe(status)+'</span><i></i></header><h3>'+safe(row.name)+'</h3>'+thermometer+
+    '<p>'+(row.modeled?(row.awaitingEvidence?row.awaitingEvidence+' acción(es) esperan evidencia.':row.activeLights+' capacidades conectadas · '+moneyText):'Control Central ya lo conoce. Falta convertirlo en una célula jugable de LINK WORLD.')+'</p>'+
+    '<div class="micelio-game-business-actions">'+(row.modeled&&row.linkWorldId?'<button data-game-business="'+safe(row.linkWorldId)+'" type="button">Abrir negocio →</button>'+((row.gameState==='frozen'||row.gameState==='critical_frozen')?'<button data-game-copy-prompt="'+safe(coldPrompt)+'" type="button">Prompt para encender →</button>':''):(integration?'<button data-game-work="'+safe(integration.key)+'" type="button">Crear célula conmigo →</button>':''))+'</div>'+
   '</article>';
 }
 
@@ -308,7 +314,7 @@ function recommendationBannerMarkup(state){
   return '<header class="micelio-reco-banner '+(state.recommendationPaused?'is-paused':'')+'">'+
     '<div class="micelio-reco-top"><div><span class="micelio-reco-priority">PRIORIDAD '+rec.priorityRank+'</span><span class="micelio-reco-lane">'+safe(rec.lane)+'</span></div><span class="micelio-reco-goal">META · MÁS MARGEN · MENOS ESFUERZO</span></div>'+
     '<div class="micelio-reco-main"><div class="micelio-reco-copy"><small>'+safe(rec.business)+'</small><h2>'+safe(rec.business)+' <i>—</i> '+safe(rec.title)+'</h2><p>'+safe(rec.recommendation)+'</p><div class="micelio-reco-why"><b>Por qué ahora</b><span>'+safe(rec.why)+'</span></div></div>'+
-      '<aside class="micelio-reco-impact"><span>LECTURA DE LA JUGADA</span><b>'+safe(rec.moneyLabel)+'</b><b>'+safe(rec.marginLabel)+'</b><b>'+safe(rec.effortLabel)+'</b><small>Desbloquea · '+safe(rec.unlock)+'</small></aside>'+
+      '<aside class="micelio-reco-impact"><span>LECTURA DE LA JUGADA</span><b>'+safe(rec.moneyLabel)+'</b><b>'+safe(rec.marginLabel)+'</b><b>'+safe(rec.effortLabel)+'</b>'+(rec.businessId?'<div class="micelio-reco-heat"><strong>'+Math.round(Number(rec.currentTemperature||0))+'°</strong><i>→</i><strong>'+Math.round(Number(rec.projectedTemperature||0))+'°</strong><small>+'+safe(rec.projectedHeat)+'° si se verifica</small></div><div class="micelio-reco-conversion">'+Math.round(Number(rec.currentConversion||0))+'% conversión · '+safe(rec.gameStateLabel||'sin estado')+'</div>':'')+'<small>Desbloquea · '+safe(rec.unlock)+'</small></aside>'+
     '</div>'+
     '<div class="micelio-reco-actions"><div><button class="is-primary" data-game-work="'+safe(rec.key)+'" type="button">Hacerlo conmigo</button><button data-game-copy="'+safe(rec.key)+'" type="button">Copiar prompt</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(rec.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'Misión guardada ✓':'Guardar misión')+'</button>':'')+'</div>'+
       '<nav><button data-action="recommendation-prev" type="button" aria-label="Recomendación anterior">←</button><span>'+(index+1)+' / '+recs.length+'</span><button data-action="recommendation-pause" type="button" aria-label="'+(state.recommendationPaused?'Reanudar':'Pausar')+'">'+(state.recommendationPaused?'▶':'Ⅱ')+'</button><button data-action="recommendation-next" type="button" aria-label="Siguiente recomendación">→</button></nav>'+
@@ -547,17 +553,19 @@ export function mountMicelioBeta(selector='#lw-micelio'){
     const payload={
       title:mission.title,
       instruction:mission.prompt,
-      origin:'micelio_game',
+      origin:'link_world_web',
       status:'pending',
       business_ids:mission.businessId?[mission.businessId]:[],
-      evidence:{
+      evidence:[{
         game_key:mission.key,
+        game_category:mission.category||'organize',
         kind:mission.kind,
         lane:mission.lane,
         executor:mission.executor,
         unlock:mission.unlock,
-        source:mission.source
-      },
+        source:mission.source,
+        verified:false
+      }],
       created_by:user?.id||null
     };
     const {error}=await db.from('link_world_requests').insert(payload);
@@ -651,6 +659,7 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       const action=event.target.closest('[data-action]');if(action){handleAction(action.dataset.action);return;}
       const work=event.target.closest('[data-game-work]');if(work){workGameMission(work.dataset.gameWork);return;}
       const copy=event.target.closest('[data-game-copy]');if(copy){copyGameMission(copy.dataset.gameCopy,copy);return;}
+      const directPrompt=event.target.closest('[data-game-copy-prompt]');if(directPrompt){navigator.clipboard?.writeText(directPrompt.dataset.gameCopyPrompt||'');directPrompt.textContent='Prompt copiado ✓';return;}
       const save=event.target.closest('[data-game-save]');if(save){saveGameMission(save.dataset.gameSave);return;}
       const business=event.target.closest('[data-game-business]');if(business){document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:business.dataset.gameBusiness}}));return;}
       const view=event.target.closest('[data-micelio-view]');if(view){setView(view.dataset.micelioView);return;}
