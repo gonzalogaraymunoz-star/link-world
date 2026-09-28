@@ -99,3 +99,16 @@
   .cj-evolution{padding:17px}.cj-evolution-strip{grid-template-columns:1fr}.cj-list{padding:13px}.cj-split,.cj-grid-2{grid-template-columns:1fr}.cj-field{grid-template-columns:1fr;gap:5px}
   .cj-card-metrics span{font-size:8px}.cj-gate{margin:4vh 12px}.cj-gate h1{font-size:36px}
 }
+
+
+/* Structured-data presentation: never expose raw JSON in the journal */
+.cj-readable-list{list-style:none!important;padding-left:0!important;gap:8px!important}
+.cj-readable-list>li{background:#fff;border:1px solid #e4e2d8;border-radius:12px;padding:10px 11px;display:grid;gap:7px;color:#282824!important}
+.cj-readable-list>li>strong{font-size:10.5px;line-height:1.55;font-weight:600;color:#242420}
+.cj-readable-meta{display:flex;gap:5px;flex-wrap:wrap}
+.cj-readable-meta>span{display:inline-flex;align-items:center;gap:5px;max-width:100%;background:#f0eee6;border:1px solid #e0ddd1;border-radius:999px;padding:4px 7px;font-size:8px;line-height:1.25;color:#67675f;overflow-wrap:anywhere}
+.cj-readable-meta>span b{font-size:7px;letter-spacing:.07em;text-transform:uppercase;color:#929188}
+.cj-readable-meta>span.is-code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#20201d;color:#f5f4ed;border-color:#20201d;border-radius:7px}
+.cj-readable-meta>span.is-code b{color:#c3c2b9}
+.cj-split>div,.cj-grid-2>div{min-width:0;overflow:hidden}
+@media(max-width:680px){.cj-readable-meta>span{border-radius:8px;white-space:normal}}
