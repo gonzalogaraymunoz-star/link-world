@@ -253,6 +253,11 @@ function clearLinkedMarkers() {
   linkedMarkers.clear();
 }
 function linkedColor(business) {
+  const game=business?.game_state||null;
+  if(game?.game_state==='critical_frozen'||game?.game_state==='red_close')return '#d8342f';
+  if(game?.game_state==='frozen'||game?.game_state==='cold')return '#78a9d4';
+  if(game?.game_state==='hot'||game?.game_state==='very_hot')return '#ef7b38';
+  if(game?.game_state==='converted')return '#52a06d';
   const visual = business?.owned_facts?.visual_identity || {};
   const raw = String(visual.assigned_color || '').trim();
   return visual.color_visible === true && /^#[0-9a-f]{6}$/i.test(raw) ? raw : '#e1e1e1';
@@ -278,7 +283,9 @@ function refreshLinkedList() {
     row.type = 'button';
     row.append(
       el('strong','',business.name || 'Negocio LINK'),
-      el('small','',business.owned_facts?.territory?.address_input || 'Vinculado por Place ID')
+      el('small','',business.game_state
+        ? ((business.game_state.game_state_label||'Estado')+' · '+Math.round(Number(business.game_state.temperature||0))+'° · '+Math.round(Number(business.game_state.conversion_percent||0))+'% conversión')
+        : (business.owned_facts?.territory?.address_input || 'Vinculado por Place ID'))
     );
     row.style.borderLeft = '4px solid ' + linkedColor(business);
     row.addEventListener('click',()=>flyToLinkBusiness(business.id));
@@ -301,6 +308,10 @@ async function openLinkedBusinessInfo(business, place, marker) {
   const type = textValue(place.primaryTypeDisplayName);
   const meta = [type, place.businessStatus].filter(Boolean).join(' · ');
   if (meta) card.append(el('small','',meta));
+  if (business.game_state) {
+    const gs=business.game_state;
+    card.append(el('small','google-game-state',(gs.game_state_label||'Estado')+' · '+Math.round(Number(gs.temperature||0))+'° · '+Math.round(Number(gs.conversion_percent||0))+'% conversión'));
+  }
   if (place.nationalPhoneNumber) card.append(el('p','',place.nationalPhoneNumber));
   if (place.websiteURI) {
     const web = el('a','','Sitio web ↗'); web.href=place.websiteURI; web.target='_blank'; web.rel='noopener noreferrer'; card.append(web);
