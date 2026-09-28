@@ -50,7 +50,13 @@ function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[],g
       overdue:Boolean(gs.overdue),
       awaitingEvidence:Number(gs.awaiting_evidence_count||0),
       lastVerifiedActionAt:gs.last_verified_action_at||null,
-      lastActionTitle:gs.last_action_title||null
+      lastActionTitle:gs.last_action_title||null,
+      suggestedAction:gs.suggested_action||null,
+      suggestedPrompt:gs.suggested_prompt||null,
+      attentionMode:gs.attention_mode||null,
+      panelTone:gs.panel_tone||null,
+      hoursRemaining:gs.hours_remaining==null?null:Number(gs.hours_remaining),
+      urgencyHours:gs.urgency_hours==null?null:Number(gs.urgency_hours)
     });
   }
 
@@ -87,7 +93,13 @@ function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[],g
       overdue:false,
       awaitingEvidence:0,
       lastVerifiedActionAt:null,
-      lastActionTitle:null
+      lastActionTitle:null,
+      suggestedAction:null,
+      suggestedPrompt:null,
+      attentionMode:'reactivate',
+      panelTone:'cold',
+      hoursRemaining:null,
+      urgencyHours:null
     });
   }
 
