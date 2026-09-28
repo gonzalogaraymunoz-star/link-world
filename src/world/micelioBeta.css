@@ -415,3 +415,60 @@
   .micelio-game-stats{grid-template-columns:1fr}
   .micelio-game-actions button{flex:1 1 auto}
 }
+
+
+/* Micelio Game · five-second prioritized recommender */
+.micelio-reco-banner{position:relative;overflow:hidden;background:var(--my-panel);border:1px solid var(--my-line);border-radius:26px;padding:18px 20px 12px;box-shadow:0 18px 55px rgba(0,0,0,.04);min-height:300px;display:flex;flex-direction:column;gap:14px}
+.micelio-reco-banner.is-empty{min-height:180px;justify-content:center}
+.micelio-reco-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.micelio-reco-top>div{display:flex;gap:6px;flex-wrap:wrap}
+.micelio-reco-priority,.micelio-reco-lane,.micelio-reco-goal{font-size:7px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.micelio-reco-priority{background:var(--my-active);color:#111;border-radius:999px;padding:6px 8px}
+.micelio-reco-lane{background:var(--my-ink);color:var(--my-paper);border-radius:999px;padding:6px 8px}
+.micelio-reco-goal{color:var(--my-muted)}
+.micelio-reco-main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(230px,.55fr);gap:24px;align-items:stretch}
+.micelio-reco-copy{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.micelio-reco-copy>small{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--my-muted);font-weight:800}
+.micelio-reco-copy h2{font-size:clamp(28px,4.3vw,54px);line-height:.98;letter-spacing:-.055em;margin:6px 0 10px;max-width:900px}
+.micelio-reco-copy h2 i{font-style:normal;color:var(--my-active)}
+.micelio-reco-copy>p{font-size:12px;line-height:1.58;color:var(--my-ink);margin:0;max-width:850px}
+.micelio-reco-why{display:flex;gap:8px;align-items:baseline;margin-top:12px;padding-top:10px;border-top:1px solid var(--my-line);max-width:850px}
+.micelio-reco-why b{font-size:8px;text-transform:uppercase;letter-spacing:.09em;white-space:nowrap}
+.micelio-reco-why span{font-size:9px;line-height:1.45;color:var(--my-muted)}
+.micelio-reco-impact{border-left:1px solid var(--my-line);padding-left:18px;display:flex;flex-direction:column;justify-content:center;gap:7px}
+.micelio-reco-impact>span{font-size:7px;font-weight:800;letter-spacing:.12em;color:var(--my-muted)}
+.micelio-reco-impact>b{font-size:15px;letter-spacing:-.02em}
+.micelio-reco-impact>small{font-size:8px;line-height:1.45;color:var(--my-muted);padding-top:6px;border-top:1px solid var(--my-line)}
+.micelio-reco-actions{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:auto}
+.micelio-reco-actions>div,.micelio-reco-actions nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.micelio-reco-actions button{appearance:none;border:1px solid var(--my-line);background:transparent;color:var(--my-ink);border-radius:999px;padding:8px 11px;font-size:8px;font-weight:750;cursor:pointer}
+.micelio-reco-actions button:hover{border-color:var(--my-ink)}
+.micelio-reco-actions button.is-primary{background:var(--my-active);border-color:var(--my-active);color:#111}
+.micelio-reco-actions button.is-saved{background:var(--my-soft);color:var(--my-muted);cursor:default}
+.micelio-reco-actions nav span{min-width:34px;text-align:center;font-size:8px;color:var(--my-muted)}
+.micelio-reco-actions nav button{width:32px;height:32px;padding:0;display:grid;place-items:center;font-size:11px}
+.micelio-reco-timer{height:3px;background:var(--my-soft);border-radius:999px;overflow:hidden;margin:0 -20px -12px}
+.micelio-reco-timer i{display:block;width:100%;height:100%;background:var(--my-active);transform-origin:left center;animation:micelio-reco-countdown 5s linear forwards}
+.micelio-reco-banner.is-paused .micelio-reco-timer i{animation-play-state:paused}
+@keyframes micelio-reco-countdown{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(max-width:900px){
+  .micelio-reco-main{grid-template-columns:1fr}
+  .micelio-reco-impact{border-left:0;border-top:1px solid var(--my-line);padding:12px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .micelio-reco-impact>span,.micelio-reco-impact>small{grid-column:1/-1}
+  .micelio-reco-copy h2{font-size:38px}
+}
+@media(max-width:650px){
+  .micelio-reco-banner{border-radius:20px;padding:14px 14px 10px;min-height:0}
+  .micelio-reco-top{align-items:flex-start}
+  .micelio-reco-goal{max-width:140px;text-align:right;line-height:1.4}
+  .micelio-reco-copy h2{font-size:31px}
+  .micelio-reco-copy>p{font-size:10.5px}
+  .micelio-reco-why{display:grid}
+  .micelio-reco-impact{grid-template-columns:1fr}
+  .micelio-reco-impact>span,.micelio-reco-impact>small{grid-column:auto}
+  .micelio-reco-actions{align-items:flex-start;flex-direction:column}
+  .micelio-reco-actions>div{width:100%}
+  .micelio-reco-actions>div button{flex:1 1 auto}
+  .micelio-reco-actions nav{width:100%;justify-content:flex-end}
+  .micelio-reco-timer{margin:0 -14px -10px}
+}
