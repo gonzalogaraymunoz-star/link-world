@@ -307,3 +307,111 @@
 .micelio-evolution-rule{margin:12px 0 0;font-size:11px;opacity:.58}
 @media(max-width:900px){.micelio-evolution-strip{margin:0 10px 12px;padding:14px}.micelio-evolution-head{align-items:flex-start;flex-direction:column}.micelio-evolution-score{text-align:left}.micelio-evolution-cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.micelio-evolution-kpis{grid-template-columns:1fr}.micelio-evolution-cells{grid-template-columns:1fr}}
+
+
+/* Micelio Game · ecosystem-first mission layer */
+.micelio-game-shell{min-height:100%;overflow:auto;background:var(--my-bg)}
+.micelio-game{padding:0 24px 34px;display:grid;gap:14px}
+.micelio-game-nav{position:sticky;top:0;z-index:12;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;background:color-mix(in srgb,var(--my-bg) 94%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--my-line)}
+.micelio-game-nav>div{display:flex;gap:5px;flex-wrap:wrap}
+.micelio-game-nav button{appearance:none;border:1px solid transparent;background:transparent;color:var(--my-muted);border-radius:999px;padding:8px 11px;font-size:9px;font-weight:700;cursor:pointer}
+.micelio-game-nav button:hover{border-color:var(--my-line);color:var(--my-ink)}
+.micelio-game-nav button.active{background:var(--my-ink);color:var(--my-paper);border-color:var(--my-ink);box-shadow:inset 0 -2px 0 var(--my-active)}
+.micelio-game-nav button b{margin-left:5px;background:var(--my-active);color:#111;border-radius:999px;padding:1px 5px;font-size:7px}
+.micelio-game-nav>span{font-size:8px;color:var(--my-muted)}
+.micelio-game-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.65fr);gap:18px;padding:clamp(20px,3vw,34px);background:var(--my-panel);border:1px solid var(--my-line);border-radius:26px;box-shadow:0 18px 55px rgba(0,0,0,.04)}
+.micelio-game-hero h2{margin:7px 0 10px;max-width:820px;font-size:clamp(28px,4.2vw,52px);line-height:.98;letter-spacing:-.055em}
+.micelio-game-hero p{max-width:780px;margin:0;color:var(--my-muted);font-size:12px;line-height:1.65}
+.micelio-game-money{align-self:stretch;border-left:1px solid var(--my-line);padding-left:22px;display:flex;flex-direction:column;justify-content:center;gap:7px}
+.micelio-game-money>span{font-size:8px;letter-spacing:.15em;font-weight:700;color:var(--my-muted)}
+.micelio-game-money strong{font-size:clamp(24px,3vw,42px);line-height:1;letter-spacing:-.05em}
+.micelio-game-money small{color:var(--my-muted);font-size:9px;line-height:1.45}
+.micelio-game-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.micelio-game-stats>div{background:var(--my-panel);border:1px solid var(--my-line);border-radius:17px;padding:15px;display:grid;gap:4px;min-height:104px}
+.micelio-game-stats>div:first-child{box-shadow:inset 3px 0 0 var(--my-active)}
+.micelio-game-stats strong{font-size:26px;letter-spacing:-.04em}
+.micelio-game-stats span{font-size:10px;font-weight:700}
+.micelio-game-stats small{font-size:8.5px;line-height:1.35;color:var(--my-muted)}
+.micelio-game-section{background:var(--my-panel);border:1px solid var(--my-line);border-radius:22px;padding:18px}
+.micelio-game-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:13px}
+.micelio-game-section-head h2{font-size:24px;letter-spacing:-.045em;margin:5px 0}
+.micelio-game-section-head p{font-size:10px;color:var(--my-muted);line-height:1.55;margin:0;max-width:680px}
+.micelio-game-missions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.micelio-game-mission{position:relative;overflow:hidden;border:1px solid var(--my-line);border-radius:18px;background:color-mix(in srgb,var(--my-panel) 92%,var(--my-soft) 8%);padding:15px;display:flex;flex-direction:column;gap:10px;min-height:345px}
+.micelio-game-mission:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--my-active)}
+.micelio-game-mission.kind-commercial:before{background:#111}
+.micelio-game-mission.kind-digitalization:before{background:var(--my-active)}
+.micelio-game-mission.kind-capability:before{background:#9b74ff}
+.micelio-game-mission.kind-connection:before{background:#45a6c8}
+.micelio-game-mission.kind-productize:before{background:#e0a131}
+.micelio-game-mission>header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.micelio-game-mission>header>div{display:flex;gap:5px;flex-wrap:wrap}
+.micelio-game-lane,.micelio-game-stale,.micelio-game-executor{font-size:7px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:5px 7px}
+.micelio-game-lane{background:var(--my-ink);color:var(--my-paper)}
+.micelio-game-stale{background:#f1e2d7;color:#8d4e37}
+.micelio-game-executor{background:var(--my-soft);color:var(--my-muted);text-align:right}
+.micelio-game-mission h3{font-size:20px;line-height:1.08;letter-spacing:-.035em;margin:0}
+.micelio-game-business{font-size:9px;color:var(--my-muted);margin-top:-5px}
+.micelio-game-why,.micelio-game-next{display:grid;gap:4px}
+.micelio-game-why b,.micelio-game-next b{font-size:8px;letter-spacing:.1em;text-transform:uppercase}
+.micelio-game-why p,.micelio-game-next p{font-size:10px;line-height:1.52;color:var(--my-muted);margin:0}
+.micelio-game-next{background:var(--my-soft);border-radius:12px;padding:10px}
+.micelio-game-next p{color:var(--my-ink)}
+.micelio-game-unlock{margin-top:auto;border-top:1px solid var(--my-line);padding-top:10px;display:grid;gap:4px}
+.micelio-game-unlock span{font-size:7px;letter-spacing:.12em;font-weight:800;color:var(--my-muted)}
+.micelio-game-unlock strong{font-size:9px;line-height:1.35}
+.micelio-game-actions{display:flex;gap:5px;flex-wrap:wrap}
+.micelio-game-actions button{appearance:none;border:1px solid var(--my-line);border-radius:999px;background:transparent;color:var(--my-ink);padding:7px 9px;font-size:8px;font-weight:700;cursor:pointer}
+.micelio-game-actions button:hover{border-color:var(--my-ink)}
+.micelio-game-actions button.is-primary{background:var(--my-active);border-color:var(--my-active);color:#111}
+.micelio-game-actions button.is-saved{background:var(--my-soft);color:var(--my-muted);cursor:default}
+.micelio-game-businesses{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.micelio-game-business-card{border:1px solid var(--my-line);border-radius:16px;padding:14px;background:color-mix(in srgb,var(--my-panel) 93%,var(--my-soft) 7%);display:grid;gap:8px;min-height:150px}
+.micelio-game-business-card.is-pending{border-style:dashed}
+.micelio-game-business-card>header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.micelio-game-business-card>header span{font-size:8px;color:var(--my-muted)}
+.micelio-game-business-card>header i{width:7px;height:7px;border-radius:50%;background:var(--my-active)}
+.micelio-game-business-card.is-pending>header i{background:#b9b9b0}
+.micelio-game-business-card h3{font-size:15px;margin:0}
+.micelio-game-business-card p{font-size:9px;line-height:1.5;color:var(--my-muted);margin:0}
+.micelio-game-business-actions{margin-top:auto}
+.micelio-game-business-actions button{appearance:none;border:0;background:transparent;color:var(--my-ink);font-size:8px;font-weight:800;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.micelio-game-ideas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.micelio-game-idea{appearance:none;position:relative;display:grid;gap:6px;text-align:left;border:1px solid var(--my-line);border-radius:15px;padding:13px 34px 13px 13px;background:transparent;color:var(--my-ink);cursor:pointer}
+.micelio-game-idea:hover{border-color:var(--my-active);transform:translateY(-1px)}
+.micelio-game-idea span{font-size:7px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--my-muted)}
+.micelio-game-idea strong{font-size:12px;line-height:1.25}
+.micelio-game-idea small{font-size:8.5px;line-height:1.35;color:var(--my-muted)}
+.micelio-game-idea i{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-style:normal}
+.micelio-game-loop{background:var(--my-ink);color:var(--my-paper);border-radius:22px;padding:18px}
+.micelio-game-loop>.micelio-eyebrow{color:#aaa!important}
+.micelio-game-loop>div{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:9px;align-items:center;margin-top:12px}
+.micelio-game-loop p{margin:0;display:grid;gap:4px}
+.micelio-game-loop p b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--my-active);color:#111;font-size:9px}
+.micelio-game-loop p strong{font-size:11px}
+.micelio-game-loop p small{font-size:8px;color:#aaa;line-height:1.35}
+.micelio-game-loop i{color:var(--my-active);font-style:normal}
+@media(max-width:1000px){
+  .micelio-game-missions{grid-template-columns:1fr}
+  .micelio-game-mission{min-height:0}
+  .micelio-game-hero{grid-template-columns:1fr}
+  .micelio-game-money{border-left:0;border-top:1px solid var(--my-line);padding:16px 0 0}
+  .micelio-game-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .micelio-game-ideas{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .micelio-game{padding:0 10px 20px}
+  .micelio-game-nav{align-items:flex-start;overflow:auto}
+  .micelio-game-nav>div{min-width:max-content;flex-wrap:nowrap}
+  .micelio-game-nav>span{display:none}
+  .micelio-game-hero{padding:18px;border-radius:20px}
+  .micelio-game-hero h2{font-size:34px}
+  .micelio-game-stats{grid-template-columns:1fr 1fr}
+  .micelio-game-section{padding:13px}
+  .micelio-game-loop>div{grid-template-columns:1fr}
+  .micelio-game-loop i{transform:rotate(90deg);justify-self:center}
+}
+@media(max-width:430px){
+  .micelio-game-stats{grid-template-columns:1fr}
+  .micelio-game-actions button{flex:1 1 auto}
+}
