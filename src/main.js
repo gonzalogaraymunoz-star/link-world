@@ -16,6 +16,7 @@ import './brand.css';
 import './territory-responsive.css';
 import './world/micelioBeta.css';
 import './world/cronJournal.css';
+import './linkTheme.css';
 
 const $=s=>document.querySelector(s);
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
