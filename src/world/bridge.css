@@ -87,3 +87,12 @@ body.link-dark .bridge-panel input:not([type=checkbox]),body.link-dark .bridge-p
 .bridge-human-meta>span{display:inline-flex;gap:4px;align-items:center;font-size:8px;color:#74746d;background:#eeeDE7;border-radius:999px;padding:3px 6px}
 .bridge-human-meta b{font-size:7px;text-transform:uppercase;letter-spacing:.06em;color:#98988f}
 .bridge-code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:9px;color:#555;overflow-wrap:anywhere}
+
+
+/* Shared verified game state · bridge */
+.bridge-business.game-critical_frozen,.bridge-business.game-red_close{box-shadow:inset 4px 0 0 #d8342f}
+.bridge-business.game-critical_frozen .bridge-badge,.bridge-business.game-red_close .bridge-badge{border-color:#d8342f;color:#b72e29;background:#fff5f4}
+.bridge-business.game-frozen,.bridge-business.game-cold{box-shadow:inset 4px 0 0 #78a9d4}
+.bridge-business.game-frozen .bridge-badge,.bridge-business.game-cold .bridge-badge{color:#527fa7;background:#f4f9fd}
+.bridge-business.game-hot,.bridge-business.game-very_hot{box-shadow:inset 4px 0 0 #ef7b38}
+.bridge-business.game-converted{box-shadow:inset 4px 0 0 #52a06d}
