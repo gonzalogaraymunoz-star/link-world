@@ -19,7 +19,7 @@ const RRSS_PANEL_URL='https://linkrrss.vercel.app';
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,gameState:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -64,13 +64,19 @@ async function loadBusiness(businessId){
         .eq('business_id',businessId)
         .maybeSingle()
     : Promise.resolve({data:null,error:null});
-  const [b,c,p,r,s,rrss]=await Promise.all([
+  const gameRead=state.canWrite
+    ? db.from('link_game_business_state_v')
+        .select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,last_action_title,next_action_due_at,overdue')
+        .eq('business_id',businessId).maybeSingle()
+    : Promise.resolve({data:null,error:null});
+  const [b,c,p,r,s,rrss,game]=await Promise.all([
     db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
     db.from('link_world_clients').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_products').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_responsibility_profiles').select('*').order('sort_order',{ascending:true}),
     statusRead,
-    db.from('link_world_rrss_status_v').select('*').eq('business_id',businessId).maybeSingle()
+    db.from('link_world_rrss_status_v').select('*').eq('business_id',businessId).maybeSingle(),
+    gameRead
   ]);
   const problem=[b,c,p,r,rrss].find(x=>x.error);
   if(problem)throw problem.error;
@@ -80,6 +86,7 @@ async function loadBusiness(businessId){
   state.profiles=r.data||[];
   state.houseStatus=s?.error?null:(s?.data||null);
   state.rrssStatus=rrss?.data||{business_id:businessId,rrss_status:'missing',profile_count:0,source_count:0,account_count:0,connected_account_count:0};
+  state.gameState=game?.error?null:(game?.data||null);
   state.taxiHotelOperations=[];
   state.taxiHotelOperationsError=null;
   if(state.canWrite&&state.business?.slug==='taxi-hotel'){
@@ -133,6 +140,31 @@ function businessMetrics(){
   const blocked=state.products.filter(x=>x.economic_state==='blocked').length;
   return {clients:state.clients.length,products:state.products.length,active,blocked};
 }
+function gameStateMarkup(){
+  const g=state.gameState;
+  if(!g)return '';
+  const temp=Math.round(Number(g.temperature||0)),conv=Math.round(Number(g.conversion_percent||0));
+  const cls='game-'+safe(g.game_state||'frozen');
+  const evidence=Number(g.awaiting_evidence_count||0);
+  return '<section class="bw-game-state '+cls+'">'+
+    '<div class="bw-game-copy"><span class="bw-kicker">JUEGO / TEMPERATURA COMERCIAL</span><h2>'+safe(g.game_state_label||'Estado')+'</h2><p>'+(g.game_state==='critical_frozen'?'Está cerca de cierre pero sin acción verificada reciente. Es prioridad roja.':g.game_state==='frozen'?'No hay suficiente actividad verificada. Para calentarlo necesitamos una acción comprobada.':'La temperatura solo cambia con acciones que dejan evidencia.')+'</p></div>'+
+    '<div class="bw-game-thermometer"><div><i style="width:'+Math.max(0,Math.min(100,temp))+'%"></i></div><strong>'+temp+'°</strong><span>'+conv+'% conversión</span></div>'+
+    '<div class="bw-game-actions">'+(evidence?'<small>'+evidence+' acción(es) esperando evidencia</small>':'<small>Sin evidencia pendiente</small>')+'<button id="bw-game-director" type="button">Continuar con ChatGPT</button></div>'+
+  '</section>';
+}
+function injectGameState(root){
+  if(!root||!state.gameState)return;
+  const head=root.querySelector('.bw-business-head,.bw-client-head');
+  if(!head)return;
+  head.insertAdjacentHTML('afterend',gameStateMarkup());
+  root.querySelector('#bw-game-director')?.addEventListener('click',()=>{
+    const g=state.gameState;
+    const prompt='Revisa '+state.business.name+' desde el juego de LINK. Temperatura actual: '+Math.round(Number(g.temperature||0))+'°. Conversión: '+Math.round(Number(g.conversion_percent||0))+'%. Estado: '+(g.game_state_label||g.game_state)+'. '+(g.game_state==='critical_frozen'||g.game_state==='frozen'?'Identifica la acción verificable de menor esfuerzo que más acerque a una conversión rentable. ':'')+'Ejecuta dentro de este entorno todo lo que puedas. Si alguna acción requiere que yo actúe fuera de ChatGPT, dime exactamente qué debo hacer y qué pantallazo, comprobante, archivo o enlace debo subir. No actualices temperatura ni conversión hasta validar la evidencia.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  });
+}
+
 
 function rrssApparatusMarkup(){
   const r=state.rrssStatus||{rrss_status:'missing',profile_count:0,source_count:0,account_count:0,connected_account_count:0};
@@ -415,6 +447,7 @@ function renderClientHub(){
       }).join(''):'<div class="bw-empty"><strong>Aún no hay clientes registrados.</strong><span>Cuando agreguemos el primer convenio real, aparecerá aquí y abrirá su ficha maestra a pantalla completa.</span></div>')+'</div>',
     '</section>'
   ].join('');
+  injectGameState(root);
   $('#bw-close-hub').addEventListener('click',close);
   $('#bw-business-master').addEventListener('click',renderBusiness);
   $('#bw-refresh-hub').addEventListener('click',refresh);
@@ -468,6 +501,7 @@ function renderClientBusinessCell(){
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
   bindRrssApparatus(root);
+  injectGameState(root);
   $('#bw-close-client-cell').addEventListener('click',close);
   $('#bw-client-cell-director').addEventListener('click',()=>{
     const prompt='Revisa la ficha completa de '+state.business.name+' en LINK WORLD: productos vendidos, compromisos, jornadas, evidencias, boletas, pagos y siguiente acción. No inventes pagos ni cierres.';
@@ -616,6 +650,7 @@ function renderBusiness(){
     '</section>'
   ].join('');
   bindRrssApparatus(root);
+  injectGameState(root);
   $('#bw-close-top').addEventListener('click',close);
   $('#bw-refresh').addEventListener('click',refresh);
   $('#bw-open-director').addEventListener('click',()=>{
