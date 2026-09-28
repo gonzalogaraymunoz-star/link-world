@@ -472,3 +472,31 @@
   .micelio-reco-actions nav{width:100%;justify-content:flex-end}
   .micelio-reco-timer{margin:0 -14px -10px}
 }
+
+
+/* Verified action temperature across Micelio */
+.micelio-thermometer{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;margin:2px 0 3px}
+.micelio-thermometer>div{height:7px;border-radius:999px;background:var(--my-soft);overflow:hidden}
+.micelio-thermometer>div>i{display:block;height:100%;border-radius:999px;background:#78a9d4}
+.micelio-thermometer>strong{font-size:14px;letter-spacing:-.04em}
+.micelio-thermometer>span{font-size:8px;color:var(--my-muted)}
+.micelio-game-business-card.game-warm .micelio-thermometer>div>i{background:#e0b548}
+.micelio-game-business-card.game-hot .micelio-thermometer>div>i,.micelio-game-business-card.game-very_hot .micelio-thermometer>div>i{background:#f07b36}
+.micelio-game-business-card.game-red_close,.micelio-game-business-card.game-critical_frozen{border-color:#d8342f;box-shadow:inset 0 0 0 1px #d8342f}
+.micelio-game-business-card.game-red_close>header i,.micelio-game-business-card.game-critical_frozen>header i{background:#d8342f}
+.micelio-game-business-card.game-red_close .micelio-thermometer>div>i,.micelio-game-business-card.game-critical_frozen .micelio-thermometer>div>i{background:#d8342f}
+.micelio-game-business-card.game-frozen,.micelio-game-business-card.game-cold{background:color-mix(in srgb,var(--my-panel) 88%,#dfeaf4 12%)}
+.micelio-game-business-card.game-frozen>header i,.micelio-game-business-card.game-cold>header i{background:#78a9d4}
+.micelio-game-business-actions{display:flex;gap:7px;flex-wrap:wrap}
+.micelio-game-business-actions button{max-width:100%}
+.micelio-reco-heat{display:flex;align-items:baseline;gap:7px;padding:8px 0;border-top:1px solid var(--my-line);border-bottom:1px solid var(--my-line)}
+.micelio-reco-heat strong{font-size:22px;letter-spacing:-.04em}
+.micelio-reco-heat i{font-style:normal;color:var(--my-active)}
+.micelio-reco-heat small{margin-left:auto;border:0!important;padding:0!important}
+.micelio-reco-conversion{font-size:8px;color:var(--my-muted);text-transform:uppercase;letter-spacing:.06em}
+.micelio-node-heat{font-size:9px;font-weight:800;fill:#6c8fae;paint-order:stroke;stroke:var(--my-panel);stroke-width:3px;stroke-linejoin:round}
+.micelio-node.game-red_close .micelio-node-core,.micelio-node.game-critical_frozen .micelio-node-core{stroke:#d8342f!important;stroke-width:4px!important}
+.micelio-node.game-red_close .micelio-node-halo,.micelio-node.game-critical_frozen .micelio-node-halo{stroke:#d8342f!important;opacity:.45}
+.micelio-node.game-red_close .micelio-node-heat,.micelio-node.game-critical_frozen .micelio-node-heat{fill:#d8342f}
+.micelio-node.game-frozen .micelio-node-core,.micelio-node.game-cold .micelio-node-core{stroke:#78a9d4!important}
+.micelio-node.game-frozen .micelio-node-heat,.micelio-node.game-cold .micelio-node-heat{fill:#78a9d4}
