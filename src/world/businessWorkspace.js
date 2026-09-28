@@ -1,6 +1,7 @@
 // LINK WORLD · full-screen business/client workspace for real operations.
 import {createClient} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './connection.js';
+import {humanizeToken} from './presentation.js';
 
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
@@ -250,13 +251,13 @@ function mercadoPagoPanelMarkup(){
   const prodReady=prod.status==='active';
   const realCharges=prod.metadata?.real_charges_enabled===true;
   const taxVerified=tax.status==='verified';
-  const taxLabel=tax.id?(tax.tax_treatment==='exempt'?'Exento · 0%':(safe(tax.tax_treatment)+' · '+safe(tax.tax_rate)+'%')):'Sin perfil';
+  const taxLabel=tax.id?(tax.tax_treatment==='exempt'?'Exento · 0%':(safe(humanizeToken(tax.tax_treatment))+' · '+safe(tax.tax_rate)+'%')):'Sin perfil';
   return '<section class="bw-products-section bw-mp-section">'+
     '<div class="bw-section-head"><div><span class="bw-kicker">COBRO / MERCADO PAGO</span><h2>Cobro trazable + formalización financiera</h2><p>Mercado Pago procesa el dinero; Taxi Hotel conserva la reserva; LINK registra monto, tratamiento tributario, estado, comisión y conciliación. La barra mide evidencia operativa, no riesgo crediticio.</p></div><span class="bw-mp-score">'+points+'/100</span></div>'+
     '<div class="bw-mp-progress"><i style="--progress:'+Math.max(0,Math.min(100,points))+'%"></i>'+milestones.map(([label,done])=>'<span class="'+(done?'done':'')+'"><b>'+(done?'✓':'○')+'</b>'+safe(label)+'</span>').join('')+'</div>'+
     '<div class="bw-mp-grid">'+
-      '<article><small>Sandbox</small><strong>'+safe(testReady?'Conectado':(test.status||'Sin credenciales'))+'</strong><span>'+safe(test.webhook_status==='verified'?'Webhook verificado':'Webhook pendiente')+'</span><button type="button" data-mp-verify="test">'+(testReady?'Re-verificar':'Verificar sandbox')+'</button></article>'+
-      '<article><small>Producción</small><strong>'+safe(prodReady?'Cuenta verificada':(prod.status||'Sin credenciales'))+'</strong><span>'+(realCharges?'Cobros reales habilitados':'Seguro de cobro real: bloqueado')+'</span><button type="button" data-mp-verify="production">'+(prodReady?'Re-verificar':'Verificar producción')+'</button></article>'+
+      '<article><small>Sandbox</small><strong>'+safe(testReady?'Conectado':humanizeToken(test.status||'Sin credenciales'))+'</strong><span>'+safe(test.webhook_status==='verified'?'Webhook verificado':'Webhook pendiente')+'</span><button type="button" data-mp-verify="test">'+(testReady?'Re-verificar':'Verificar sandbox')+'</button></article>'+
+      '<article><small>Producción</small><strong>'+safe(prodReady?'Cuenta verificada':humanizeToken(prod.status||'Sin credenciales'))+'</strong><span>'+(realCharges?'Cobros reales habilitados':'Seguro de cobro real: bloqueado')+'</span><button type="button" data-mp-verify="production">'+(prodReady?'Re-verificar':'Verificar producción')+'</button></article>'+
       '<article><small>Tributación Chile</small><strong>'+safe(taxLabel)+'</strong><span>'+safe(tax.status==='verified'?'Perfil verificado':'Perfil propuesto · requiere validación antes de producción')+'</span></article>'+
       '<article><small>Producción observada</small><strong>'+money(prodDash.approved_gross_amount||0,'CLP')+'</strong><span>'+safe(prodDash.approved_payments||0)+' pagos aprobados · '+safe(prodDash.reconciled_settlements||0)+' conciliados</span></article>'+
     '</div>'+
@@ -316,10 +317,10 @@ function financialCorePanelMarkup(){
     '<div class="bw-financial-core-grid">'+
       '<div><small>Recaudación</small><strong>'+safe(collectionLabels[f.collection_model]||'Por definir')+'</strong><span>'+safe(f.payment_provider||'—')+'</span></div>'+
       '<div><small>Liquidación</small><strong>'+safe(settlementLabels[f.settlement_model]||f.settlement_model||'Por definir')+'</strong><span>'+splits.length+' reglas económicas registradas</span></div>'+
-      '<div><small>Sandbox</small><strong>'+safe(test?.status||'Sin ruta')+'</strong><span>'+safe(test?.webhook_status||'Webhook pendiente')+'</span></div>'+
-      '<div><small>Producción</small><strong>'+safe(prod?.status||'Bloqueada')+'</strong><span>'+(prod?.real_charges_enabled?'Seguro abierto':'Seguro cerrado')+'</span></div>'+
-      '<div><small>Tributación</small><strong>'+safe(tax?.status||'Pendiente')+'</strong><span>'+safe(tax?.tax_treatment||'Sin definir')+(tax?.tax_rate!=null?' · '+safe(tax.tax_rate)+'%':'')+'</span></div>'+
-      '<div><small>Política</small><strong>'+safe(f.policy_status||'proposed')+'</strong><span>'+safe(f.provider_connection_key||'Sin conexión compartida')+'</span></div>'+
+      '<div><small>Sandbox</small><strong>'+safe(humanizeToken(test?.status||'Sin ruta'))+'</strong><span>'+safe(humanizeToken(test?.webhook_status||'Webhook pendiente'))+'</span></div>'+
+      '<div><small>Producción</small><strong>'+safe(humanizeToken(prod?.status||'Bloqueada'))+'</strong><span>'+(prod?.real_charges_enabled?'Seguro abierto':'Seguro cerrado')+'</span></div>'+
+      '<div><small>Tributación</small><strong>'+safe(humanizeToken(tax?.status||'Pendiente'))+'</strong><span>'+safe(humanizeToken(tax?.tax_treatment||'Sin definir'))+(tax?.tax_rate!=null?' · '+safe(tax.tax_rate)+'%':'')+'</span></div>'+
+      '<div><small>Política</small><strong>'+safe(humanizeToken(f.policy_status||'proposed'))+'</strong><span>'+safe(f.provider_connection_key||'Sin conexión compartida')+'</span></div>'+
     '</div>'+
   '</section>';
 }
@@ -645,11 +646,11 @@ function renderProduct(p){
   const split=e.splitKnown?'<div class="bw-split"><span style="--v:'+e.clientShare+'%"><b>Cliente</b><strong>'+e.clientShare+'%</strong></span><span style="--v:'+e.linkShare+'%"><b>LINK</b><strong>'+e.linkShare+'%</strong></span></div>':'<p class="bw-soft">Distribución cliente/LINK todavía sin definir.</p>';
   const blocked=p.economic_state==='blocked'||e.blocked;
   return '<article class="bw-product '+(blocked?'blocked':'')+'" data-product-id="'+safe(p.id)+'"'+colorStyle(pColor)+'>'+
-    '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.code||p.category||'PRODUCTO')+'</span><h3>'+safe(p.name)+'</h3></div><span class="bw-economic '+safe(p.economic_state)+'">'+(blocked?'Bloqueado':safe(p.economic_state))+'</span></div>'+
+    '<div class="bw-product-head"><div><span class="bw-kicker">'+safe(p.code||p.category||'PRODUCTO')+'</span><h3>'+safe(p.name)+'</h3></div><span class="bw-economic '+safe(humanizeToken(p.economic_state))+'">'+(blocked?'Bloqueado':safe(humanizeToken(p.economic_state)))+'</span></div>'+
     '<div class="bw-product-values"><div><small>Adquisición</small><strong>'+money(p.acquisition_price,p.currency)+'</strong></div><div><small>Precio público</small><strong>'+money(p.public_price,p.currency)+'</strong></div><div><small>Diferencia observada</small><strong>'+money(e.spread,p.currency)+'</strong></div></div>'+
     '<div class="bw-responsibility"><span><small>Responsabilidad</small><strong>'+(profile?safe(profile.label):'Por definir')+'</strong></span><b>'+(p.responsibility_percent==null?'—':safe(p.responsibility_percent)+'%')+'</b></div>'+
     split+
-    '<div class="bw-product-logic"><span><small>1 · Adquisición</small><b>'+money(p.acquisition_price,p.currency)+'</b></span><i>→</i><span><small>2 · Responsabilidad LINK</small><b>'+(p.responsibility_percent==null?'Por definir':safe(p.responsibility_percent)+'%')+'</b></span><i>→</i><span><small>3 · Reparto interno</small><b>'+(e.splitKnown?('Cliente '+e.clientShare+'% / LINK '+e.linkShare+'%'):'Por definir')+'</b></span><i>→</i><span><small>4 · Estado</small><b>'+(blocked?'Bloqueado':safe(p.economic_state))+'</b></span></div>'+
+    '<div class="bw-product-logic"><span><small>1 · Adquisición</small><b>'+money(p.acquisition_price,p.currency)+'</b></span><i>→</i><span><small>2 · Responsabilidad LINK</small><b>'+(p.responsibility_percent==null?'Por definir':safe(p.responsibility_percent)+'%')+'</b></span><i>→</i><span><small>3 · Reparto interno</small><b>'+(e.splitKnown?('Cliente '+e.clientShare+'% / LINK '+e.linkShare+'%'):'Por definir')+'</b></span><i>→</i><span><small>4 · Estado</small><b>'+(blocked?'Bloqueado':safe(humanizeToken(p.economic_state)))+'</b></span></div>'+
     (p.responsibility_notes?'<p class="bw-product-notes"><b>Responsabilidad asumida:</b> '+safe(p.responsibility_notes)+'</p>':'')+
     '<div class="bw-product-foot"><span>Etapa: <b>'+safe(stageNames[p.stage]||p.stage)+'</b></span><span>Mínimo LINK: <b>'+(p.minimum_link_share_percent==null?'—':safe(p.minimum_link_share_percent)+'% de su reparto')+'</b></span></div>'+
     (blocked?'<p class="bw-block-reason">No puede activarse: el reparto actual deja a LINK bajo su mínimo definido.</p>':'')+
