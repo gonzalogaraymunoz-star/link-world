@@ -112,3 +112,21 @@
 .cj-readable-meta>span.is-code b{color:#c3c2b9}
 .cj-split>div,.cj-grid-2>div{min-width:0;overflow:hidden}
 @media(max-width:680px){.cj-readable-meta>span{border-radius:8px;white-space:normal}}
+
+
+/* Verified game facts */
+.cj-game-history{margin:14px 0;padding:16px;background:#fff;border:1px solid #deddd4;border-radius:18px}
+.cj-game-history .cj-section-title p{margin:4px 0 0;font-size:9px;color:#777;line-height:1.45}
+.cj-game-states{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:12px 0}
+.cj-game-state{border:1px solid #e3e1d7;border-radius:13px;padding:10px;background:#faf9f5;display:grid;gap:7px}
+.cj-game-state header{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.cj-game-state header b{font-size:10px}.cj-game-state header span{font-size:7px;text-transform:uppercase;letter-spacing:.08em;color:#777}
+.cj-game-state>div{display:flex;align-items:baseline;gap:6px}.cj-game-state>div strong{font-size:20px;letter-spacing:-.04em}.cj-game-state>div i{font-style:normal;color:#aaa}.cj-game-state>div small{font-size:7px;color:#777}
+.cj-game-state p{margin:0;font-size:8px;color:#8a5a3b}
+.cj-game-state.game-red_close,.cj-game-state.game-critical_frozen{border-color:#d8342f;box-shadow:inset 3px 0 0 #d8342f}
+.cj-game-state.game-frozen,.cj-game-state.game-cold{box-shadow:inset 3px 0 0 #78a9d4}
+.cj-game-state.game-hot,.cj-game-state.game-very_hot{box-shadow:inset 3px 0 0 #ef7b38}
+.cj-game-state.game-converted{box-shadow:inset 3px 0 0 #52a06d}
+.cj-game-events{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:7px}
+.cj-game-event{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start;border-top:1px solid #eceae1;padding:9px 0}
+.cj-game-event>span{font-size:16px}.cj-game-event strong{font-size:9px}.cj-game-event p{font-size:8.5px;margin:2px 0;color:#555}.cj-game-event small{font-size:7px;color:#929188}
