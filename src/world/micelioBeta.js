@@ -83,7 +83,7 @@ function memberReads(){
     readSource('integrations',db.from('integration_bindings')
       .select('id,global_id,provider,entity_type,external_object,sync_status,last_synced_at')),
     readSource('conversions',db.from('link_conversion_assessments')
-      .select('id,business_id,title,source_status,conversion_level,conversion_label,priority_score,conversion_reason,recommended_action,assessed_at,active').eq('active',true)),
+      .select('id,business_id,title,source_status,conversion_level,conversion_label,priority_score,conversion_reason,recommended_action,components,metadata,assessed_at,active').eq('active',true)),
     readSource('daily',db.from('link_daily_intelligence_reports')
       .select('id,report_date,report_type,metrics,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).limit(5)),
     readSource('transactions',db.from('link_world_transactions')
@@ -526,7 +526,8 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       const radar=event.target.closest('[data-radar-node]');if(radar){selectNode(radar.dataset.radarNode);return;}
       const step=event.target.closest('[data-route-step]');if(step){state.route.index=Number(step.dataset.routeStep)||0;routeStep(0);return;}
       const reach=event.target.closest('[data-reach]');if(reach&&state.selectedNode){state.reach=reachable(state.model,state.selectedNode,reach.dataset.reach);state.reachDirection=reach.dataset.reach;if([...state.reach.nodes].some(id=>['client','product'].includes(state.model.nodes.find(node=>node.id===id)?.type)))state.view='records';state.camera=cameraForIds(graphContext(state),[...state.reach.nodes]);render();return;}
-      const evo=event.target.closest('[data-evolution-business]');if(evo){document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:evo.dataset.evolutionBusiness}}));return;}\n      const node=event.target.closest('[data-node-id]');if(node){openCanonicalRecord(node.dataset.nodeId);return;}
+      const evo=event.target.closest('[data-evolution-business]');if(evo){document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:evo.dataset.evolutionBusiness}}));return;}
+      const node=event.target.closest('[data-node-id]');if(node){openCanonicalRecord(node.dataset.nodeId);return;}
       const edge=event.target.closest('[data-edge-id]');if(edge){selectEdge(edge.dataset.edgeId);return;}
     };
     root.onkeydown=event=>{
