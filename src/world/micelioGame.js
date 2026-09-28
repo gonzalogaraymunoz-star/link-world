@@ -209,6 +209,180 @@ function replicateMission(accepted){
   };
 }
 
+
+function goalScore({proximity=0,margin=0,ease=0,reuse=0,evidence=0}={}){
+  return Math.round(proximity*.35+margin*.25+ease*.20+reuse*.10+evidence*.10);
+}
+
+function recBase({key,business,businessId=null,title,recommendation,why,unlock,prompt,metrics={},kind='commercial',lane='Vender',accepted=false}){
+  const score=goalScore(metrics);
+  return {
+    key,kind,lane,business,businessId,title,recommendation,why,unlock,prompt,
+    accepted,priority:score,
+    proximity:metrics.proximity||0,margin:metrics.margin||0,ease:metrics.ease||0,reuse:metrics.reuse||0,evidence:metrics.evidence||0,
+    moneyLabel:(metrics.proximity||0)>=90?'Dinero muy cerca':(metrics.proximity||0)>=70?'Dinero cerca':'Construye venta',
+    marginLabel:(metrics.margin||0)>=85?'Margen fuerte':(metrics.margin||0)>=65?'Margen favorable':'Margen por validar',
+    effortLabel:(metrics.ease||0)>=85?'Esfuerzo bajo':(metrics.ease||0)>=65?'Esfuerzo medio-bajo':'Requiere trabajo',
+    executorLabel:'Trabajémoslo',
+    explanation:why,
+    action:recommendation,
+    source:{type:'game_recommendation',id:key}
+  };
+}
+
+function buildRecommendations(rows,portfolio,accepted){
+  const businesses=rows.businesses||[];
+  const products=rows.products||[];
+  const transactions=rows.transactions||[];
+  const recs=[];
+  const bySlug=new Map(businesses.map(b=>[b.slug,b]));
+
+  for(const b of businesses){
+    const pending=transactions.filter(t=>String(t.business_id)===String(b.id)&&String(t.status||'').toLowerCase()==='pending_payment');
+    const pendingAmount=pending.reduce((sum,t)=>sum+Number(t.amount||0),0);
+    if(pendingAmount>0){
+      const key='rec:verify-income:'+b.id;
+      recs.push(recBase({
+        key,business:b.name,businessId:b.id,title:'Verifica ingresos que ya están cerca del banco',
+        recommendation:'Revisa si los '+pending.length+' ingresos pendientes están realmente impagos o solo sin conciliar. Confirma evidencia y actualiza el estado antes de buscar más venta.',
+        why:'Cobrar o conciliar dinero ya generado suele requerir menos esfuerzo que captar una venta nueva.',
+        unlock:'Ingresos verificados + caja real + mejor lectura de margen',
+        metrics:{proximity:100,margin:88,ease:92,reuse:55,evidence:94},
+        accepted:accepted.has(key),
+        prompt:'Audita los ingresos pendientes de '+b.name+' en LINK WORLD. No asumas que están impagos: revisa evidencia, separa lo cobrado de lo no cobrado, calcula el monto realmente pendiente y dime la acción mínima para cerrar o conciliar cada caso. Prioriza caja real con el menor esfuerzo y deja el resultado persistido.'
+      }));
+    }
+
+    const contract=b.owned_facts?.active_contract||b.owned_facts?.sold_product||null;
+    const contractAmount=Number(contract?.monthly_fee_clp||contract?.agreed_price_clp||0);
+    const paymentState=String(contract?.payment_status||contract?.financial_state?.payment_status||'').toLowerCase();
+    if(contractAmount>0&&['','unknown_not_inferred','unverified','pending','pending_payment_evidence'].includes(paymentState)){
+      const key='rec:contract-cash:'+b.id;
+      recs.push(recBase({
+        key,business:b.name,businessId:b.id,title:'Cierra el ciclo económico del contrato activo',
+        recommendation:'Confirma facturación y pago del acuerdo vigente de '+money(contractAmount)+'. Si ya fue pagado, vincula la evidencia; si no, prepara el cobro.',
+        why:'El servicio ya está vendido. Convertir acuerdo activo en caja verificada es más eficiente que abrir una venta nueva.',
+        unlock:'Contrato → cobro → margen medible',
+        metrics:{proximity:98,margin:90,ease:88,reuse:70,evidence:95},
+        accepted:accepted.has(key),
+        prompt:'Trabajemos el ciclo económico del contrato activo de '+b.name+' por '+money(contractAmount)+'. Revisa lo que LINK ya sabe sobre facturación, pago y evidencia. No inventes cobros. Dime qué puedes verificar tú, qué dato o comprobante necesito aportar yo y deja el contrato con un estado financiero claro y persistente.'
+      }));
+    }
+  }
+
+  const hotel=bySlug.get('hotel-experience');
+  if(hotel){
+    const network=hotel.owned_facts?.observed_network||{};
+    const leads=Number(network.leads||0),productsCount=Number(network.active_catalog_products||0),partners=Number(network.hotel_partner_records||0);
+    if(leads>0){
+      const key='rec:hotel-existing-demand';
+      recs.push(recBase({
+        key,business:hotel.name,businessId:hotel.id,title:'Vende primero a la demanda que ya existe',
+        recommendation:'Prioriza los '+leads+' leads existentes antes de captar más. Separa intención alta, cotiza lo más simple de operar y mueve primero los productos con ruta de ejecución clara.',
+        why:'La adquisición ya ocurrió. Trabajar demanda existente reduce esfuerzo comercial y evita gastar en captar antes de convertir.',
+        unlock:'Primeros cierres medibles usando '+productsCount+' productos y '+partners+' hoteles/canales ya observados',
+        metrics:{proximity:92,margin:82,ease:82,reuse:86,evidence:92},
+        accepted:accepted.has(key),
+        prompt:'Analiza HOTEL EXPERIENCE con foco en vender con mejor margen y menor esfuerzo. Parte por los '+leads+' leads existentes y el catálogo ya disponible. Diseña un orden de ataque: qué leads revisar primero, qué productos son más simples de operar y qué siguiente acción concreta debemos ejecutar. No inventes margen si no hay costo suficiente; identifica qué dato falta para calcularlo.'
+      }));
+    }
+  }
+
+  const taxi=bySlug.get('taxi-hotel');
+  if(taxi){
+    const remaining=taxi.owned_facts?.entry_stabilization?.remaining||[];
+    if(remaining.includes('payment_provider_wiring')){
+      const key='rec:taxi-payment';
+      recs.push(recBase({
+        key,business:taxi.name,businessId:taxi.id,title:'Conecta el cobro al flujo que ya captura reservas',
+        recommendation:'Termina el proveedor de pago después de la confirmación operativa. La venta ya tiene web, pricing y reserva persistente; falta convertir la confirmación en pago.',
+        why:'Es un cuello de botella muy cercano al dinero: no exige crear otro producto ni otra web.',
+        unlock:'Reserva confirmada → pago → operación → evidencia económica',
+        metrics:{proximity:96,margin:72,ease:72,reuse:92,evidence:94},
+        accepted:accepted.has(key),
+        prompt:'Toma TAXI HOTEL y llévalo del flujo actual de reserva confirmada al cobro real, respetando la regla de cobrar solo después de confirmar disponibilidad. Audita lo ya construido, reutiliza Mercado Pago si corresponde, evita duplicar lógica y define la implementación mínima que desbloquea pago verificable.'
+      }));
+    }
+    const he=hotel;
+    if(he){
+      const key='rec:taxi-hotel-experience-bridge';
+      recs.push(recBase({
+        key,business:'TAXI HOTEL × HOTEL EXPERIENCE',businessId:taxi.id,title:'Prueba un canal existente antes de buscar clientes nuevos',
+        recommendation:'Valida si TAXI HOTEL puede venderse como producto de transporte dentro de HOTEL EXPERIENCE y sus hoteles/canales. Haz una prueba pequeña antes de formalizar la relación.',
+        why:'Combina un servicio ya operativo con una casa comercial que ya observa hoteles, leads y una categoría de transporte.',
+        unlock:'Canal de distribución nuevo sin construir una audiencia desde cero',
+        metrics:{proximity:84,margin:76,ease:78,reuse:96,evidence:84},
+        accepted:accepted.has(key),
+        prompt:'Evalúa una prueba comercial entre TAXI HOTEL y HOTEL EXPERIENCE. No asumas que existe convenio. Verifica compatibilidad de producto, precio, responsabilidad, operación y comisión. Diseña un piloto mínimo con un hotel o canal y define qué evidencia demostraría que vale la pena formalizarlo.'
+      }));
+    }
+  }
+
+  const coupons=bySlug.get('link-cupones');
+  if(coupons){
+    const p=products.find(x=>String(x.business_id)===String(coupons.id));
+    if(p){
+      const salesEnabled=p.metadata?.commercial_status?.sales_enabled===true;
+      const agreement=String(p.metadata?.commercial_status?.agreement_status||'').toLowerCase();
+      if(!salesEnabled||agreement==='pending'||p.acquisition_price==null){
+        const key='rec:cupones-unit-economics:'+p.id;
+        recs.push(recBase({
+          key,business:coupons.name,businessId:coupons.id,title:'No vendas antes de cerrar el margen del producto',
+          recommendation:'Completa costo de adquisición, convenio y participación mínima de LINK para '+p.name+' ('+money(p.public_price||0)+' público). Luego habilita ventas.',
+          why:'El producto tiene precio visible, pero todavía no tiene economía vigente suficiente para asegurar que vender más mejore el margen.',
+          unlock:'Producto vendible con margen protegido',
+          metrics:{proximity:78,margin:96,ease:84,reuse:88,evidence:88},
+          accepted:accepted.has(key),
+          prompt:'Cierra la economía de '+p.name+' en LINK Cupones. Precio público actual: '+money(p.public_price||0)+'. Revisa el antecedente económico solo como referencia histórica, identifica costos y convenio que siguen pendientes, define el margen mínimo de LINK y deja una regla de venta que impida activar el producto si el margen no está protegido.'
+        }));
+      }
+    }
+  }
+
+  const caracol=bySlug.get('caracol');
+  if(caracol){
+    const key='rec:caracol-efficiency';
+    recs.push(recBase({
+      key,business:caracol.name,businessId:caracol.id,title:'Haz que el contenido cueste menos producir sin perder resultado',
+      recommendation:'Usa LINK RRSS para identificar formatos y piezas que mejor responden y convierte esos patrones en una biblioteca reutilizable. Reduce producción que no genera aprendizaje.',
+      why:'CARACOL ya tiene contrato recurrente. Mejorar eficiencia de producción aumenta margen sin tener que subir precio ni vender más horas.',
+      unlock:'Más margen por el mismo contrato + sistema reusable para otros clientes',
+      metrics:{proximity:70,margin:92,ease:80,reuse:94,evidence:76},
+      accepted:accepted.has(key),
+      prompt:'Analiza CARACOL con LINK RRSS y el contrato actual de contenido. Identifica qué formatos, hooks, rostros o ritmos de publicación conviene repetir y qué trabajo podemos eliminar. El objetivo es mantener o mejorar resultado con menos horas de producción. Devuélveme una rutina reusable y qué evidencia debemos guardar para saber si el margen mejora.'
+    }));
+  }
+
+  for(const row of portfolio.filter(x=>!x.modeled)){
+    const key='rec:incorporate:'+row.slug;
+    recs.push(recBase({
+      key,business:row.name,businessId:row.linkWorldId||null,title:'Decide si este negocio merece entrar al tablero ahora',
+      recommendation:'Audita su vigencia y potencial actual. Si está vivo, incorpóralo con una célula mínima; si está obsoleto, archívalo para no gastar atención.',
+      why:'Un juego divertido también elimina ruido. No todo negocio conocido merece consumir energía hoy.',
+      unlock:'Portafolio más limpio o nueva célula lista para vender',
+      metrics:{proximity:58,margin:68,ease:76,reuse:82,evidence:64},
+      accepted:accepted.has(key),
+      prompt:'Revisa '+row.name+' antes de incorporarlo a LINK WORLD. Determina si sigue vigente, cuál es su oferta real, qué evidencia actual existe y si merece una célula activa. Si no está vigente, propón archivarlo; si sí, crea la estructura mínima y el primer objetivo comercial.'
+    }));
+  }
+
+  const capCount=(rows.skillCapabilities||[]).length;
+  if(capCount){
+    const key='rec:capability-leverage';
+    recs.push(recBase({
+      key,business:'LINK',businessId:null,title:'Mejora una capacidad solo si reduce trabajo o aumenta conversión',
+      recommendation:'Compara las '+capCount+' capacidades existentes con los cuellos de botella de mayor prioridad y evoluciona solo la capacidad que quite más esfuerzo repetitivo o acerque más ventas.',
+      why:'Crear más herramientas por sí mismo no mejora el juego. La evolución debe ahorrar trabajo o producir una ruta comercial mejor.',
+      unlock:'Una capacidad reusable con retorno claro',
+      metrics:{proximity:62,margin:84,ease:74,reuse:100,evidence:84},
+      accepted:accepted.has(key),
+      prompt:'Cruza las capacidades actuales de LINK con los cuellos de botella comerciales del ecosistema. No propongas una skill nueva si una existente puede resolverlo. Elige una sola mejora que reduzca trabajo repetitivo o aumente conversión en más de un negocio, define su prueba de éxito y aplícala de forma reusable.'
+    }));
+  }
+
+  return recs.sort((a,b)=>b.priority-a.priority).map((rec,index)=>({...rec,priorityRank:index+1}));
+}
+
 export function buildMicelioGame(rows={},evolution=[]){
   const businesses=rows.businesses||[];
   const portfolio=portfolioRows({businesses,portfolio:rows.portfolio||[],evolution,conversions:rows.conversions||[]});
@@ -229,7 +403,8 @@ export function buildMicelioGame(rows={},evolution=[]){
   if(featured.length<3&&!featured.some(x=>x.key===bridge.key))featured.push(bridge);
   if(featured.length<3)featured.push(replicate);
 
-  const allMissions=[...commercial,...integrations,capability,bridge,replicate];
+  const recommendations=buildRecommendations(rows,portfolio,accepted);
+  const allMissions=[...commercial,...integrations,capability,bridge,replicate,...recommendations];
   const realized=evolution.reduce((sum,row)=>sum+Number(row.realized||0),0);
   const activeLights=evolution.reduce((sum,row)=>sum+Number(row.activeLights||0),0);
   const detectedLights=evolution.reduce((sum,row)=>sum+Number(row.detectedLights||0),0);
@@ -250,6 +425,7 @@ export function buildMicelioGame(rows={},evolution=[]){
     },
     portfolio,
     featured:featured.slice(0,3),
+    recommendations,
     missions:allMissions,
     ideas:[bridge,replicate,capability],
     moneyLabel:realized>0?money(realized):'Sin ventas verificadas',
