@@ -294,3 +294,16 @@
   .micelio-canvas{height:calc(100dvh - 210px);min-height:500px}
   .micelio-edge-label{opacity:.58}
 }
+
+
+/* Economic evolution: reality is the game. */
+.micelio-evolution-strip{margin:0 24px 18px;padding:18px;border:1px solid var(--lw-line,#d9d9d2);border-radius:22px;background:color-mix(in srgb,var(--lw-surface,#fff) 92%,var(--lw-acid,#dfff00) 8%);box-shadow:0 18px 48px rgba(0,0,0,.05)}
+.micelio-evolution-strip.is-locked{display:flex;align-items:center;min-height:120px}
+.micelio-evolution-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.micelio-evolution-head h2{margin:5px 0 0;font-size:clamp(20px,2.2vw,34px);line-height:1.02;max-width:720px}
+.micelio-evolution-score{text-align:right}.micelio-evolution-score strong{display:block;font-size:clamp(26px,3.2vw,48px);letter-spacing:-.05em}.micelio-evolution-score span,.micelio-evolution-kpis span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6}
+.micelio-evolution-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}.micelio-evolution-kpis>div{padding:12px 14px;border-radius:14px;background:rgba(127,127,127,.08)}.micelio-evolution-kpis b{display:block;font-size:18px;margin-bottom:3px}
+.micelio-evolution-cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.micelio-evolution-cells button{appearance:none;border:1px solid rgba(127,127,127,.2);border-radius:16px;background:transparent;color:inherit;text-align:left;padding:13px;cursor:pointer}.micelio-evolution-cells button:hover{border-color:var(--lw-acid,#cfff00);transform:translateY(-1px)}.micelio-evolution-cells button>span{display:block;height:4px;background:rgba(127,127,127,.16);border-radius:999px;overflow:hidden;margin-bottom:10px}.micelio-evolution-cells button i{display:block;width:var(--light);height:100%;background:var(--lw-acid,#cfff00)}.micelio-evolution-cells strong,.micelio-evolution-cells small,.micelio-evolution-cells em{display:block}.micelio-evolution-cells small{margin-top:5px;opacity:.68}.micelio-evolution-cells em{margin-top:9px;font-size:11px;font-style:normal;opacity:.8}
+.micelio-evolution-rule{margin:12px 0 0;font-size:11px;opacity:.58}
+@media(max-width:900px){.micelio-evolution-strip{margin:0 10px 12px;padding:14px}.micelio-evolution-head{align-items:flex-start;flex-direction:column}.micelio-evolution-score{text-align:left}.micelio-evolution-cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.micelio-evolution-kpis{grid-template-columns:1fr}.micelio-evolution-cells{grid-template-columns:1fr}}
