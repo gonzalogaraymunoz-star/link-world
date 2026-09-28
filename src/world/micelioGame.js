@@ -70,8 +70,8 @@ function portfolioRows({businesses=[],portfolio=[],evolution=[],conversions=[]}=
   const byPortfolioId=new Map(rows.filter(x=>x.portfolioId).map(x=>[String(x.portfolioId),x]));
   const byBusinessId=new Map(rows.filter(x=>x.linkWorldId).map(x=>[String(x.linkWorldId),x]));
   for(const c of conversions){
-    const row=(c.business_id&&byBusinessId.get(String(c.business_id)))||
-      (c.metadata?.client_id&&byPortfolioId.get(String(c.metadata.client_id)));
+    if(c.business_id)continue; // LINK WORLD businesses already count these in buildEvolution.
+    const row=c.metadata?.client_id&&byPortfolioId.get(String(c.metadata.client_id));
     if(row)row.opportunities+=1;
   }
   return rows.sort((a,b)=>a.name.localeCompare(b.name,'es'));
@@ -233,7 +233,7 @@ export function buildMicelioGame(rows={},evolution=[]){
   const realized=evolution.reduce((sum,row)=>sum+Number(row.realized||0),0);
   const activeLights=evolution.reduce((sum,row)=>sum+Number(row.activeLights||0),0);
   const detectedLights=evolution.reduce((sum,row)=>sum+Number(row.detectedLights||0),0);
-  const activeRequests=(rows.requests||[]).filter(r=>!['completed','closed','done','cancelled'].includes(String(r.status||'').toLowerCase())).length;
+  const activeRequests=(rows.requests||[]).filter(r=>r.evidence?.game_key&&!['completed','closed','done','cancelled'].includes(String(r.status||'').toLowerCase())).length;
 
   return {
     stats:{
