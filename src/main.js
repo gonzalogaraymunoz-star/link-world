@@ -114,14 +114,28 @@ function releaseTerritoryOrientation(){
 
 async function loadOpenWorld(){
   $('#lw-data-state').textContent='Sincronizando LINK WORLD…';
-  const {data,error}=await publicDb.from('link_world_businesses')
-    .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace,google_place_id,owned_facts')
-    .eq('public_workspace',true).order('name',{ascending:true});
+  const {data:{session}}=await publicDb.auth.getSession();
+  let member=false;
+  if(session){
+    const check=await publicDb.rpc('link_world_is_member');
+    member=!check.error&&check.data===true;
+  }
+  const [businessRead,gameRead]=await Promise.all([
+    publicDb.from('link_world_businesses')
+      .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace,google_place_id,owned_facts')
+      .eq('public_workspace',true).order('name',{ascending:true}),
+    member
+      ? publicDb.from('link_game_business_state_v')
+          .select('business_id,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,next_action_due_at,overdue')
+      : Promise.resolve({data:[],error:null})
+  ]);
+  const {data,error}=businessRead;
   if(error){
     $('#lw-data-state').textContent='No se pudo abrir LINK WORLD: '+error.message;
     return;
   }
-  state.connected=true;state.businesses=data||[];state.requests=[];state.relations=[];
+  const gameMap=new Map((gameRead.data||[]).map(row=>[String(row.business_id),row]));
+  state.connected=true;state.businesses=(data||[]).map(b=>({...b,game_state:gameMap.get(String(b.id))||null}));state.requests=[];state.relations=[];
   setLinkBusinesses(state.businesses);
   $('#lw-app-state').textContent='Modo abierto';
   $('#lw-business-count').textContent=String(state.businesses.length);
@@ -170,15 +184,18 @@ function renderBusinessList(){
   const list=$('#lw-real-businesses');list.replaceChildren();
   if(!state.connected)return;
   for(const b of state.businesses){
-    const card=make('button','lw-real-business');
+    const game=b.game_state||null;
+    const card=make('button','lw-real-business'+(game?' game-'+game.game_state:''));
     card.type='button';
     const visual=b.owned_facts?.visual_identity||{};
     const color=visual.color_visible===true&&/^#[0-9a-f]{6}$/i.test(visual.assigned_color||'')?visual.assigned_color:null;
-    if(color){card.style.borderLeft='4px solid '+color;card.style.paddingLeft='18px';}
+    if(color&&!game){card.style.borderLeft='4px solid '+color;card.style.paddingLeft='18px';}
     card.append(make('span','lw-business-icon',b.name?.trim()?.charAt(0)?.toUpperCase()||'L'),
       make('strong','lw-business-name',b.name||'Negocio'),
       make('small','lw-business-sector',[b.sector,b.city,b.country].filter(Boolean).join(' · ')),
-      make('small','lw-business-status',b.verification_status==='verified'?'Verificado':b.verification_status==='needs_review'?'Por verificar':'Borrador'));
+      make('small','lw-business-status',game
+        ? (game.game_state_label+' · '+Math.round(Number(game.temperature||0))+'° · '+Math.round(Number(game.conversion_percent||0))+'%')
+        : (b.verification_status==='verified'?'Verificado':b.verification_status==='needs_review'?'Por verificar':'Borrador')));
     card.addEventListener('click',()=>{
       document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:b.id}}));
     });
