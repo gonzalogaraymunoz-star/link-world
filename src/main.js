@@ -137,7 +137,7 @@ async function loadOpenWorld(){
   const gameMap=new Map((gameRead.data||[]).map(row=>[String(row.business_id),row]));
   state.connected=true;state.businesses=(data||[]).map(b=>({...b,game_state:gameMap.get(String(b.id))||null}));state.requests=[];state.relations=[];
   setLinkBusinesses(state.businesses);
-  $('#lw-app-state').textContent='Modo abierto';
+  $('#lw-app-state').textContent=member?'Sesión LINK · juego vivo':'Modo abierto';
   $('#lw-business-count').textContent=String(state.businesses.length);
   $('#lw-request-count').textContent='—';
   $('#lw-relation-count').textContent='—';
