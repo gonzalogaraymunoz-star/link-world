@@ -1,6 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './connection.js';
 import {buildMicelioModel,layoutMicelio,reachable,localNeighborhood} from './micelioModel.js';
+import {buildMicelioGame} from './micelioGame.js';
 
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
@@ -15,7 +16,7 @@ const formatDate=value=>{
   catch{return String(value);}
 };
 
-const viewNames={organism:'Grafo global',evolution:'Evolución',local:'Grafo local',businesses:'Negocios',records:'Fichas',operations:'Operación',proposals:'Propuestas'};
+const viewNames={evolution:'Juego',organism:'Grafo global',local:'Grafo local',businesses:'Negocios',records:'Fichas',operations:'Operación',proposals:'Propuestas'};
 const typeNames={control:'Control',business:'Negocio',client:'Cliente',product:'Producto'};
 const stateNames={active:'Activo',proposed:'Propuesta',attention:'Atención',unknown:'Sin verificar'};
 const originNames={entity_relations:'Relación canónica',link_world_relations:'Propuesta de negocio',foreign_key:'Estructura de ficha'};
@@ -83,7 +84,15 @@ function memberReads(){
     readSource('integrations',db.from('integration_bindings')
       .select('id,global_id,provider,entity_type,external_object,sync_status,last_synced_at')),
     readSource('conversions',db.from('link_conversion_assessments')
-      .select('id,business_id,title,source_status,conversion_level,conversion_label,priority_score,conversion_reason,recommended_action,components,metadata,assessed_at,active').eq('active',true)),
+      .select('id,business_id,title,source_status,conversion_level,conversion_label,priority_score,conversion_reason,recommended_action,components,metadata,source_updated_at,assessed_at,active').eq('active',true)),
+    readSource('portfolio',db.from('clients')
+      .select('id,name,slug,status,metadata,archived_at,global_id').is('archived_at',null).order('name',{ascending:true})),
+    readSource('skills',db.from('link_skills')
+      .select('id,slug,name,description,category,status,current_version,activation_mode,updated_at').eq('status','active').order('name',{ascending:true})),
+    readSource('skillCapabilities',db.from('link_skill_capabilities')
+      .select('id,skill_id,capability_key,label,description,weight,metadata').order('weight',{ascending:false})),
+    readSource('requests',db.from('link_world_requests')
+      .select('id,title,instruction,origin,status,business_ids,result_summary,evidence,created_by,created_at,updated_at').order('created_at',{ascending:false}).limit(120)),
     readSource('daily',db.from('link_daily_intelligence_reports')
       .select('id,report_date,report_type,metrics,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).limit(5)),
     readSource('transactions',db.from('link_world_transactions')
@@ -250,16 +259,56 @@ function metricsMarkup(state){
   const model=state.model,read=model.edges.filter(edge=>state.readEdges.has(edge.id)).length;
   return '<div class="micelio-metrics"><div><strong>'+model.totals.businesses+'</strong><span>negocios</span></div><div><strong>'+(model.totals.clients+model.totals.products)+'</strong><span>fichas</span></div><div><strong>'+model.totals.relations+'</strong><span>rutas</span></div><div><strong>'+model.edges.filter(edge=>edge.state==='proposed').length+'</strong><span>propuestas</span></div></div><div class="micelio-progress"><div><span style="width:'+(model.edges.length?Math.round(read/model.edges.length*100):0)+'%"></span></div><p><b>'+read+'/'+model.edges.length+'</b> rutas comprendidas</p></div>';
 }
-function economicEvolutionMarkup(state){
-  if(state.view!=='evolution')return '';
-  if(!state.member)return '<section class="micelio-evolution-strip is-locked"><div><span class="micelio-eyebrow">REALIDAD ECONÓMICA</span><h2>La evolución necesita evidencia privada.</h2><p>Abre la capa LINK para leer dinero, oportunidades y luces sin exponer datos económicos.</p></div></section>';
-  const rows=state.evolution||[];
-  const total=rows.reduce((sum,row)=>sum+row.realized,0);
-  const potential=rows.reduce((sum,row)=>sum+row.potential,0);
-  const active=rows.reduce((sum,row)=>sum+row.activeLights,0);
-  const detected=rows.reduce((sum,row)=>sum+row.detectedLights,0);
-  const top=[...rows].sort((a,b)=>(b.potential+b.realized)-(a.potential+a.realized)).slice(0,4);
-  return '<section class="micelio-evolution-strip"><div class="micelio-evolution-head"><div><span class="micelio-eyebrow">REALIDAD PURA GAMIFICADA</span><h2>Dinero demuestra evolución. Las luces explican cómo.</h2></div><div class="micelio-evolution-score"><strong>'+new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(total)+'</strong><span>valor realizado</span></div></div><div class="micelio-evolution-kpis"><div><b>'+new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(potential)+'</b><span>oportunidad activa</span></div><div><b>'+active+'/'+detected+'</b><span>luces funcionales / detectadas</span></div><div><b>'+rows.filter(row=>row.realized>0).length+'/'+rows.length+'</b><span>células con valor demostrado</span></div></div><div class="micelio-evolution-cells">'+top.map(row=>'<button type="button" data-evolution-business="'+safe(row.businessId)+'"><span><i style="--light:'+Math.round(row.lightRatio*100)+'%"></i></span><strong>'+safe(row.name)+'</strong><small>'+row.activeLights+'/'+row.detectedLights+' luces · '+new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(row.realized)+'</small><em>'+(row.potential>0?'Oportunidad '+new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(row.potential):'Sin valor potencial cuantificado')+'</em></button>').join('')+'</div><p class="micelio-evolution-rule">Sin evidencia económica registrada, no hay evolución declarada. Las luces pueden estar detectadas; el dinero valida que producen valor real.</p></section>';
+function gameMissionCard(mission,state){
+  if(!mission)return '';
+  const saved=mission.accepted;
+  const stale=mission.stale?'<span class="micelio-game-stale">Señal antigua · revalidar</span>':'';
+  return '<article class="micelio-game-mission kind-'+safe(mission.kind)+'">'+
+    '<header><div><span class="micelio-game-lane">'+safe(mission.lane)+'</span>'+stale+'</div><span class="micelio-game-executor">'+safe(mission.executorLabel)+'</span></header>'+
+    '<h3>'+safe(mission.title)+'</h3><small class="micelio-game-business">'+safe(mission.business)+'</small>'+
+    '<div class="micelio-game-why"><b>Por qué importa</b><p>'+safe(mission.explanation)+'</p></div>'+
+    '<div class="micelio-game-next"><b>Haz esto</b><p>'+safe(mission.action)+'</p></div>'+
+    '<div class="micelio-game-unlock"><span>DESBLOQUEA</span><strong>'+safe(mission.unlock)+'</strong></div>'+
+    '<div class="micelio-game-actions"><button class="is-primary" data-game-work="'+safe(mission.key)+'" type="button">Trabajar con Director</button><button data-game-copy="'+safe(mission.key)+'" type="button">Copiar para ChatGPT</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(mission.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'En misión ✓':'Guardar misión')+'</button>':'')+'</div>'+
+  '</article>';
+}
+
+function gameBusinessCard(row,state){
+  const integration=state.game?.missions?.find(m=>m.key==='integration:'+row.slug);
+  const moneyText=row.realized>0?new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(row.realized):'Sin venta verificada';
+  const status=row.modeled?(row.status==='verified'?'En juego':'En juego · por completar'):'Falta incorporar';
+  return '<article class="micelio-game-business-card '+(row.modeled?'is-modeled':'is-pending')+'">'+
+    '<header><span>'+safe(status)+'</span><i></i></header><h3>'+safe(row.name)+'</h3>'+
+    '<p>'+(row.modeled?(row.activeLights+' capacidades conectadas · '+moneyText):'Control Central ya lo conoce. Falta convertirlo en una célula jugable de LINK WORLD.')+'</p>'+
+    '<div class="micelio-game-business-actions">'+(row.modeled&&row.linkWorldId?'<button data-game-business="'+safe(row.linkWorldId)+'" type="button">Abrir negocio →</button>':(integration?'<button data-game-work="'+safe(integration.key)+'" type="button">Crear célula conmigo →</button>':''))+'</div>'+
+  '</article>';
+}
+
+function gameIdeaCard(mission){
+  return '<button class="micelio-game-idea" data-game-work="'+safe(mission.key)+'" type="button"><span>'+safe(mission.lane)+'</span><strong>'+safe(mission.title)+'</strong><small>'+safe(mission.unlock)+'</small><i>→</i></button>';
+}
+
+function ecosystemGameMarkup(state,chapters){
+  const g=state.game;
+  if(!g)return '<div class="micelio-loading"><span></span><p>Preparando el juego con el estado real del ecosistema…</p></div>';
+  const s=g.stats;
+  const coverage=s.pendingBusinesses
+    ? s.modeledBusinesses+' ya tienen célula completa y '+s.pendingBusinesses+' esperan incorporación.'
+    : 'Todos los negocios reconocidos ya tienen célula en LINK WORLD.';
+  return '<section class="micelio-game">'+
+    '<div class="micelio-game-nav"><div>'+chapters+'</div><span>El grafo sigue disponible como mapa técnico</span></div>'+
+    '<header class="micelio-game-hero"><div><span class="micelio-eyebrow">ECOSISTEMA EN JUEGO</span><h2>'+s.knownBusinesses+' negocios reconocidos. Cada movimiento debe desbloquear algo real.</h2><p>'+safe(coverage)+' El objetivo no es llenar indicadores: es ayudar a cada negocio a vender, digitalizarse, automatizarse y reutilizar lo que aprende el resto del ecosistema.</p></div><div class="micelio-game-money"><span>RESULTADO VERIFICADO</span><strong>'+safe(g.moneyLabel)+'</strong><small>'+(s.realized>0?'Dinero respaldado por evidencia registrada.':'No significa que los negocios no vendan; significa que LINK aún no tiene una venta confirmada como evidencia.')+'</small></div></header>'+
+    '<div class="micelio-game-stats">'+
+      '<div><strong>'+s.knownBusinesses+'</strong><span>Negocios conocidos</span><small>'+s.modeledBusinesses+' ya viven en LINK WORLD</small></div>'+
+      '<div><strong>'+s.capabilities+'</strong><span>Capacidades para ayudarte</span><small>'+s.skills+' skills registradas</small></div>'+
+      '<div><strong>'+s.opportunities+'</strong><span>Movimientos comerciales</span><small>Se verifican antes de ejecutar</small></div>'+
+      '<div><strong>'+s.missions+'</strong><span>Misiones guardadas</span><small>Persisten en Control Central</small></div>'+
+    '</div>'+
+    '<section class="micelio-game-section"><div class="micelio-game-section-head"><div><span class="micelio-eyebrow">SIGUIENTE JUGADA</span><h2>No busques números: elige una misión.</h2><p>Cada tarjeta explica por qué importa, qué hacer, quién debe actuar y qué se desbloquea.</p></div></div><div class="micelio-game-missions">'+g.featured.map(m=>gameMissionCard(m,state)).join('')+'</div></section>'+
+    '<section class="micelio-game-section"><div class="micelio-game-section-head"><div><span class="micelio-eyebrow">TU MUNDO</span><h2>Negocios dentro y fuera del tablero.</h2><p>Lo que falta también forma parte del juego: si Control Central conoce un negocio pero Micelio aún no, aparece como misión de incorporación.</p></div></div><div class="micelio-game-businesses">'+g.portfolio.map(row=>gameBusinessCard(row,state)).join('')+'</div></section>'+
+    '<section class="micelio-game-section"><div class="micelio-game-section-head"><div><span class="micelio-eyebrow">IDEAS PARA SEGUIR CRECIENDO</span><h2>Cuando no sabes qué hacer, pregúntale al ecosistema.</h2></div></div><div class="micelio-game-ideas">'+g.ideas.map(gameIdeaCard).join('')+'</div></section>'+
+    '<section class="micelio-game-loop"><span class="micelio-eyebrow">REGLA DEL JUEGO INFINITO</span><div><p><b>1</b><strong>Observar</strong><small>Leer realidad y señales.</small></p><i>→</i><p><b>2</b><strong>Elegir misión</strong><small>Priorizar lo que desbloquea.</small></p><i>→</i><p><b>3</b><strong>Actuar</strong><small>Yo hago lo digital; tú lo externo.</small></p><i>→</i><p><b>4</b><strong>Aprender</strong><small>Persistir evidencia y generar el siguiente nivel.</small></p></div></section>'+
+  '</section>';
 }
 
 function buildEvolution(rows){
@@ -360,13 +409,17 @@ function shellMarkup(state){
   const chapters=Object.entries(viewNames).map(([key,name])=>'<button class="'+(state.view===key?'active':'')+'" data-micelio-view="'+key+'" type="button">'+safe(name)+(key==='proposals'?'<b>'+state.model.edges.filter(edge=>edge.state==='proposed').length+'</b>':'')+'</button>').join('');
   const hasPassport=Boolean(state.selectedNode||state.selectedEdge);
   const localControls=state.view==='local'?'<div class="micelio-local-depth"><span>PROFUNDIDAD</span>'+[1,2,3].map(depth=>'<button class="'+(state.localDepth===depth?'active':'')+'" data-action="local-depth-'+depth+'" type="button">'+depth+'</button>').join('')+'</div>':'';
-  return '<div class="micelio-shell" data-reading-depth="'+depth+'"><header class="micelio-head"><div><span class="micelio-eyebrow">LINK WORLD / CONNECTION READER</span><h1>Micelio <small>BETA</small></h1><p>Lee el organismo como una red: conexiones reales, vecindarios locales y fichas navegables.</p></div><div class="micelio-head-actions"><span class="micelio-sync-state"><i></i>'+(state.member?'Evento vivo + 90 s':'Vista abierta')+'</span><button data-action="refresh" type="button" aria-label="Sincronizar">'+(state.loading?'Leyendo…':'↻')+'</button><button data-action="theme" type="button" aria-label="Cambiar tema">'+(state.theme==='dark'?'☀':'◐')+'</button></div></header>'+economicEvolutionMarkup(state)+'<div class="micelio-stage"><aside class="micelio-overview-rail"><span class="micelio-eyebrow">PULSO</span>'+metricsMarkup(state)+'<button class="micelio-primary-button" data-action="data-panel" type="button">Capas y acceso</button><p class="micelio-boundary">Supabase es la fuente viva. El visor no crea una topología paralela.</p></aside><section class="micelio-workbench"><div class="micelio-chapter-rail"><div>'+chapters+'</div>'+localControls+'<button class="micelio-story-button '+(state.story.playing?'active':'')+'" data-action="story" type="button">'+(state.story.playing?'Pausar':'▶ Recorrido')+'</button></div><div class="micelio-canvas" data-viewer-state="'+safe(statusMessage(state))+'"><div class="micelio-canvas-status"><span>'+safe(statusMessage(state))+'</span><small>'+scale+'% · '+depth.toUpperCase()+'</small></div>'+graphMarkup(state,context)+'<nav class="micelio-viewer-nav" aria-label="Herramientas del visor"><button data-action="finder" type="button" title="Buscar nodo" aria-label="Buscar nodo">⌕<span>Buscar</span></button><button data-action="lens" type="button" title="Lente semántica" aria-label="Lente semántica">◫<span>Tipos</span></button><button data-action="route" type="button" title="Trazar ruta" aria-label="Trazar ruta">⇢<span>Ruta</span></button><button data-action="radar" type="button" title="Mapa general" aria-label="Mapa general">◇<span>Mapa</span></button><i></i><button data-action="zoom-out" type="button" aria-label="Alejar">−</button><button class="micelio-reset-view" data-action="reset-camera" type="button" aria-label="Restablecer vista">'+scale+'%</button><button data-action="zoom-in" type="button" aria-label="Acercar">+</button><button data-action="data-panel" type="button" title="Capas y acceso" aria-label="Capas y acceso">⋮</button></nav>'+radarMarkup(state,context)+activePanelMarkup(state)+'</div></section><aside class="micelio-inspector '+(hasPassport?'has-selection':'')+'">'+inspectorMarkup(state)+'</aside></div>'+(hasPassport?'<button class="micelio-sheet-backdrop" data-action="close-passport" aria-label="Cerrar pasaporte"></button>':'')+'<footer class="micelio-foot"><span>Relaciones registradas, no causalidad inferida.</span><span>'+safe(formatDate(state.lastRefresh))+'</span></footer></div>';
+  const header='<header class="micelio-head"><div><span class="micelio-eyebrow">LINK WORLD / ECOSISTEMA VIVO</span><h1>Micelio <small>BETA</small></h1><p>Juega con el ecosistema: entiende qué existe, qué falta y cuál es la siguiente misión útil.</p></div><div class="micelio-head-actions"><span class="micelio-sync-state"><i></i>'+(state.member?'Evento vivo + 90 s':'Vista abierta')+'</span><button data-action="refresh" type="button" aria-label="Sincronizar">'+(state.loading?'Leyendo…':'↻')+'</button><button data-action="theme" type="button" aria-label="Cambiar tema">'+(state.theme==='dark'?'☀':'◐')+'</button></div></header>';
+  if(state.view==='evolution'){
+    return '<div class="micelio-shell micelio-game-shell" data-reading-depth="'+depth+'">'+header+ecosystemGameMarkup(state,chapters)+'<footer class="micelio-foot"><span>El juego usa datos reales; una misión no equivale a un resultado hasta dejar evidencia.</span><span>'+safe(formatDate(state.lastRefresh))+'</span></footer></div>';
+  }
+  return '<div class="micelio-shell" data-reading-depth="'+depth+'">'+header+'<div class="micelio-stage"><aside class="micelio-overview-rail"><span class="micelio-eyebrow">PULSO</span>'+metricsMarkup(state)+'<button class="micelio-primary-button" data-action="data-panel" type="button">Capas y acceso</button><p class="micelio-boundary">Supabase es la fuente viva. El visor no crea una topología paralela.</p></aside><section class="micelio-workbench"><div class="micelio-chapter-rail"><div>'+chapters+'</div>'+localControls+'<button class="micelio-story-button '+(state.story.playing?'active':'')+'" data-action="story" type="button">'+(state.story.playing?'Pausar':'▶ Recorrido')+'</button></div><div class="micelio-canvas" data-viewer-state="'+safe(statusMessage(state))+'"><div class="micelio-canvas-status"><span>'+safe(statusMessage(state))+'</span><small>'+scale+'% · '+depth.toUpperCase()+'</small></div>'+graphMarkup(state,context)+'<nav class="micelio-viewer-nav" aria-label="Herramientas del visor"><button data-action="finder" type="button" title="Buscar nodo" aria-label="Buscar nodo">⌕<span>Buscar</span></button><button data-action="lens" type="button" title="Lente semántica" aria-label="Lente semántica">◫<span>Tipos</span></button><button data-action="route" type="button" title="Trazar ruta" aria-label="Trazar ruta">⇢<span>Ruta</span></button><button data-action="radar" type="button" title="Mapa general" aria-label="Mapa general">◇<span>Mapa</span></button><i></i><button data-action="zoom-out" type="button" aria-label="Alejar">−</button><button class="micelio-reset-view" data-action="reset-camera" type="button" aria-label="Restablecer vista">'+scale+'%</button><button data-action="zoom-in" type="button" aria-label="Acercar">+</button><button data-action="data-panel" type="button" title="Capas y acceso" aria-label="Capas y acceso">⋮</button></nav>'+radarMarkup(state,context)+activePanelMarkup(state)+'</div></section><aside class="micelio-inspector '+(hasPassport?'has-selection':'')+'">'+inspectorMarkup(state)+'</aside></div>'+(hasPassport?'<button class="micelio-sheet-backdrop" data-action="close-passport" aria-label="Cerrar pasaporte"></button>':'')+'<footer class="micelio-foot"><span>Relaciones registradas, no causalidad inferida.</span><span>'+safe(formatDate(state.lastRefresh))+'</span></footer></div>';
 }
 
 export function mountMicelioBeta(selector='#lw-micelio'){
   const root=document.querySelector(selector);
   if(!root)return {open(){},close(){},refresh(){}};
-  const state={open:false,loading:false,member:false,model:null,evolution:[],fatal:null,warnings:[],view:'organism',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
+  const state={open:false,loading:false,member:false,model:null,evolution:[],game:null,fatal:null,warnings:[],view:'evolution',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
   let channel=null,pollTimer=null,refreshTimer=null,storyTimer=null,routeTimer=null;
 
   const clearPlayback=()=>{
@@ -438,6 +491,40 @@ export function mountMicelioBeta(selector='#lw-micelio'){
     routeTimer=setTimeout(tick,900);
   };
   const openPanel=name=>{state.panel=state.panel===name?null:name;render();};
+
+  const gameMission=key=>state.game?.missions?.find(item=>item.key===key)||null;
+  const workGameMission=key=>{
+    const mission=gameMission(key);if(!mission)return;
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:mission.prompt}}));
+  };
+  const copyGameMission=async(key,button)=>{
+    const mission=gameMission(key);if(!mission)return;
+    try{await navigator.clipboard.writeText(mission.prompt);if(button){button.textContent='Copiado ✓';setTimeout(()=>{button.textContent='Copiar para ChatGPT';},1400);}}
+    catch{if(button)button.textContent='No se pudo copiar';}
+  };
+  const saveGameMission=async key=>{
+    const mission=gameMission(key);if(!mission||mission.accepted||!state.member)return;
+    const {data:{user}}=await db.auth.getUser();
+    const payload={
+      title:mission.title,
+      instruction:mission.prompt,
+      origin:'micelio_game',
+      status:'pending',
+      business_ids:mission.businessId?[mission.businessId]:[],
+      evidence:{
+        game_key:mission.key,
+        kind:mission.kind,
+        lane:mission.lane,
+        executor:mission.executor,
+        unlock:mission.unlock,
+        source:mission.source
+      },
+      created_by:user?.id||null
+    };
+    const {error}=await db.from('link_world_requests').insert(payload);
+    if(error){state.authError='No se pudo guardar la misión: '+error.message;state.panel='data';render();return;}
+    await refresh({quiet:true});
+  };
 
   function handleAction(action){
     if(action==='refresh'){refresh({manual:true});return;}
@@ -520,6 +607,10 @@ export function mountMicelioBeta(selector='#lw-micelio'){
   function bind(){
     root.onclick=event=>{
       const action=event.target.closest('[data-action]');if(action){handleAction(action.dataset.action);return;}
+      const work=event.target.closest('[data-game-work]');if(work){workGameMission(work.dataset.gameWork);return;}
+      const copy=event.target.closest('[data-game-copy]');if(copy){copyGameMission(copy.dataset.gameCopy,copy);return;}
+      const save=event.target.closest('[data-game-save]');if(save){saveGameMission(save.dataset.gameSave);return;}
+      const business=event.target.closest('[data-game-business]');if(business){document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:business.dataset.gameBusiness}}));return;}
       const view=event.target.closest('[data-micelio-view]');if(view){setView(view.dataset.micelioView);return;}
       const lens=event.target.closest('[data-lens-kind]');if(lens){const kind=lens.dataset.lensKind;state.lens=state.lens.includes(kind)?state.lens.filter(item=>item!==kind):[...state.lens.slice(-1),kind];render();return;}
       const found=event.target.closest('[data-finder-node]');if(found){const id=found.dataset.finderNode;state.panel=null;state.view='local';state.localDepth=1;selectNode(id);return;}
@@ -578,7 +669,7 @@ export function mountMicelioBeta(selector='#lw-micelio'){
     const coreFailure=results.find(result=>result.key==='businesses'&&result.error);
     if(coreFailure){state.fatal=coreFailure.error;state.loading=false;render();return;}
     const firstLoad=!state.model;
-    state.member=member;state.warnings=warnings;state.model=buildMicelioModel(rows,{member,capturedAt:new Date().toISOString(),warnings});state.evolution=member?buildEvolution(rows):[];state.lastRefresh=new Date().toISOString();state.loading=false;
+    state.member=member;state.warnings=warnings;state.model=buildMicelioModel(rows,{member,capturedAt:new Date().toISOString(),warnings});state.evolution=member?buildEvolution(rows):[];state.game=buildMicelioGame(rows,state.evolution);state.lastRefresh=new Date().toISOString();state.loading=false;
     if(firstLoad)state.camera=cameraBase();
     if(state.selectedNode&&!state.model.nodes.some(node=>node.id===state.selectedNode))state.selectedNode=null;
     if(state.selectedEdge&&!state.model.edges.some(edge=>edge.id===state.selectedEdge))state.selectedEdge=null;
