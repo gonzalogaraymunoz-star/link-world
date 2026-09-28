@@ -55,11 +55,12 @@ test('Circular layout is deterministic and reachability follows edge direction',
 
 test('local graph expands by depth and keeps only registered neighborhood',()=>{
   const model=buildMicelioModel(fixture,{member:true});
-  const depth1=localNeighborhood(model,'LNK-BIZ-001',1);
-  assert.ok(depth1.nodes.has('LNK-CLI-001'));
-  assert.ok(depth1.nodes.has('LNK-CTL-001'));
+  const depth1=localNeighborhood(model,'LNK-CTL-001',1);
+  assert.ok(depth1.nodes.has('LNK-BIZ-001'));
+  assert.ok(!depth1.nodes.has('LNK-CLI-001'));
   assert.ok(!depth1.nodes.has('LNK-PRD-001'));
-  const depth2=localNeighborhood(model,'LNK-BIZ-001',2);
+  const depth2=localNeighborhood(model,'LNK-CTL-001',2);
+  assert.ok(depth2.nodes.has('LNK-CLI-001'));
   assert.ok(depth2.nodes.has('LNK-PRD-001'));
   assert.ok(depth2.edges.size>=depth1.edges.size);
 });
