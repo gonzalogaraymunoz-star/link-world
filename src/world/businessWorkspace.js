@@ -18,7 +18,7 @@ const RRSS_PANEL_URL='https://linkrrss.vercel.app';
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -87,19 +87,35 @@ async function loadBusiness(businessId){
     else state.taxiHotelOperations=Array.isArray(ops?.rows)?ops.rows:[];
   }
   if(state.canWrite){
-    const [tx,docs]=await Promise.all([
+    const [tx,docs,mpAccounts,taxProfiles,mpDashboard,bankProgress]=await Promise.all([
       db.from('link_world_transactions')
         .select('id,direction,transaction_type,status,amount,currency,external_reference,documentary_status,occurred_at,metadata')
         .eq('business_id',businessId).order('occurred_at',{ascending:false}),
       db.from('link_world_documents')
         .select('id,transaction_id,document_type,drive_url,file_name,issue_date,amount,currency')
-        .eq('business_id',businessId).order('issue_date',{ascending:false})
+        .eq('business_id',businessId).order('issue_date',{ascending:false}),
+      db.from('link_payment_provider_accounts')
+        .select('id,environment,status,webhook_status,external_merchant_id,verified_at,last_webhook_at,last_error,metadata')
+        .eq('business_id',businessId).order('environment',{ascending:true}),
+      db.from('link_tax_profiles')
+        .select('id,profile_key,country_code,tax_treatment,tax_code,tax_rate,document_type,price_includes_tax,status,notes,approved_at')
+        .eq('business_id',businessId).order('valid_from',{ascending:false}),
+      db.from('link_payment_dashboard_v').select('*').eq('business_id',businessId),
+      db.from('link_bancarization_progress_v').select('*').eq('business_id',businessId).maybeSingle()
     ]);
     state.financeTransactions=tx.error?[]:(tx.data||[]);
     state.financeDocuments=docs.error?[]:(docs.data||[]);
+    state.paymentProviderAccounts=mpAccounts.error?[]:(mpAccounts.data||[]);
+    state.taxProfiles=taxProfiles.error?[]:(taxProfiles.data||[]);
+    state.paymentDashboard=mpDashboard.error?[]:(mpDashboard.data||[]);
+    state.bancarizationProgress=bankProgress.error?null:(bankProgress.data||null);
   }else{
     state.financeTransactions=[];
     state.financeDocuments=[];
+    state.paymentProviderAccounts=[];
+    state.taxProfiles=[];
+    state.paymentDashboard=[];
+    state.bancarizationProgress=null;
   }
 }
 function facts(){
@@ -202,7 +218,7 @@ function taxiHotelOperationsPanelMarkup(){
       '<div class="bw-taxi-op-main"><div><small>Salida</small><strong>'+safe(taxiDateTime(r.outbound_at))+'</strong></div><div><small>Total</small><strong>'+money(r.quoted_total_clp,'CLP')+'</strong></div><div><small>Pago</small><strong>'+safe(paymentLabel)+'</strong></div></div>'+
       '<div class="bw-taxi-legs">'+(legHtml||'<span class="bw-soft">Sin tramos generados.</span>')+'</div>'+
       '<div class="bw-facts">'+assignmentHtml+'</div>'+
-      '<button class="bw-taxi-director" type="button" data-taxi-director="'+safe(r.reservation_code)+'">Gestionar con Director →</button>'+
+      '<div class="bw-taxi-card-actions"><button class="bw-taxi-director" type="button" data-taxi-director="'+safe(r.reservation_code)+'">Gestionar con Director →</button>'+(['availability_confirmed','awaiting_payment'].includes(r.reservation_status)?'<button class="bw-mp-checkout" type="button" data-mp-checkout="'+safe(r.id)+'">Cobro sandbox →</button>':'')+'</div>'+
     '</article>';
   }).join('');
   return '<section class="bw-products-section bw-taxi-ops-section">'+
@@ -211,6 +227,75 @@ function taxiHotelOperationsPanelMarkup(){
     '<div class="bw-taxi-ops-grid">'+(cards||'<div class="bw-empty"><strong>No hay reservas todavía.</strong><span>La primera solicitud creada desde taxihotel.vercel.app aparecerá aquí inmediatamente después de sincronizar.</span></div>')+'</div>'+
   '</section>';
 }
+
+function mercadoPagoPanelMarkup(){
+  if(state.business?.slug!=='taxi-hotel'||!state.canWrite)return '';
+  const test=state.paymentProviderAccounts.find(x=>x.environment==='test')||{};
+  const prod=state.paymentProviderAccounts.find(x=>x.environment==='production')||{};
+  const tax=state.taxProfiles[0]||{};
+  const progress=state.bancarizationProgress||{};
+  const prodDash=state.paymentDashboard.find(x=>x.environment==='production')||{};
+  const points=Number(progress.progress_points||0);
+  const milestones=[
+    ['Cuenta',Boolean(progress.account_connected)],
+    ['Webhook',Boolean(progress.webhook_verified)],
+    ['1er cobro',Boolean(progress.first_approved_payment)],
+    ['Documento',Boolean(progress.documentary_complete)],
+    ['Conciliación',Boolean(progress.settlement_reconciled)]
+  ];
+  const testReady=['sandbox_ready','active'].includes(test.status);
+  const prodReady=prod.status==='active';
+  const realCharges=prod.metadata?.real_charges_enabled===true;
+  const taxVerified=tax.status==='verified';
+  const taxLabel=tax.id?(tax.tax_treatment==='exempt'?'Exento · 0%':(safe(tax.tax_treatment)+' · '+safe(tax.tax_rate)+'%')):'Sin perfil';
+  return '<section class="bw-products-section bw-mp-section">'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">COBRO / MERCADO PAGO</span><h2>Cobro trazable + formalización financiera</h2><p>Mercado Pago procesa el dinero; Taxi Hotel conserva la reserva; LINK registra monto, tratamiento tributario, estado, comisión y conciliación. La barra mide evidencia operativa, no riesgo crediticio.</p></div><span class="bw-mp-score">'+points+'/100</span></div>'+
+    '<div class="bw-mp-progress"><i style="--progress:'+Math.max(0,Math.min(100,points))+'%"></i>'+milestones.map(([label,done])=>'<span class="'+(done?'done':'')+'"><b>'+(done?'✓':'○')+'</b>'+safe(label)+'</span>').join('')+'</div>'+
+    '<div class="bw-mp-grid">'+
+      '<article><small>Sandbox</small><strong>'+safe(testReady?'Conectado':(test.status||'Sin credenciales'))+'</strong><span>'+safe(test.webhook_status==='verified'?'Webhook verificado':'Webhook pendiente')+'</span><button type="button" data-mp-verify="test">'+(testReady?'Re-verificar':'Verificar sandbox')+'</button></article>'+
+      '<article><small>Producción</small><strong>'+safe(prodReady?'Cuenta verificada':(prod.status||'Sin credenciales'))+'</strong><span>'+(realCharges?'Cobros reales habilitados':'Seguro de cobro real: bloqueado')+'</span><button type="button" data-mp-verify="production">'+(prodReady?'Re-verificar':'Verificar producción')+'</button></article>'+
+      '<article><small>Tributación Chile</small><strong>'+safe(taxLabel)+'</strong><span>'+safe(tax.status==='verified'?'Perfil verificado':'Perfil propuesto · requiere validación antes de producción')+'</span></article>'+
+      '<article><small>Producción observada</small><strong>'+money(prodDash.approved_gross_amount||0,'CLP')+'</strong><span>'+safe(prodDash.approved_payments||0)+' pagos aprobados · '+safe(prodDash.reconciled_settlements||0)+' conciliados</span></article>'+
+    '</div>'+
+    '<div class="bw-mp-guard">'+
+      '<span><b>Checkout real</b>'+(prodReady&&taxVerified&&realCharges?'Habilitado por las tres barreras':'Bloqueado hasta: cuenta productiva + perfil tributario verificado + seguro explícito')+'</span>'+
+      '<span><b>Datos de tarjeta</b>No entran a LINK; el checkout queda hospedado en Mercado Pago.</span>'+
+    '</div>'+
+  '</section>';
+}
+async function verifyMercadoPago(environment){
+  try{
+    await writeSession();
+    notice('Verificando Mercado Pago '+environment+'…');
+    const {data,error}=await db.functions.invoke('mercado-pago',{body:{action:'verify_connection',business_id:state.business.id,environment}});
+    if(error)throw error;
+    if(!data?.ok)throw new Error(data?.error||'No se pudo verificar la conexión.');
+    await refresh();
+    notice(environment==='test'?'Sandbox Mercado Pago verificado.':'Cuenta productiva verificada; los cobros reales siguen sujetos al seguro y al perfil tributario.');
+  }catch(e){notice('Mercado Pago: '+(e.message||'no se pudo verificar la conexión.'),true);}
+}
+async function createMercadoPagoSandboxCheckout(reservationId){
+  let tab=null;
+  try{
+    await writeSession();
+    tab=window.open('about:blank','_blank');
+    notice('Creando checkout sandbox…');
+    const {data,error}=await db.functions.invoke('mercado-pago',{body:{action:'create_checkout',reservation_id:reservationId,environment:'test'}});
+    if(error)throw error;
+    if(!data?.ok||!data?.checkout_url)throw new Error(data?.error||'No se pudo crear el checkout.');
+    if(tab){tab.opener=null;tab.location.href=data.checkout_url;}
+    await refresh();
+    notice('Checkout sandbox creado sin habilitar cobros reales.');
+  }catch(e){
+    if(tab)tab.close();
+    notice('Checkout sandbox: '+(e.message||'no se pudo crear.'),true);
+  }
+}
+function bindMercadoPagoPanel(root){
+  root.querySelectorAll('[data-mp-verify]').forEach(button=>button.addEventListener('click',()=>verifyMercadoPago(button.dataset.mpVerify)));
+  root.querySelectorAll('[data-mp-checkout]').forEach(button=>button.addEventListener('click',()=>createMercadoPagoSandboxCheckout(button.dataset.mpCheckout)));
+}
+
 function financePanelMarkup(){
   if(!state.canWrite){
     return '<section class="bw-products-section bw-finance-section"><div class="bw-section-head"><div><span class="bw-kicker">FINANZAS / PRIVADO</span><h2>Panel financiero</h2><p>Los montos financieros solo se muestran a miembros autenticados de LINK.</p></div><span class="bw-open-mode">Sesión LINK requerida</span></div></section>';
@@ -432,10 +517,12 @@ function renderOperationalHouseBusinessCell(){
       '<article class="bw-panel span-2"><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta esta casa al ecosistema</h2><div class="bw-capabilities">'+capabilities.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
     '</section>',
     taxiHotelOperationsPanelMarkup(),
+    mercadoPagoPanelMarkup(),
     '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>'+safe(counterpartyTitle)+'</h2><p>Son proyecciones de identidad desde '+safe(counterpartySource)+'. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Las relaciones deben existir en la fuente o contar con evidencia antes de incorporarse a LINK WORLD.</span></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">CATÁLOGO / PROYECCIÓN</span><h2>'+safe(network.active_catalog_products??0)+' '+safe(productTitle.toLowerCase())+' sin duplicarlos</h2><p>El catálogo canónico sigue en '+safe(sourceName)+' ('+safe(catalogSource)+'). LINK WORLD observa identidad y capacidad de distribución; no mantiene una segunda copia de precios, reservas o estados transaccionales.</p></div></div><div class="bw-capabilities">'+Object.entries(categories).map(([k,v])=>'<div><b>'+safe(v)+'</b><span>'+safe(String(k).replaceAll('_',' '))+'</span></div>').join('')+'</div></section>'
   ].join('');
   bindRrssApparatus(root);
+  bindMercadoPagoPanel(root);
   $('#bw-close-operational-house').addEventListener('click',close);
   $('#bw-refresh-operational-house').addEventListener('click',refresh);
   $('#bw-operational-house-director').addEventListener('click',()=>{
