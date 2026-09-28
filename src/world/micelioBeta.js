@@ -1,6 +1,6 @@
 import {createClient} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './connection.js';
-import {buildMicelioModel,layoutMicelio,reachable} from './micelioModel.js';
+import {buildMicelioModel,layoutMicelio,reachable,localNeighborhood} from './micelioModel.js';
 
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
@@ -15,7 +15,7 @@ const formatDate=value=>{
   catch{return String(value);}
 };
 
-const viewNames={organism:'Organismo',businesses:'Negocios',records:'Fichas',operations:'Operación',proposals:'Propuestas'};
+const viewNames={organism:'Grafo global',local:'Grafo local',businesses:'Negocios',records:'Fichas',operations:'Operación',proposals:'Propuestas'};
 const typeNames={control:'Control',business:'Negocio',client:'Cliente',product:'Producto'};
 const stateNames={active:'Activo',proposed:'Propuesta',attention:'Atención',unknown:'Sin verificar'};
 const originNames={entity_relations:'Relación canónica',link_world_relations:'Propuesta de negocio',foreign_key:'Estructura de ficha'};
@@ -99,9 +99,13 @@ const VIEWBOX={x:0,y:0,width:900,height:640};
 const CAMERA_RATIO=VIEWBOX.width/VIEWBOX.height;
 const typeOrder={control:0,business:1,client:2,product:3};
 
-function viewScope(model,view){
+function viewScope(model,view,selectedNode=null,localDepth=1){
   const allNodes=new Set(model.nodes.map(node=>node.id));
   const allEdges=new Set(model.edges.map(edge=>edge.id));
+  if(view==='local'){
+    const local=localNeighborhood(model,selectedNode,localDepth);
+    return local.nodes.size?local:{nodes:allNodes,edges:allEdges};
+  }
   if(view==='records')return {nodes:new Set(model.nodes.filter(node=>node.type!=='control').map(node=>node.id)),edges:allEdges};
   if(view==='businesses'){
     const nodes=new Set(model.nodes.filter(node=>node.type==='business').map(node=>node.id));
@@ -119,12 +123,11 @@ function viewScope(model,view){
     const edges=model.edges.filter(edge=>edge.state==='proposed');
     return {nodes:new Set(edges.flatMap(edge=>[edge.source,edge.target])),edges:new Set(edges.map(edge=>edge.id))};
   }
-  const organism=new Set(model.nodes.filter(node=>node.type==='control'||node.type==='business').map(node=>node.id));
-  return {nodes:organism.size?organism:allNodes,edges:new Set(model.edges.filter(edge=>organism.has(edge.source)&&organism.has(edge.target)).map(edge=>edge.id))};
+  return {nodes:allNodes,edges:allEdges};
 }
 
 function graphContext(state){
-  const scope=viewScope(state.model,state.view);
+  const scope=viewScope(state.model,state.view,state.selectedNode||state.lastNode,state.localDepth);
   const nodes=state.model.nodes.filter(node=>scope.nodes.has(node.id));
   const nodeIds=new Set(nodes.map(node=>node.id));
   const edges=state.model.edges.filter(edge=>nodeIds.has(edge.source)&&nodeIds.has(edge.target)&&(scope.edges.has(edge.id)||state.view==='records'));
@@ -211,11 +214,12 @@ function graphMarkup(state,context){
     if(state.selectedEdge===edge.id)classes.push('is-selected');
     if(state.readEdges.has(edge.id))classes.push('is-read');
     if(routeEdges.has(edge.id))classes.push('is-route');
-    return '<g class="'+classes.join(' ')+'" data-edge-id="'+safe(edge.id)+'" data-edge-from="'+safe(edge.source)+'" data-edge-to="'+safe(edge.target)+'" role="button" tabindex="0" aria-label="Ruta '+safe(edge.label)+'"><path class="micelio-edge-hit" d="'+path+'"></path><path class="micelio-edge-line" d="'+path+'" marker-end="url(#micelio-arrow)"></path></g>';
+    const domId='micelio-edge-'+String(edge.id).replace(/[^a-zA-Z0-9_-]/g,'-');
+    return '<g class="'+classes.join(' ')+'" data-edge-id="'+safe(edge.id)+'" data-edge-from="'+safe(edge.source)+'" data-edge-to="'+safe(edge.target)+'" role="button" tabindex="0" aria-label="Conexión '+safe(edge.label)+'"><path class="micelio-edge-hit" d="'+path+'"></path><path id="'+domId+'" class="micelio-edge-line" d="'+path+'" marker-end="url(#micelio-arrow)"></path><text class="micelio-edge-label"><textPath href="#'+domId+'" startOffset="50%" text-anchor="middle">'+safe(labelize(edge.label))+'</textPath></text></g>';
   }).join('');
   const nodes=context.nodes.map(node=>{
     const point=context.positions.get(node.id);if(!point)return '';
-    const radius=node.type==='control'?58:node.type==='business'?50:node.type==='client'?32:29;
+    const radius=point.r||24;
     const lensMatch=!lens.size||lens.has(node.type);
     const routeMatch=!state.route.result||routeNodes.has(node.id);
     const reachMatch=!reachNodes||reachNodes.has(node.id);
@@ -319,13 +323,14 @@ function shellMarkup(state){
   const depth=scale>=170?'full':scale<100?'map':'read';
   const chapters=Object.entries(viewNames).map(([key,name])=>'<button class="'+(state.view===key?'active':'')+'" data-micelio-view="'+key+'" type="button">'+safe(name)+(key==='proposals'?'<b>'+state.model.edges.filter(edge=>edge.state==='proposed').length+'</b>':'')+'</button>').join('');
   const hasPassport=Boolean(state.selectedNode||state.selectedEdge);
-  return '<div class="micelio-shell" data-reading-depth="'+depth+'"><header class="micelio-head"><div><span class="micelio-eyebrow">LINK WORLD / ARCHIFY READER</span><h1>Micelio <small>BETA</small></h1><p>Explora estructura, rutas y evidencia sin separar las fichas de LINK.</p></div><div class="micelio-head-actions"><span class="micelio-sync-state"><i></i>'+(state.member?'Evento vivo + 90 s':'Vista abierta')+'</span><button data-action="refresh" type="button" aria-label="Sincronizar">'+(state.loading?'Leyendo…':'↻')+'</button><button data-action="theme" type="button" aria-label="Cambiar tema">'+(state.theme==='dark'?'☀':'◐')+'</button></div></header><div class="micelio-stage"><aside class="micelio-overview-rail"><span class="micelio-eyebrow">PULSO</span>'+metricsMarkup(state)+'<button class="micelio-primary-button" data-action="data-panel" type="button">Capas y acceso</button><p class="micelio-boundary">Supabase es la fuente viva. El visor no crea una topología paralela.</p></aside><section class="micelio-workbench"><div class="micelio-chapter-rail"><div>'+chapters+'</div><button class="micelio-story-button '+(state.story.playing?'active':'')+'" data-action="story" type="button">'+(state.story.playing?'Pausar':'▶ Recorrido')+'</button></div><div class="micelio-canvas" data-viewer-state="'+safe(statusMessage(state))+'"><div class="micelio-canvas-status"><span>'+safe(statusMessage(state))+'</span><small>'+scale+'% · '+depth.toUpperCase()+'</small></div>'+graphMarkup(state,context)+'<nav class="micelio-viewer-nav" aria-label="Herramientas del visor"><button data-action="finder" type="button" title="Buscar nodo" aria-label="Buscar nodo">⌕<span>Buscar</span></button><button data-action="lens" type="button" title="Lente semántica" aria-label="Lente semántica">◫<span>Tipos</span></button><button data-action="route" type="button" title="Trazar ruta" aria-label="Trazar ruta">⇢<span>Ruta</span></button><button data-action="radar" type="button" title="Mapa general" aria-label="Mapa general">◇<span>Mapa</span></button><i></i><button data-action="zoom-out" type="button" aria-label="Alejar">−</button><button class="micelio-reset-view" data-action="reset-camera" type="button" aria-label="Restablecer vista">'+scale+'%</button><button data-action="zoom-in" type="button" aria-label="Acercar">+</button><button data-action="data-panel" type="button" title="Capas y acceso" aria-label="Capas y acceso">⋮</button></nav>'+radarMarkup(state,context)+activePanelMarkup(state)+'</div></section><aside class="micelio-inspector '+(hasPassport?'has-selection':'')+'">'+inspectorMarkup(state)+'</aside></div>'+(hasPassport?'<button class="micelio-sheet-backdrop" data-action="close-passport" aria-label="Cerrar pasaporte"></button>':'')+'<footer class="micelio-foot"><span>Relaciones registradas, no causalidad inferida.</span><span>'+safe(formatDate(state.lastRefresh))+'</span></footer></div>';
+  const localControls=state.view==='local'?'<div class="micelio-local-depth"><span>PROFUNDIDAD</span>'+[1,2,3].map(depth=>'<button class="'+(state.localDepth===depth?'active':'')+'" data-action="local-depth-'+depth+'" type="button">'+depth+'</button>').join('')+'</div>':'';
+  return '<div class="micelio-shell" data-reading-depth="'+depth+'"><header class="micelio-head"><div><span class="micelio-eyebrow">LINK WORLD / CONNECTION READER</span><h1>Micelio <small>BETA</small></h1><p>Lee el organismo como una red: conexiones reales, vecindarios locales y fichas navegables.</p></div><div class="micelio-head-actions"><span class="micelio-sync-state"><i></i>'+(state.member?'Evento vivo + 90 s':'Vista abierta')+'</span><button data-action="refresh" type="button" aria-label="Sincronizar">'+(state.loading?'Leyendo…':'↻')+'</button><button data-action="theme" type="button" aria-label="Cambiar tema">'+(state.theme==='dark'?'☀':'◐')+'</button></div></header><div class="micelio-stage"><aside class="micelio-overview-rail"><span class="micelio-eyebrow">PULSO</span>'+metricsMarkup(state)+'<button class="micelio-primary-button" data-action="data-panel" type="button">Capas y acceso</button><p class="micelio-boundary">Supabase es la fuente viva. El visor no crea una topología paralela.</p></aside><section class="micelio-workbench"><div class="micelio-chapter-rail"><div>'+chapters+'</div>'+localControls+'<button class="micelio-story-button '+(state.story.playing?'active':'')+'" data-action="story" type="button">'+(state.story.playing?'Pausar':'▶ Recorrido')+'</button></div><div class="micelio-canvas" data-viewer-state="'+safe(statusMessage(state))+'"><div class="micelio-canvas-status"><span>'+safe(statusMessage(state))+'</span><small>'+scale+'% · '+depth.toUpperCase()+'</small></div>'+graphMarkup(state,context)+'<nav class="micelio-viewer-nav" aria-label="Herramientas del visor"><button data-action="finder" type="button" title="Buscar nodo" aria-label="Buscar nodo">⌕<span>Buscar</span></button><button data-action="lens" type="button" title="Lente semántica" aria-label="Lente semántica">◫<span>Tipos</span></button><button data-action="route" type="button" title="Trazar ruta" aria-label="Trazar ruta">⇢<span>Ruta</span></button><button data-action="radar" type="button" title="Mapa general" aria-label="Mapa general">◇<span>Mapa</span></button><i></i><button data-action="zoom-out" type="button" aria-label="Alejar">−</button><button class="micelio-reset-view" data-action="reset-camera" type="button" aria-label="Restablecer vista">'+scale+'%</button><button data-action="zoom-in" type="button" aria-label="Acercar">+</button><button data-action="data-panel" type="button" title="Capas y acceso" aria-label="Capas y acceso">⋮</button></nav>'+radarMarkup(state,context)+activePanelMarkup(state)+'</div></section><aside class="micelio-inspector '+(hasPassport?'has-selection':'')+'">'+inspectorMarkup(state)+'</aside></div>'+(hasPassport?'<button class="micelio-sheet-backdrop" data-action="close-passport" aria-label="Cerrar pasaporte"></button>':'')+'<footer class="micelio-foot"><span>Relaciones registradas, no causalidad inferida.</span><span>'+safe(formatDate(state.lastRefresh))+'</span></footer></div>';
 }
 
 export function mountMicelioBeta(selector='#lw-micelio'){
   const root=document.querySelector(selector);
   if(!root)return {open(){},close(){},refresh(){}};
-  const state={open:false,loading:false,member:false,model:null,fatal:null,warnings:[],view:'organism',selectedNode:null,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
+  const state={open:false,loading:false,member:false,model:null,fatal:null,warnings:[],view:'organism',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
   let channel=null,pollTimer=null,refreshTimer=null,storyTimer=null,routeTimer=null;
 
   const clearPlayback=()=>{
@@ -338,11 +343,28 @@ export function mountMicelioBeta(selector='#lw-micelio'){
     bind();
   };
   const setView=view=>{
-    clearPlayback();state.view=view;state.selectedNode=null;state.selectedEdge=null;state.reach=null;state.reachDirection=null;state.route.result=null;state.route.error=null;state.camera=cameraBase();state.panel=null;render();
+    clearPlayback();
+    if(view==='local'&&!state.selectedNode){
+      state.selectedNode=state.lastNode||state.model?.nodes.find(node=>node.type==='business')?.id||state.model?.nodes[0]?.id||null;
+    }
+    state.view=view;
+    if(view!=='local'&&view!=='organism')state.selectedNode=null;
+    state.selectedEdge=null;state.reach=null;state.reachDirection=null;state.route.result=null;state.route.error=null;state.camera=cameraBase();state.panel=null;render();
   };
   const selectNode=id=>{
-    state.selectedNode=id;state.selectedEdge=null;state.reach=null;state.reachDirection=null;
+    state.selectedNode=id;state.lastNode=id;state.selectedEdge=null;state.reach=null;state.reachDirection=null;
     revealNodeCamera(state,id);render();
+  };
+  const openCanonicalRecord=id=>{
+    const node=state.model?.nodes.find(item=>item.id===id);if(!node)return;
+    state.selectedNode=id;state.lastNode=id;state.selectedEdge=null;
+    if(!node.businessId){selectNode(id);return;}
+    document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{
+      id:node.businessId,
+      clientId:node.type==='client'?node.ownerRecordId:(node.clientId||null),
+      productId:node.type==='product'?node.ownerRecordId:null,
+      graphNodeId:node.id
+    }}));
   };
   const selectEdge=id=>{
     state.selectedEdge=id;state.selectedNode=null;state.reach=null;state.reachDirection=null;state.readEdges.add(id);writeProgress(state.readEdges);render();
@@ -410,10 +432,9 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       else{state.route.result=result;state.route.index=0;state.view=result.nodes.some(id=>['client','product'].includes(state.model.nodes.find(node=>node.id===id)?.type))?'records':'organism';state.camera=cameraForIds(graphContext(state),result.nodes);state.selectedNode=null;state.selectedEdge=null;}
       render();return;
     }
-    if(action==='open-record'){
-      const node=state.model?.nodes.find(item=>item.id===state.selectedNode);
-      if(node?.businessId)document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:node.businessId}}));
-      return;
+    if(action==='open-record'){openCanonicalRecord(state.selectedNode);return;}
+    if(action.startsWith('local-depth-')){
+      state.localDepth=Math.max(1,Math.min(3,Number(action.slice(-1))||1));state.view='local';state.camera=cameraBase();render();return;
     }
   }
 
@@ -465,11 +486,11 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       const action=event.target.closest('[data-action]');if(action){handleAction(action.dataset.action);return;}
       const view=event.target.closest('[data-micelio-view]');if(view){setView(view.dataset.micelioView);return;}
       const lens=event.target.closest('[data-lens-kind]');if(lens){const kind=lens.dataset.lensKind;state.lens=state.lens.includes(kind)?state.lens.filter(item=>item!==kind):[...state.lens.slice(-1),kind];render();return;}
-      const found=event.target.closest('[data-finder-node]');if(found){const id=found.dataset.finderNode,node=state.model.nodes.find(item=>item.id===id);if(node?.type==='client'||node?.type==='product')state.view='records';else if(node?.type==='control'||node?.type==='business')state.view='organism';state.panel=null;selectNode(id);return;}
+      const found=event.target.closest('[data-finder-node]');if(found){const id=found.dataset.finderNode;state.panel=null;state.view='local';state.localDepth=1;selectNode(id);return;}
       const radar=event.target.closest('[data-radar-node]');if(radar){selectNode(radar.dataset.radarNode);return;}
       const step=event.target.closest('[data-route-step]');if(step){state.route.index=Number(step.dataset.routeStep)||0;routeStep(0);return;}
       const reach=event.target.closest('[data-reach]');if(reach&&state.selectedNode){state.reach=reachable(state.model,state.selectedNode,reach.dataset.reach);state.reachDirection=reach.dataset.reach;if([...state.reach.nodes].some(id=>['client','product'].includes(state.model.nodes.find(node=>node.id===id)?.type)))state.view='records';state.camera=cameraForIds(graphContext(state),[...state.reach.nodes]);render();return;}
-      const node=event.target.closest('[data-node-id]');if(node){selectNode(node.dataset.nodeId);return;}
+      const node=event.target.closest('[data-node-id]');if(node){openCanonicalRecord(node.dataset.nodeId);return;}
       const edge=event.target.closest('[data-edge-id]');if(edge){selectEdge(edge.dataset.edgeId);return;}
     };
     root.onkeydown=event=>{
@@ -487,6 +508,17 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       state.panel=null;await refresh({manual:true});
     });
     root.querySelector('[data-action="sign-out"]')?.addEventListener('click',async()=>{await db.auth.signOut();state.panel=null;await refresh({manual:true});});
+    const setHover=id=>{
+      const connected=new Set([id]);
+      state.model?.edges.forEach(edge=>{if(edge.source===id)connected.add(edge.target);if(edge.target===id)connected.add(edge.source);});
+      root.querySelectorAll('[data-node-id]').forEach(el=>el.classList.toggle('is-hover-dim',Boolean(id)&&!connected.has(el.dataset.nodeId)));
+      root.querySelectorAll('[data-edge-id]').forEach(el=>el.classList.toggle('is-hover-dim',Boolean(id)&&el.dataset.edgeFrom!==id&&el.dataset.edgeTo!==id));
+      root.querySelector('[data-node-id="'+CSS.escape(id||'')+'"]')?.classList.toggle('is-hover',Boolean(id));
+    };
+    root.querySelectorAll('[data-node-id]').forEach(el=>{
+      el.addEventListener('pointerenter',()=>setHover(el.dataset.nodeId));
+      el.addEventListener('pointerleave',()=>setHover(null));
+    });
     bindCamera();
   }
 
