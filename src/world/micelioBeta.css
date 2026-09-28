@@ -500,3 +500,23 @@
 .micelio-node.game-red_close .micelio-node-heat,.micelio-node.game-critical_frozen .micelio-node-heat{fill:#d8342f}
 .micelio-node.game-frozen .micelio-node-core,.micelio-node.game-cold .micelio-node-core{stroke:#78a9d4!important}
 .micelio-node.game-frozen .micelio-node-heat,.micelio-node.game-cold .micelio-node-heat{fill:#78a9d4}
+
+
+/* Global game state across every Micelio panel */
+.micelio-global-pulse{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);gap:8px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--my-line);background:color-mix(in srgb,var(--my-panel) 90%,transparent);position:relative;z-index:10}
+.micelio-global-pulse>div{display:flex;align-items:baseline;gap:5px;border:1px solid var(--my-line);border-radius:999px;padding:5px 8px;background:var(--my-panel)}
+.micelio-global-pulse>div span{font-weight:800;font-size:11px}.micelio-global-pulse>div span.is-red{color:#d8342f}.micelio-global-pulse>div span.is-cold{color:#4e86b8}
+.micelio-global-pulse>div small{font-size:7px;color:var(--my-muted);white-space:nowrap}
+.micelio-global-pulse>p{margin:0;min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--my-soft);border-radius:10px;padding:7px 9px}
+.micelio-global-pulse>p b{font-size:8px;white-space:nowrap}.micelio-global-pulse>p span{font-size:8px;color:var(--my-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.micelio-global-pulse>p button{appearance:none;border:0;background:var(--my-ink);color:var(--my-paper);border-radius:999px;padding:5px 8px;font-size:7px;font-weight:800;cursor:pointer}
+.micelio-passport-game{border:1px solid var(--my-line);border-radius:13px;padding:10px;margin:10px 0;display:grid;gap:7px;background:var(--my-soft)}
+.micelio-passport-game>header{display:flex;justify-content:space-between;gap:8px;align-items:center}.micelio-passport-game>header span{font-size:7px;letter-spacing:.1em;font-weight:800;color:var(--my-muted)}.micelio-passport-game>header b{font-size:9px}
+.micelio-passport-game>div{display:flex;align-items:baseline;gap:7px}.micelio-passport-game>div strong{font-size:21px;letter-spacing:-.04em}.micelio-passport-game>div i{font-style:normal;color:var(--my-muted)}.micelio-passport-game>div small{font-size:8px;color:var(--my-muted)}
+.micelio-passport-game p{font-size:9px;line-height:1.45;margin:0;color:var(--my-muted)}.micelio-passport-game em{font-style:normal;font-size:8px;color:#8c622a;background:#fff3d8;border-radius:8px;padding:6px 7px}
+.micelio-passport-game button{appearance:none;border:0;background:transparent;text-align:left;padding:0;font-size:8px;font-weight:800;color:var(--my-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.micelio-passport-game.game-red_close,.micelio-passport-game.game-critical_frozen{border-color:#d8342f;background:color-mix(in srgb,var(--my-panel) 92%,#d8342f 8%)}
+.micelio-passport-game.game-red_close>header b,.micelio-passport-game.game-critical_frozen>header b{color:#d8342f}
+.micelio-passport-game.game-frozen,.micelio-passport-game.game-cold{border-color:#b7d0e4;background:color-mix(in srgb,var(--my-panel) 90%,#dfeaf4 10%)}
+@media(max-width:780px){.micelio-global-pulse{grid-template-columns:1fr 1fr 1fr}.micelio-global-pulse>p{grid-column:1/-1}.micelio-global-pulse>p span{white-space:normal}}
+@media(max-width:520px){.micelio-global-pulse{grid-template-columns:1fr}.micelio-global-pulse>p{grid-column:auto;grid-template-columns:1fr}.micelio-global-pulse>p button{justify-self:start}}
