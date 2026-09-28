@@ -93,6 +93,13 @@ function memberReads(){
       .select('id,skill_id,capability_key,label,description,weight,metadata').order('weight',{ascending:false})),
     readSource('requests',db.from('link_world_requests')
       .select('id,title,instruction,origin,status,business_ids,result_summary,evidence,created_by,created_at,updated_at').order('created_at',{ascending:false}).limit(120)),
+    readSource('gameStates',db.from('link_game_business_state_v')
+      .select('business_id,name,slug,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,last_action_id,last_action_title,last_action_category,last_heat_awarded,next_action_due_at,overdue,highest_priority,assessment_at')
+      .order('conversion_percent',{ascending:false})),
+    readSource('gameActions',db.from('link_game_actions')
+      .select('id,business_id,category,title,executor_type,evidence_requirement,status,heat_awarded,conversion_before,conversion_after,prompt,next_prompt,verified_at,expires_at,metadata,created_at').order('created_at',{ascending:false}).limit(240)),
+    readSource('actionPolicies',db.from('link_game_action_policy')
+      .select('category,label,base_heat,base_decay_hours,default_proximity,default_margin,default_ease,default_reuse,description').order('base_heat',{ascending:false})),
     readSource('daily',db.from('link_daily_intelligence_reports')
       .select('id,report_date,report_type,metrics,priorities,blockers,recommendations,generated_at').order('report_date',{ascending:false}).limit(5)),
     readSource('transactions',db.from('link_world_transactions')
@@ -242,12 +249,16 @@ function graphMarkup(state,context){
     const lensMatch=!lens.size||lens.has(node.type);
     const routeMatch=!state.route.result||routeNodes.has(node.id);
     const reachMatch=!reachNodes||reachNodes.has(node.id);
+    const gameState=node.type==='business'?state.game?.stateByBusiness?.[node.businessId]||null:null;
     const classes=['micelio-node','is-'+node.type,'status-'+node.status];
+    if(gameState?.game_state)classes.push('game-'+gameState.game_state);
     if(!lensMatch||!routeMatch||!reachMatch)classes.push('is-dimmed');
     if(state.selectedNode===node.id)classes.push('is-selected');
     if(routeNodes.has(node.id))classes.push('is-route');
     const label=node.label.length>22?node.label.slice(0,20)+'…':node.label;
-    const badge=node.signal?.total?'<text class="micelio-node-signal" x="'+(radius*.68)+'" y="'+(-radius*.68)+'">'+compact(node.signal.total)+'</text>':'';
+    const signalBadge=node.signal?.total?'<text class="micelio-node-signal" x="'+(radius*.68)+'" y="'+(-radius*.68)+'">'+compact(node.signal.total)+'</text>':'';
+    const heatBadge=gameState?'<text class="micelio-node-heat" x="'+(-radius*.72)+'" y="'+(-radius*.72)+'">'+Math.round(Number(gameState.temperature||0))+'°</text>':'';
+    const badge=signalBadge+heatBadge;
     return '<g class="'+classes.join(' ')+'" data-node-id="'+safe(node.id)+'" data-node-kind="'+safe(node.type)+'" data-node-label="'+safe(node.label)+'" transform="translate('+point.x.toFixed(1)+' '+point.y.toFixed(1)+')" role="button" tabindex="0" aria-pressed="'+(state.selectedNode===node.id?'true':'false')+'" aria-label="'+safe(typeNames[node.type])+': '+safe(node.label)+'"><circle class="micelio-node-halo" r="'+(radius+9)+'"></circle><circle class="micelio-node-core" r="'+radius+'"></circle><text class="micelio-node-initial" text-anchor="middle" y="6">'+safe(node.type==='control'?'◎':node.label.trim().charAt(0).toUpperCase())+'</text><text class="micelio-node-label" text-anchor="middle" y="'+(radius+24)+'">'+safe(label)+'</text>'+badge+'</g>';
   }).join('');
   const empty=context.nodes.length?'':'<g class="micelio-graph-empty"><text x="450" y="300" text-anchor="middle">No hay registros disponibles en esta vista.</text><text x="450" y="326" text-anchor="middle">La interfaz no inventa conexiones.</text></g>';
