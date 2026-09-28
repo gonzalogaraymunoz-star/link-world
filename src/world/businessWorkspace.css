@@ -225,7 +225,7 @@
 .bw-mp-score{font:600 28px 'Space Grotesk',system-ui,sans-serif;color:#33573b}
 .bw-mp-progress{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:8px 0 14px;padding-top:8px}
 .bw-mp-progress:before{content:"";position:absolute;left:2%;right:2%;top:20px;height:3px;background:#e2e9df;border-radius:99px}
-.bw-mp-progress>i{position:absolute;left:2%;top:20px;height:3px;width:calc(var(--progress) * .96);background:#4f7b57;border-radius:99px;z-index:1}
+.bw-mp-progress>i{position:absolute;left:2%;top:20px;height:3px;width:var(--progress);max-width:96%;transform:scaleX(.96);transform-origin:left;background:#4f7b57;border-radius:99px;z-index:1}
 .bw-mp-progress span{position:relative;z-index:2;display:grid;justify-items:center;gap:6px;text-align:center;font-size:8px;color:#829083}
 .bw-mp-progress span b{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;border:1px solid #d9e3d6;background:#fffefa;color:#8c9a8d}
 .bw-mp-progress span.done{color:#4d7052;font-weight:700}
