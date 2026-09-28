@@ -37,6 +37,61 @@ let onReadyCallback = null;
 let linkedBusinesses = [];
 let linkedMarkers = new Map();
 let linkedRenderVersion = 0;
+let fallbackActive = false;
+let fallbackCityKey = 'atacama';
+
+function fallbackQueryForCity(key=fallbackCityKey) {
+  const labels = {
+    atacama: 'San Pedro de Atacama, Chile',
+    saopaulo: 'São Paulo, Brasil',
+    earth: 'South America'
+  };
+  return labels[key] || labels.atacama;
+}
+function googleEmbedUrl(query) {
+  return 'https://www.google.com/maps?q=' + encodeURIComponent(query) + '&output=embed';
+}
+function googleSearchUrl(query) {
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+}
+function renderFallbackMap(query=fallbackQueryForCity(), reason='') {
+  fallbackActive = true;
+  map = null;
+  clearMarkers();
+  clearLinkedMarkers();
+  const holder = document.getElementById('cesiumContainer');
+  if (!holder) return;
+  holder.innerHTML = '';
+  holder.classList.remove('google-map-active');
+  holder.classList.add('google-map-fallback');
+  const iframe = document.createElement('iframe');
+  iframe.className = 'google-fallback-frame';
+  iframe.src = googleEmbedUrl(query);
+  iframe.loading = 'lazy';
+  iframe.referrerPolicy = 'no-referrer-when-downgrade';
+  iframe.allowFullscreen = true;
+  iframe.setAttribute('aria-label','Google Maps');
+  holder.append(iframe);
+  const badge = el('div','google-fallback-badge');
+  badge.innerHTML = '<strong>Google Maps · vista de respaldo</strong><span>' +
+    (reason ? reason : 'La vista interactiva avanzada no está disponible en este dominio.') +
+    '</span>';
+  holder.append(badge);
+  document.getElementById('google-search-panel')?.classList.remove('hidden');
+  setStatus('Google Maps · vista de respaldo', true);
+  showFeedback('Territorio sigue operativo. Las búsquedas se abrirán en Google Maps mientras este dominio de Vercel no esté autorizado para la API avanzada.');
+  refreshLinkedList();
+}
+function updateFallbackMap(query) {
+  const frame = document.querySelector('.google-fallback-frame');
+  if (frame) frame.src = googleEmbedUrl(query);
+}
+function openFallbackSearch(textQuery='') {
+  const category = CATEGORIES.find(x=>x.value===activeCategory)?.label || 'Negocios';
+  const query = textQuery || (category + ' en ' + fallbackQueryForCity());
+  window.open(googleSearchUrl(query),'_blank','noopener,noreferrer');
+  showFeedback('Abrí la búsqueda en Google Maps. LINK WORLD conserva aquí los negocios propios vinculados.');
+}
 
 function el(tag, className, value) {
   const item = document.createElement(tag);
@@ -64,11 +119,23 @@ function getKey() {
 async function loadGoogle(key) {
   if (window.google?.maps?.Map) return;
   if (scriptPromise) return scriptPromise;
+  // Google calls this global callback when a browser key is rejected after the JS API loads.
+  window.gm_authFailure = () => {
+    scriptPromise = null;
+    renderFallbackMap(
+      fallbackQueryForCity(),
+      'La API avanzada rechazó este dominio de preview. El territorio continúa disponible en modo de respaldo.'
+    );
+  };
   // Official loader v2; no dynamic REST calls to places.googleapis.com from browser.
   setOptions({ key, v: 'weekly', language: 'es', region: 'CL' });
   scriptPromise = importLibrary('maps').catch((error) => {
     scriptPromise = null;
-    throw new Error('No se pudo cargar Google Maps. Revisa la clave, facturación y dominio autorizado.');
+    renderFallbackMap(
+      fallbackQueryForCity(),
+      'No se pudo iniciar la API avanzada de Google en este dominio.'
+    );
+    throw new Error('No se pudo cargar Google Maps. Se activó la vista de respaldo.');
   });
   return scriptPromise;
 }
@@ -98,11 +165,16 @@ function buildControls() {
     try { localStorage.removeItem(LOCAL_KEY); } catch { /* private browsing */ }
     location.reload();
   });
-  panel.querySelector('#google-search-btn').addEventListener('click', () => searchPlaces());
+  panel.querySelector('#google-search-btn').addEventListener('click', () => {
+    if (fallbackActive) openFallbackSearch();
+    else searchPlaces();
+  });
   panel.querySelector('#google-text-form').addEventListener('submit', event => {
     event.preventDefault();
     const text = panel.querySelector('#google-text-query').value.trim();
-    if (text) searchPlaces(text);
+    if (!text) return;
+    if (fallbackActive) openFallbackSearch(text);
+    else searchPlaces(text);
   });
 }
 
@@ -141,8 +213,10 @@ function showSetup() {
   });
 }
 async function initializeMap(key) {
+  fallbackActive = false;
   setStatus('Conectando Google Maps…');
   await loadGoogle(key);
+  if (fallbackActive) return null;
   const [{ Map, InfoWindow }, { AdvancedMarkerElement: Advanced, PinElement: Pin }] = await Promise.all([
     importLibrary('maps'), importLibrary('marker')
   ]);
@@ -284,11 +358,21 @@ export function setLinkBusinesses(businesses=[]) {
   if (map) renderLinkedBusinesses();
 }
 export function flyToLinkBusiness(businessId) {
+  const business = linkedBusinesses.find(b=>b.id===businessId);
+  if (fallbackActive || !map) {
+    if (!business) return;
+    const address = business.owned_facts?.territory?.address_input || business.name || fallbackQueryForCity();
+    updateFallbackMap(address);
+    document.dispatchEvent(new CustomEvent('linkworld:owned-business-selected',{detail:{
+      id:business.id,name:business.name,address
+    }}));
+    return;
+  }
   const item = linkedMarkers.get(businessId);
   if (!item) {
     renderLinkedBusinesses().then(()=>{
       const retry=linkedMarkers.get(businessId);
-      if(retry){map.panTo(retry.marker.position);map.setZoom(18);openLinkedBusinessInfo(retry.business,retry.place,retry.marker);}
+      if(retry&&map){map.panTo(retry.marker.position);map.setZoom(18);openLinkedBusinessInfo(retry.business,retry.place,retry.marker);}
     });
     return;
   }
@@ -339,6 +423,7 @@ function renderResults(places) {
   });
 }
 async function searchPlaces(textQuery = '') {
+  if (fallbackActive) { openFallbackSearch(textQuery); return; }
   if (!map || searchBusy) return;
   if (requestsThisSession >= MAX_REQUESTS_PER_SESSION || dailyCalls() >= DAY_LIMIT) {
     showFeedback('Pausa de Google Places: máximo 8 búsquedas por sesión y 12 por día en este navegador. No es un tope global de Google Cloud.', true);
@@ -381,9 +466,15 @@ async function searchPlaces(textQuery = '') {
 export function flyGoogle(where) {
   const city = CITIES[where];
   if (!city) return;
+  fallbackCityKey = where;
   const label = document.getElementById('city-label');
   if (label) label.textContent = city.label;
   document.querySelectorAll('[data-location]').forEach(button => button.classList.toggle('active', button.dataset.location === where));
+  if (fallbackActive) {
+    updateFallbackMap(fallbackQueryForCity(where));
+    showFeedback('Vista de respaldo activa. Puedes explorar esta zona y abrir búsquedas en Google Maps.');
+    return;
+  }
   if (map) {
     map.panTo({ lat: city.lat, lng: city.lng });
     map.setZoom(city.zoom);
@@ -404,9 +495,11 @@ export async function startGoogleWorld(onReady) {
   }
   try { await initializeMap(configured); }
   catch {
-    setStatus('Google Maps · revisar clave');
-    showSetup();
-    const output = document.getElementById('google-setup-feedback');
-    if (output) output.textContent = 'La clave guardada no pudo iniciar el mapa. Puedes introducir una clave válida.';
+    if (!fallbackActive) {
+      renderFallbackMap(
+        fallbackQueryForCity(),
+        'La API avanzada no pudo iniciar en este dominio. Se mantiene una vista Google funcional de respaldo.'
+      );
+    }
   }
 }
