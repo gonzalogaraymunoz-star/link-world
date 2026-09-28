@@ -283,7 +283,7 @@ function gameMissionCard(mission,state){
     '<div class="micelio-game-why"><b>Por qué importa</b><p>'+safe(mission.explanation)+'</p></div>'+
     '<div class="micelio-game-next"><b>Haz esto</b><p>'+safe(mission.action)+'</p></div>'+
     '<div class="micelio-game-unlock"><span>DESBLOQUEA</span><strong>'+safe(mission.unlock)+'</strong></div>'+
-    '<div class="micelio-game-actions"><button class="is-primary" data-game-work="'+safe(mission.key)+'" type="button">Trabajar con Director</button><button data-game-copy="'+safe(mission.key)+'" type="button">Copiar para ChatGPT</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(mission.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'En misión ✓':'Guardar misión')+'</button>':'')+'</div>'+
+    '<div class="micelio-game-actions"><button class="is-primary" data-game-work="'+safe(mission.key)+'" type="button">Copiar para ChatGPT</button><button data-game-copy="'+safe(mission.key)+'" type="button">Copiar para ChatGPT</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(mission.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'En misión ✓':'Guardar misión')+'</button>':'')+'</div>'+
   '</article>';
 }
 
@@ -319,7 +319,7 @@ function recommendationBannerMarkup(state){
     '<div class="micelio-reco-main"><div class="micelio-reco-copy"><small>'+safe(rec.business)+'</small><h2>'+safe(rec.business)+' <i>—</i> '+safe(rec.title)+'</h2><p>'+safe(rec.recommendation)+'</p><div class="micelio-reco-why"><b>Por qué ahora</b><span>'+safe(rec.why)+'</span></div></div>'+
       '<aside class="micelio-reco-impact"><span>LECTURA DE LA JUGADA</span><b>'+safe(rec.moneyLabel)+'</b><b>'+safe(rec.marginLabel)+'</b><b>'+safe(rec.effortLabel)+'</b>'+(rec.businessId?'<div class="micelio-reco-heat"><strong>'+Math.round(Number(rec.currentTemperature||0))+'°</strong><i>→</i><strong>'+Math.round(Number(rec.projectedTemperature||0))+'°</strong><small>+'+safe(rec.projectedHeat)+'° si se verifica</small></div><div class="micelio-reco-conversion">'+Math.round(Number(rec.currentConversion||0))+'% conversión · '+safe(rec.gameStateLabel||'sin estado')+'</div>':'')+'<small>Desbloquea · '+safe(rec.unlock)+'</small></aside>'+
     '</div>'+
-    '<div class="micelio-reco-actions"><div><button class="is-primary" data-game-work="'+safe(rec.key)+'" type="button">Hacerlo conmigo</button><button data-game-copy="'+safe(rec.key)+'" type="button">Copiar prompt</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(rec.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'Misión guardada ✓':'Guardar misión')+'</button>':'')+'</div>'+
+    '<div class="micelio-reco-actions"><div><button class="is-primary" data-game-work="'+safe(rec.key)+'" type="button">Copiar para ChatGPT</button><button data-game-copy="'+safe(rec.key)+'" type="button">Copiar prompt</button>'+(state.member?'<button class="'+(saved?'is-saved':'')+'" data-game-save="'+safe(rec.key)+'" type="button" '+(saved?'disabled':'')+'>'+(saved?'Misión guardada ✓':'Guardar misión')+'</button>':'')+'</div>'+
       '<nav><button data-action="recommendation-prev" type="button" aria-label="Recomendación anterior">←</button><span>'+(index+1)+' / '+recs.length+'</span><button data-action="recommendation-pause" type="button" aria-label="'+(state.recommendationPaused?'Reanudar':'Pausar')+'">'+(state.recommendationPaused?'▶':'Ⅱ')+'</button><button data-action="recommendation-next" type="button" aria-label="Siguiente recomendación">→</button></nav>'+
     '</div>'+
     '<div class="micelio-reco-timer"><i></i></div>'+
@@ -558,9 +558,18 @@ export function mountMicelioBeta(selector='#lw-micelio'){
   const openPanel=name=>{state.panel=state.panel===name?null:name;render();};
 
   const gameMission=key=>state.game?.missions?.find(item=>item.key===key)||state.game?.recommendations?.find(item=>item.key===key)||null;
-  const workGameMission=key=>{
+  const workGameMission=async key=>{
     const mission=gameMission(key);if(!mission)return;
-    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:mission.prompt}}));
+    try{
+      await navigator.clipboard.writeText(mission.prompt||'');
+      state.authError='Prompt copiado. Pégalo en ChatGPT para ejecutar la misión y volver con evidencia.';
+      state.panel='data';
+      render();
+    }catch{
+      state.authError='No se pudo copiar el prompt. Usa el botón Copiar para ChatGPT.';
+      state.panel='data';
+      render();
+    }
   };
   const copyGameMission=async(key,button)=>{
     const mission=gameMission(key);if(!mission)return;
