@@ -68,9 +68,18 @@ async function readGameFacts(){
 }
 
 async function readGameStates(){
-  const {data,error}=await db.from('link_game_business_state_v')
-    .select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue')
+  const {data,error}=await db.from('link_game_operating_state_v')
+    .select('business_id,name,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,next_action_due_at,overdue,attention_mode,panel_tone,suggested_action,suggested_prompt,hours_remaining')
     .order('conversion_percent',{ascending:false});
+  if(error)throw error;
+  return data||[];
+}
+
+async function readEvidenceQueue(){
+  const {data,error}=await db.from('link_game_evidence_review_v')
+    .select('evidence_id,action_id,business_id,business_name,action_title,category,evidence_type,evidence_ref,summary,created_at,prompt,conversion_before,conversion_after')
+    .order('created_at',{ascending:true})
+    .limit(80);
   if(error)throw error;
   return data||[];
 }
@@ -97,6 +106,15 @@ function gameFactsMarkup(state){
     return '<article class="cj-game-event"><span>'+gameIcon(e.event_type)+'</span><div><strong>'+safe(p.business_name||p.title||'LINK')+'</strong><p>'+safe(p.state_label||p.title||String(e.event_type).replaceAll('.',' · '))+'</p><small>'+safe([temp,conv,formatUpdated(e.occurred_at)].filter(Boolean).join(' · '))+'</small></div></article>';
   }).join('');
   return '<section class="cj-game-history"><div class="cj-section-title"><span>HECHOS DEL JUEGO</span><h2>Solo avanza lo que tiene evidencia.</h2><p>Temperatura, cierres, enfriamientos y conversiones vienen del mismo motor verificable de LINK.</p></div><div class="cj-game-states">'+stateCards+'</div><div class="cj-game-events">'+eventRows+'</div></section>';
+}
+
+function evidenceQueueMarkup(state){
+  const rows=state.evidenceQueue||[];
+  if(!rows.length)return '';
+  return '<section class="cj-proof-queue"><div class="cj-section-title"><span>CHECKPOINT DE EVIDENCIA</span><h2>'+rows.length+' prueba(s) esperan revisión.</h2><p>Adjuntar una prueba no entrega puntos. ChatGPT debe comprobar que demuestra la acción y el resultado antes de calentar el negocio.</p></div><div class="cj-proof-list">'+rows.map(row=>{
+    const prompt='Revisa esta evidencia del juego de LINK WORLD para '+(row.business_name||'el negocio')+'. Acción: '+row.action_title+'. Tipo de evidencia: '+row.evidence_type+'. Resumen: '+(row.summary||'sin resumen')+'. Comprueba que la prueba corresponda a la acción y demuestre el resultado. Si es suficiente, valida la evidencia y actualiza el juego; si no, recházala e indica exactamente qué falta. No otorgues temperatura ni conversión sin prueba suficiente.';
+    return '<article class="cj-proof-card"><header><span>'+safe(row.business_name||'LINK')+'</span><b>'+safe(row.evidence_type)+'</b></header><h3>'+safe(row.action_title)+'</h3><p>'+safe(row.summary||'Evidencia sin resumen; requiere revisión.')+'</p><small>'+safe(formatUpdated(row.created_at))+(row.evidence_ref?' · '+safe(row.evidence_ref):'')+'</small><button type="button" data-cj-copy-prompt="'+safe(prompt)+'">Copiar prompt de revisión</button></article>';
+  }).join('')+'</div></section>';
 }
 
 async function readExecutions(registry){
@@ -147,6 +165,7 @@ function listViewMarkup(state){
     '<header class="cj-top"><div><span class="cj-eyebrow">LINK WORLD / BITÁCORA</span><h1>Cómo está evolucionando el sistema.</h1><p>Cada ejecución es un capítulo verificable: estado, misión, trayectoria, resultado y aprendizaje.</p></div><div class="cj-top-actions"><button type="button" data-cj-refresh>↻ Actualizar</button><button type="button" data-cj-signout>Cerrar sesión</button></div></header>'+
     '<section class="cj-summary"><div><strong>'+model.summary.cronCount+'</strong><span>crons registrados</span></div><div><strong>'+model.summary.executionCount+'</strong><span>ejecuciones</span></div><div><strong>'+model.summary.closedCount+'</strong><span>cierres</span></div><div><strong>'+model.summary.blockedCount+'</strong><span>bloqueadas</span></div></section>'+
     gameFactsMarkup(state)+
+    evidenceQueueMarkup(state)+
     '<section class="cj-evolution"><div class="cj-section-title"><span>EVOLUCIÓN RECIENTE</span><h2>Estado → movimiento → siguiente estado</h2></div>'+evolutionMarkup(items)+'</section>'+
     '<div class="cj-workspace"><aside class="cj-crons"><span class="cj-eyebrow">CRONS</span>'+tabs+'</aside><section class="cj-list"><div class="cj-list-head"><div><span class="cj-eyebrow">EJECUCIONES</span><h2>'+safe(group?.label||'Cron')+'</h2></div><small>'+items.length+' capítulos persistidos</small></div><div class="cj-cards">'+(items.length?items.map(cardMarkup).join(''):'<div class="cj-empty-panel"><h3>Sin ejecuciones.</h3><p>Cuando este cron persista su primer registro aparecerá aquí automáticamente.</p></div>')+'</div></section></div>'+
     '<footer class="cj-foot">Fuente de verdad: deep_memories · La vista no modifica la memoria ni decide prioridades.</footer></div>';
@@ -175,7 +194,7 @@ function detailViewMarkup(item){
 
 export function mountCronJournal(){
   const root=document.querySelector('#lw-journal');
-  const state={opened:false,loading:false,member:false,error:null,architecture:null,model:null,cronId:null,selectedId:null,gameFacts:[],gameStates:[]};
+  const state={opened:false,loading:false,member:false,error:null,architecture:null,model:null,cronId:null,selectedId:null,gameFacts:[],gameStates:[],evidenceQueue:[]};
 
   function render(){
     if(!root)return;
@@ -195,14 +214,16 @@ export function mountCronJournal(){
       if(!state.member){state.loading=false;render();return;}
       const architecture=await readArchitecture();
       const registry=architecture?.structured_data?.registered_crons||[];
-      const [rows,gameFacts,gameStates]=await Promise.all([
+      const [rows,gameFacts,gameStates,evidenceQueue]=await Promise.all([
         readExecutions(registry.length?registry:undefined),
         readGameFacts(),
-        readGameStates()
+        readGameStates(),
+        readEvidenceQueue()
       ]);
       state.architecture=architecture;
       state.gameFacts=gameFacts;
       state.gameStates=gameStates;
+      state.evidenceQueue=evidenceQueue;
       state.model=buildCronJournal({architecture,rows});
       if(!state.cronId)state.cronId=state.model.groups[0]?.cron_id||null;
       if(state.selectedId&&!state.model.executions.some(item=>item.id===state.selectedId))state.selectedId=null;
@@ -236,6 +257,10 @@ export function mountCronJournal(){
     root?.querySelector('[data-cj-back]')?.addEventListener('click',()=>{state.selectedId=null;render();});
     root?.querySelectorAll('[data-cj-refresh]').forEach(button=>button.addEventListener('click',load));
     root?.querySelector('[data-cj-signout]')?.addEventListener('click',async()=>{await db.auth.signOut();state.member=false;state.model=null;state.selectedId=null;render();});
+    root?.querySelectorAll('[data-cj-copy-prompt]').forEach(button=>button.addEventListener('click',async()=>{
+      const value=button.dataset.cjCopyPrompt||'';
+      try{await navigator.clipboard.writeText(value);button.textContent='Copiado ✓';setTimeout(()=>button.textContent='Copiar prompt de revisión',1300);}catch{button.textContent='No se pudo copiar';}
+    }));
   }
 
   return {
