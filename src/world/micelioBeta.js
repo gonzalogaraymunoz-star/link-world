@@ -16,10 +16,10 @@ const formatDate=value=>{
   catch{return String(value);}
 };
 
-const viewNames={evolution:'Juego',organism:'Grafo global',local:'Grafo local',businesses:'Negocios',records:'Fichas',operations:'Operación',proposals:'Propuestas'};
-const typeNames={control:'Control',business:'Negocio',client:'Cliente',product:'Producto'};
+const viewNames={evolution:'Juego',processes:'Procesos',organism:'Grafo global',local:'Grafo local',businesses:'Negocios',records:'Fichas',operations:'Operación',proposals:'Propuestas'};
+const typeNames={control:'Control',agent:'Director / agente',process:'Proceso',business:'Negocio',client:'Cliente',product:'Producto'};
 const stateNames={active:'Activo',proposed:'Propuesta',attention:'Atención',unknown:'Sin verificar'};
-const originNames={entity_relations:'Relación canónica',link_world_relations:'Propuesta de negocio',foreign_key:'Estructura de ficha'};
+const originNames={entity_relations:'Relación canónica',link_world_relations:'Propuesta de negocio',foreign_key:'Estructura de ficha',agent_mission:'Misión activa'};
 
 function readProgress(){
   try{return new Set(JSON.parse(sessionStorage.getItem('linkworld:micelio:read-routes')||'[]'));}
@@ -66,7 +66,7 @@ function publicReads(){
 function memberReads(){
   return [
     readSource('entities',db.from('ecosystem_entities')
-      .select('id,global_id,entity_type,owner_domain,owner_table,owner_record_id,status,updated_at')),
+      .select('id,global_id,entity_type,owner_domain,owner_table,owner_record_id,status,metadata,updated_at')),
     readSource('cells',db.from('ecosystem_cells')
       .select('entity_id,lifecycle_stage,health_status,autonomy_level,archetype_key,updated_at')),
     readSource('bindings',db.from('ecosystem_cell_organelle_bindings')
@@ -88,7 +88,12 @@ function memberReads(){
     readSource('portfolio',db.from('clients')
       .select('id,name,slug,status,metadata,archived_at,global_id').is('archived_at',null).order('name',{ascending:true})),
     readSource('skills',db.from('link_skills')
-      .select('id,slug,name,description,category,status,current_version,activation_mode,updated_at').eq('status','active').order('name',{ascending:true})),
+      .select('id,slug,name,description,category,status,current_version,activation_mode,metadata,updated_at').eq('status','active').order('name',{ascending:true})),
+    readSource('stageProcesses',db.from('link_stage_processes')
+      .select('id,stage_key,stage_number,name,customer_state_in,customer_state_out,director_slug,description,status,metadata,updated_at').eq('status','active').order('stage_number',{ascending:true})),
+    readSource('agentMissions',db.from('agent_missions')
+      .select('id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,assigned_agent_slug,status,priority,metadata,created_at,updated_at')
+      .neq('status','cancelled').order('updated_at',{ascending:false}).limit(120)),
     readSource('skillCapabilities',db.from('link_skill_capabilities')
       .select('id,skill_id,capability_key,label,description,weight,metadata').order('weight',{ascending:false})),
     readSource('requests',db.from('link_world_requests')
@@ -122,7 +127,7 @@ function memberReads(){
 
 const VIEWBOX={x:0,y:0,width:900,height:640};
 const CAMERA_RATIO=VIEWBOX.width/VIEWBOX.height;
-const typeOrder={control:0,business:1,client:2,product:3};
+const typeOrder={control:0,agent:1,process:2,business:3,client:4,product:5};
 
 function viewScope(model,view,selectedNode=null,localDepth=1){
   const allNodes=new Set(model.nodes.map(node=>node.id));
@@ -131,11 +136,16 @@ function viewScope(model,view,selectedNode=null,localDepth=1){
     const local=localNeighborhood(model,selectedNode,localDepth);
     return local.nodes.size?local:{nodes:allNodes,edges:allEdges};
   }
+  if(view==='processes'){
+    const nodes=new Set(model.nodes.filter(node=>['control','agent','process','business'].includes(node.type)).map(node=>node.id));
+    const processRelations=new Set(['governs_agent','supervises_stage_director','governs_process','hands_off_to','stage_operates_on','governed_by']);
+    return {nodes,edges:new Set(model.edges.filter(edge=>nodes.has(edge.source)&&nodes.has(edge.target)&&processRelations.has(edge.relation)).map(edge=>edge.id))};
+  }
   if(view==='evolution'){
     const nodes=new Set(model.nodes.filter(node=>node.type==='business'||node.type==='control').map(node=>node.id));
     return {nodes,edges:new Set(model.edges.filter(edge=>nodes.has(edge.source)&&nodes.has(edge.target)).map(edge=>edge.id))};
   }
-  if(view==='records')return {nodes:new Set(model.nodes.filter(node=>node.type!=='control').map(node=>node.id)),edges:allEdges};
+  if(view==='records')return {nodes:new Set(model.nodes.filter(node=>!['control','agent','process'].includes(node.type)).map(node=>node.id)),edges:allEdges};
   if(view==='businesses'){
     const nodes=new Set(model.nodes.filter(node=>node.type==='business').map(node=>node.id));
     return {nodes,edges:new Set(model.edges.filter(edge=>nodes.has(edge.source)&&nodes.has(edge.target)).map(edge=>edge.id))};
@@ -232,19 +242,21 @@ function graphMarkup(state,context){
   const routeNodes=new Set(state.route.result?.nodes||[]),routeEdges=new Set((state.route.result?.edges||[]).map(edge=>edge.id));
   const reachNodes=state.reach?.nodes||null,reachEdges=state.reach?.edges||null;
   const lens=new Set(state.lens);
-  const edges=context.edges.map(edge=>{
+  const edges=context.edges.map((edge,index)=>{
     const path=edgePath(edge,context.positions);if(!path)return '';
     const source=state.model.nodes.find(node=>node.id===edge.source),target=state.model.nodes.find(node=>node.id===edge.target);
     const lensMatch=!lens.size||lens.has(source?.type)||lens.has(target?.type);
     const routeMatch=!state.route.result||routeEdges.has(edge.id);
     const reachMatch=!reachEdges||reachEdges.has(edge.id);
-    const classes=['micelio-edge','status-'+edge.state];
+    const relationClass='relation-'+String(edge.relation||'related').replace(/[^a-zA-Z0-9_-]/g,'-');
+    const classes=['micelio-edge','status-'+edge.state,relationClass];
+    const flowStyle='--edge-delay:-'+((index%7)*.37).toFixed(2)+'s;--edge-speed:'+(3.2+(index%5)*.42).toFixed(2)+'s';
     if(!lensMatch||!routeMatch||!reachMatch)classes.push('is-dimmed');
     if(state.selectedEdge===edge.id)classes.push('is-selected');
     if(state.readEdges.has(edge.id))classes.push('is-read');
     if(routeEdges.has(edge.id))classes.push('is-route');
     const domId='micelio-edge-'+String(edge.id).replace(/[^a-zA-Z0-9_-]/g,'-');
-    return '<g class="'+classes.join(' ')+'" data-edge-id="'+safe(edge.id)+'" data-edge-from="'+safe(edge.source)+'" data-edge-to="'+safe(edge.target)+'" role="button" tabindex="0" aria-label="Conexión '+safe(edge.label)+'"><path class="micelio-edge-hit" d="'+path+'"></path><path id="'+domId+'" class="micelio-edge-line" d="'+path+'" marker-end="url(#micelio-arrow)"></path><text class="micelio-edge-label"><textPath href="#'+domId+'" startOffset="50%" text-anchor="middle">'+safe(labelize(edge.label))+'</textPath></text></g>';
+    return '<g class="'+classes.join(' ')+'" style="'+flowStyle+'" data-edge-id="'+safe(edge.id)+'" data-edge-from="'+safe(edge.source)+'" data-edge-to="'+safe(edge.target)+'" role="button" tabindex="0" aria-label="Conexión '+safe(edge.label)+'"><path class="micelio-edge-hit" d="'+path+'"></path><path id="'+domId+'" class="micelio-edge-line" d="'+path+'" marker-end="url(#micelio-arrow)"></path><text class="micelio-edge-label"><textPath href="#'+domId+'" startOffset="50%" text-anchor="middle">'+safe(labelize(edge.label))+'</textPath></text></g>';
   }).join('');
   const nodes=context.nodes.map(node=>{
     const point=context.positions.get(node.id);if(!point)return '';
@@ -262,7 +274,8 @@ function graphMarkup(state,context){
     const signalBadge=node.signal?.total?'<text class="micelio-node-signal" x="'+(radius*.68)+'" y="'+(-radius*.68)+'">'+compact(node.signal.total)+'</text>':'';
     const heatBadge=gameState?'<text class="micelio-node-heat" x="'+(-radius*.72)+'" y="'+(-radius*.72)+'">'+Math.round(Number(gameState.temperature||0))+'°</text>':'';
     const badge=signalBadge+heatBadge;
-    return '<g class="'+classes.join(' ')+'" data-node-id="'+safe(node.id)+'" data-node-kind="'+safe(node.type)+'" data-node-label="'+safe(node.label)+'" transform="translate('+point.x.toFixed(1)+' '+point.y.toFixed(1)+')" role="button" tabindex="0" aria-pressed="'+(state.selectedNode===node.id?'true':'false')+'" aria-label="'+safe(typeNames[node.type])+': '+safe(node.label)+'"><circle class="micelio-node-halo" r="'+(radius+9)+'"></circle><circle class="micelio-node-core" r="'+radius+'"></circle><text class="micelio-node-initial" text-anchor="middle" y="6">'+safe(node.type==='control'?'◎':node.label.trim().charAt(0).toUpperCase())+'</text><text class="micelio-node-label" text-anchor="middle" y="'+(radius+24)+'">'+safe(label)+'</text>'+badge+'</g>';
+    const glyph=node.type==='control'?'◎':node.type==='agent'?'✦':node.type==='process'?String(node.stageNumber||'•'):node.label.trim().charAt(0).toUpperCase();
+    return '<g class="'+classes.join(' ')+'" data-node-id="'+safe(node.id)+'" data-node-kind="'+safe(node.type)+'" data-node-label="'+safe(node.label)+'" transform="translate('+point.x.toFixed(1)+' '+point.y.toFixed(1)+')" role="button" tabindex="0" aria-pressed="'+(state.selectedNode===node.id?'true':'false')+'" aria-label="'+safe(typeNames[node.type]||node.type)+': '+safe(node.label)+'"><circle class="micelio-node-halo" r="'+(radius+9)+'"></circle><circle class="micelio-node-core" r="'+radius+'"></circle><text class="micelio-node-initial" text-anchor="middle" y="6">'+safe(glyph)+'</text><text class="micelio-node-label" text-anchor="middle" y="'+(radius+24)+'">'+safe(label)+'</text>'+badge+'</g>';
   }).join('');
   const empty=context.nodes.length?'':'<g class="micelio-graph-empty"><text x="450" y="300" text-anchor="middle">No hay registros disponibles en esta vista.</text><text x="450" y="326" text-anchor="middle">La interfaz no inventa conexiones.</text></g>';
   const vb=state.camera.x+' '+state.camera.y+' '+state.camera.width+' '+state.camera.height;
@@ -271,7 +284,7 @@ function graphMarkup(state,context){
 
 function metricsMarkup(state){
   const model=state.model,read=model.edges.filter(edge=>state.readEdges.has(edge.id)).length;
-  return '<div class="micelio-metrics"><div><strong>'+model.totals.businesses+'</strong><span>negocios</span></div><div><strong>'+(model.totals.clients+model.totals.products)+'</strong><span>fichas</span></div><div><strong>'+model.totals.relations+'</strong><span>rutas</span></div><div><strong>'+model.edges.filter(edge=>edge.state==='proposed').length+'</strong><span>propuestas</span></div></div><div class="micelio-progress"><div><span style="width:'+(model.edges.length?Math.round(read/model.edges.length*100):0)+'%"></span></div><p><b>'+read+'/'+model.edges.length+'</b> rutas comprendidas</p></div>';
+  return '<div class="micelio-metrics"><div><strong>'+model.totals.businesses+'</strong><span>negocios</span></div><div><strong>'+(model.totals.processes||0)+'</strong><span>procesos</span></div><div><strong>'+(model.totals.agents||0)+'</strong><span>directores/agentes</span></div><div><strong>'+(model.totals.missions||0)+'</strong><span>misiones vivas</span></div></div><div class="micelio-progress"><div><span style="width:'+(model.edges.length?Math.round(read/model.edges.length*100):0)+'%"></span></div><p><b>'+read+'/'+model.edges.length+'</b> rutas comprendidas</p></div>';
 }
 function gameMissionCard(mission,state){
   if(!mission)return '';
@@ -759,5 +772,5 @@ export function mountMicelioBeta(selector='#lw-micelio'){
   const close=()=>{state.open=false;clearPlayback();clearTimeout(recommendationTimer);recommendationTimer=null;clearInterval(pollTimer);pollTimer=null;if(channel){db.removeChannel(channel);channel=null;}};
   db.auth.onAuthStateChange(event=>{if(state.open&&(event==='SIGNED_IN'||event==='SIGNED_OUT'))setTimeout(()=>refresh({quiet:true}),0);});
   render();
-  return {open,close,refresh};
+  return {open,close,refresh,setView,selectNode};
 }
