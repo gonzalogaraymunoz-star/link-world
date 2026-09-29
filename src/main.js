@@ -250,4 +250,13 @@ document.addEventListener('linkworld:place-selected',event=>{
 });
 mountDirector(()=>({strategy:'',cell:'',mission:'',demoSnapshot:''}));
 mountBusinessWorkspace();
+
+const initialParams=new URLSearchParams(window.location.search);
+if(initialParams.get('space')==='micelio'){
+  setView('micelio');
+  const micelioView=initialParams.get('view');
+  if(['processes','organism','local','businesses','records','operations','proposals','evolution'].includes(micelioView||'')){
+    micelio.setView(micelioView);
+  }
+}
 loadOpenWorld();
