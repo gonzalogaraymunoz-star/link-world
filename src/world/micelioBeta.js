@@ -278,8 +278,11 @@ function graphMarkup(state,context){
     return '<g class="'+classes.join(' ')+'" data-node-id="'+safe(node.id)+'" data-node-kind="'+safe(node.type)+'" data-node-label="'+safe(node.label)+'" transform="translate('+point.x.toFixed(1)+' '+point.y.toFixed(1)+')" role="button" tabindex="0" aria-pressed="'+(state.selectedNode===node.id?'true':'false')+'" aria-label="'+safe(typeNames[node.type]||node.type)+': '+safe(node.label)+'"><circle class="micelio-node-halo" r="'+(radius+9)+'"></circle><circle class="micelio-node-core" r="'+radius+'"></circle><text class="micelio-node-initial" text-anchor="middle" y="6">'+safe(glyph)+'</text><text class="micelio-node-label" text-anchor="middle" y="'+(radius+24)+'">'+safe(label)+'</text>'+badge+'</g>';
   }).join('');
   const empty=context.nodes.length?'':'<g class="micelio-graph-empty"><text x="450" y="300" text-anchor="middle">No hay registros disponibles en esta vista.</text><text x="450" y="326" text-anchor="middle">La interfaz no inventa conexiones.</text></g>';
+  const guides=state.view==='processes'
+    ?'<g class="micelio-layer-guides" aria-hidden="true"><text x="18" y="100">GOBIERNO</text><line x1="16" y1="126" x2="884" y2="126"></line><text x="18" y="282">DIRECTORES DE ETAPA</text><line x1="16" y1="326" x2="884" y2="326"></line><text x="18" y="408">PROCESOS</text><line x1="16" y1="424" x2="884" y2="424"></line><text x="18" y="536">CÉLULAS / NEGOCIOS</text></g>'
+    :'';
   const vb=state.camera.x+' '+state.camera.y+' '+state.camera.width+' '+state.camera.height;
-  return '<svg class="micelio-svg" viewBox="'+vb+'" preserveAspectRatio="xMidYMid meet" aria-label="Visor semántico de LINK WORLD"><defs><marker id="micelio-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><g class="micelio-viewport"><g class="micelio-edges">'+edges+'</g><g class="micelio-nodes">'+nodes+'</g>'+empty+'</g></svg>';
+  return '<svg class="micelio-svg" viewBox="'+vb+'" preserveAspectRatio="xMidYMid meet" aria-label="Visor semántico de LINK WORLD"><defs><marker id="micelio-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><g class="micelio-viewport">'+guides+'<g class="micelio-edges">'+edges+'</g><g class="micelio-nodes">'+nodes+'</g>'+empty+'</g></svg>';
 }
 
 function metricsMarkup(state){
