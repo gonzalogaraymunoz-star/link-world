@@ -520,3 +520,73 @@
 .micelio-passport-game.game-frozen,.micelio-passport-game.game-cold{border-color:#b7d0e4;background:color-mix(in srgb,var(--my-panel) 90%,#dfeaf4 10%)}
 @media(max-width:780px){.micelio-global-pulse{grid-template-columns:1fr 1fr 1fr}.micelio-global-pulse>p{grid-column:1/-1}.micelio-global-pulse>p span{white-space:normal}}
 @media(max-width:520px){.micelio-global-pulse{grid-template-columns:1fr}.micelio-global-pulse>p{grid-column:auto;grid-template-columns:1fr}.micelio-global-pulse>p button{justify-self:start}}
+
+
+/* Micelio · governance altitude / six-stage process layer */
+.micelio-layer-guides{pointer-events:none;opacity:.72}
+.micelio-layer-guides line{stroke:color-mix(in srgb,var(--my-muted) 18%,transparent);stroke-width:1;stroke-dasharray:2 8}
+.micelio-layer-guides text{fill:var(--my-muted);font-size:7px;font-weight:850;letter-spacing:.16em}
+
+.micelio-node.is-agent .micelio-node-core{
+  fill:color-mix(in srgb,var(--my-ink) 94%,var(--lw-acid,#cfff00) 6%);
+  stroke:var(--lw-acid,#cfff00);stroke-width:2.3
+}
+.micelio-node.is-agent .micelio-node-initial{fill:var(--lw-acid,#cfff00);font-weight:900}
+.micelio-node.is-agent .micelio-node-halo{
+  stroke:color-mix(in srgb,var(--lw-acid,#cfff00) 30%,transparent);
+  stroke-width:1.2
+}
+.micelio-node.is-process .micelio-node-core{
+  fill:color-mix(in srgb,var(--my-panel) 91%,var(--lw-acid,#cfff00) 9%);
+  stroke:color-mix(in srgb,var(--my-ink) 72%,var(--lw-acid,#cfff00) 28%);
+  stroke-width:2
+}
+.micelio-node.is-process .micelio-node-initial{fill:var(--my-ink);font-weight:900}
+.micelio-node.is-process .micelio-node-label{font-weight:820}
+.micelio-node.is-process .micelio-node-halo{
+  stroke:color-mix(in srgb,var(--my-ink) 12%,transparent);
+}
+
+.micelio-edge.relation-governs_agent .micelio-edge-line,
+.micelio-edge.relation-supervises_stage_director .micelio-edge-line,
+.micelio-edge.relation-governs_process .micelio-edge-line,
+.micelio-edge.relation-hands_off_to .micelio-edge-line,
+.micelio-edge.relation-stage_operates_on .micelio-edge-line{
+  stroke-dasharray:9 8;
+  animation:micelio-edge-flow var(--edge-speed,4s) linear infinite;
+  animation-delay:var(--edge-delay,0s);
+}
+
+.micelio-edge.relation-governs_agent .micelio-edge-line,
+.micelio-edge.relation-supervises_stage_director .micelio-edge-line{
+  stroke:color-mix(in srgb,var(--lw-acid,#cfff00) 70%,var(--my-ink) 30%);
+  stroke-width:2.2
+}
+.micelio-edge.relation-governs_process .micelio-edge-line{
+  stroke:color-mix(in srgb,var(--lw-acid,#cfff00) 84%,var(--my-muted) 16%);
+  stroke-width:2.5;
+  filter:drop-shadow(0 0 4px color-mix(in srgb,var(--lw-acid,#cfff00) 28%,transparent))
+}
+.micelio-edge.relation-hands_off_to .micelio-edge-line{
+  stroke:color-mix(in srgb,var(--my-ink) 62%,var(--lw-acid,#cfff00) 38%);
+  stroke-width:2.1;stroke-dasharray:5 7
+}
+.micelio-edge.relation-stage_operates_on .micelio-edge-line{
+  stroke:color-mix(in srgb,var(--lw-acid,#cfff00) 55%,var(--my-muted) 45%);
+  stroke-width:1.9;stroke-dasharray:3 7
+}
+.micelio-edge.relation-stage_operates_on.status-attention .micelio-edge-line{
+  stroke:var(--my-attention);
+  animation:micelio-edge-flow var(--edge-speed,4s) linear infinite,micelio-edge-alert 1.8s ease-in-out infinite
+}
+.micelio-edge.relation-governs_process .micelio-edge-label,
+.micelio-edge.relation-hands_off_to .micelio-edge-label{opacity:.72}
+
+@keyframes micelio-edge-flow{to{stroke-dashoffset:-34}}
+@keyframes micelio-edge-alert{0%,100%{opacity:.48}50%{opacity:1}}
+
+@media(max-width:720px){
+  .micelio-layer-guides text{font-size:6px}
+  .micelio-node.is-agent .micelio-node-label,
+  .micelio-node.is-process .micelio-node-label{font-size:7px}
+}
