@@ -27,7 +27,7 @@ $('#app').innerHTML=[
 "<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
 "<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='journal'>Bitácora</button><button data-view='director'>Director IA</button></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Modo abierto</span>",
-"<div class='header-actions' id='lw-hidden-triggers'></div></header>",
+"<div class='header-actions' id='lw-hidden-triggers'><a class='lw-btn-secondary' href='https://linkcontrolgeneral.vercel.app/' target='_blank' rel='noopener noreferrer'>CONTROL CENTRAL ↗</a></div></header>",
 "<main class='lw-main'>",
 "<section id='lw-businesses' class='lw-home'>",
 "<div class='lw-home-hero'><div><span class='lw-kicker'>TU ESPACIO DE TRABAJO</span><h1>Construyamos con lo que existe.</h1><p>Negocios reales, sin puerta de acceso. Los cambios los hacemos desde ChatGPT por ahora.</p></div><button id='lw-new-business' class='lw-btn-primary'>✦ Trabajar con ChatGPT</button></div>",
@@ -120,14 +120,19 @@ async function loadOpenWorld(){
     const check=await publicDb.rpc('link_world_is_member');
     member=!check.error&&check.data===true;
   }
-  const [businessRead,gameRead]=await Promise.all([
+  const [businessRead,gameRead,bridgeRead]=await Promise.all([
     publicDb.from('link_world_businesses')
       .select('id,slug,name,sector,city,country,summary,verification_status,public_workspace,google_place_id,owned_facts')
       .eq('public_workspace',true).order('name',{ascending:true}),
     member
       ? publicDb.from('link_game_business_state_v')
           .select('business_id,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,next_action_due_at,overdue')
-      : Promise.resolve({data:[],error:null})
+      : Promise.resolve({data:[],error:null}),
+    member
+      ? publicDb.from('link_control_world_summary_v')
+          .select('control_global_id,businesses,agents,stage_directors,active_edges,world_activity_events,graph_updated_at')
+          .maybeSingle()
+      : Promise.resolve({data:null,error:null})
   ]);
   const {data,error}=businessRead;
   if(error){
@@ -137,7 +142,9 @@ async function loadOpenWorld(){
   const gameMap=new Map((gameRead.data||[]).map(row=>[String(row.business_id),row]));
   state.connected=true;state.businesses=(data||[]).map(b=>({...b,game_state:gameMap.get(String(b.id))||null}));state.requests=[];state.relations=[];
   setLinkBusinesses(state.businesses);
-  $('#lw-app-state').textContent=member?'Sesión LINK · juego vivo':'Modo abierto';
+  $('#lw-app-state').textContent=member&&bridgeRead.data
+    ? 'CONTROL CENTRAL ↔ LINK WORLD'
+    : member?'Sesión LINK · juego vivo':'Modo abierto';
   $('#lw-business-count').textContent=String(state.businesses.length);
   $('#lw-request-count').textContent='—';
   $('#lw-relation-count').textContent='—';
