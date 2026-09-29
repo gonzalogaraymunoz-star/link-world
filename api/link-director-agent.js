@@ -20,9 +20,10 @@ const DOCTRINE_SOURCES = [
 ];
 
 const RUNTIME_CONTRACT = `
-Eres LINK Director, primer agente operativo de LINK WORLD.
+Eres LINK Director, primer agente operativo de LINK WORLD y agente gobernado por LINK CONTROL CENTRAL.
+CONTROL CENTRAL es la raíz de gobierno, identidad, agentes, permisos y evidencia; LINK WORLD es la superficie del organismo, negocios, relaciones y micelio. Ambos comparten el mismo grafo vivo en Supabase y no deben duplicar realidad.
 Tu modo actual es SHADOW: observas, interpretas, conectas y reclutas por propuesta; no ejecutas mutaciones externas ni destructivas.
-GitHub contiene doctrina versionada. Supabase contiene estado vivo, memoria, evidencia y capacidades registradas.
+GitHub contiene doctrina versionada. Supabase contiene estado vivo, memoria, evidencia, capacidades registradas y el puente CONTROL CENTRAL ↔ LINK WORLD.
 Protege la continuidad de LINK: preserva protocolos, evita duplicar arquitectura, reduce cambios innecesarios y nunca sacrifiques evidencia por velocidad.
 Puedes detectar conexiones entre negocios y proponer la unidad mínima verificable para probarlas.
 Puedes detectar una necesidad, buscar primero una Skill/capacidad existente y proponer el agente correcto. Si no existe, define el agente mínimo que falta. No instales ni otorgues permisos por tu cuenta.
@@ -99,6 +100,9 @@ async function loadLiveContext(token) {
     ['commands', 'command_bus', 'select=command_type,action_key,actor,status,requires_approval,approval_status,source_domain,requested_at,processed_at,error&order=requested_at.desc&limit=20'],
     ['events', 'event_bus', 'select=source_provider,event_type,entity_type,global_id,occurred_at,gesture_code&order=occurred_at.desc&limit=20'],
     ['bindings', 'integration_bindings', 'select=provider,global_id,entity_type,external_object,source_app,sync_status,last_synced_at,metadata&order=updated_at.desc&limit=30'],
+    ['controlWorldNodes', 'link_control_world_nodes_v', 'select=global_id,entity_type,owner_domain,label,slug,status,agent_category,agent_version,autonomy_mode,stage_key,stage_number,updated_at&order=updated_at.desc&limit=120'],
+    ['controlWorldEdges', 'link_control_world_edges_v', 'select=source_global_id,source_label,source_type,target_global_id,target_label,target_type,relation,state,label,metadata,updated_at&order=updated_at.desc&limit=240'],
+    ['controlWorldSummary', 'link_control_world_summary_v', 'select=control_global_id,businesses,agents,stage_directors,active_edges,world_activity_events,graph_updated_at&limit=1'],
   ];
 
   const settled = await Promise.allSettled(specs.map(async ([key, resource, query]) => [key, await supabaseRows(token, resource, query)]));
@@ -232,7 +236,7 @@ export default async function handler(req, res) {
       mode: 'shadow',
       runtime: 'vercel',
       intelligence: 'vercel-ai-gateway',
-      liveState: 'supabase-link-control-central',
+      liveState: 'supabase-control-central-link-world-bridge',
       doctrine: 'github-allowlist',
       model: MODEL,
       actions: ['chat', 'observe', 'connect', 'recruit'],
