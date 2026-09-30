@@ -8,7 +8,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(process.cwd(), 'index.html'),
-        queEsLink: resolve(process.cwd(), 'que-es-link/index.html')
+        queEsLink: resolve(process.cwd(), 'que-es-link/index.html'),
+        serParte: resolve(process.cwd(), 'ser-parte/index.html')
       }
     }
   }
