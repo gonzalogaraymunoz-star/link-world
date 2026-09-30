@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+// Runtime capability: directional inbox handoffs v1.3
+
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://zgbnjlrxzvzpigmwidsp.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_RE_eqhBaLeaUMHuBjLUY2Q_OZNBm9_A';
 const AI_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions';
