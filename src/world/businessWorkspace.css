@@ -318,3 +318,46 @@
 .bw-agent-result{display:none;margin-top:10px;padding:10px;border-radius:12px;background:rgba(0,0,0,.20);white-space:pre-wrap;font-size:10px;line-height:1.45;max-height:180px;overflow:auto}
 .bw-agent-result.visible{display:block}
 @media(max-width:900px){.bw-agent-journey{padding:14px;border-radius:18px}.bw-agent-flow{grid-template-columns:repeat(6,210px)}}
+
+
+/* LINK Agents · handoffs entre etapas */
+.bw-agent-handoffs{display:grid;gap:10px;margin-top:14px}
+.bw-agent-handoff{
+  border:1px solid rgba(223,255,0,.18);
+  border-radius:18px;
+  padding:14px;
+  background:linear-gradient(135deg,rgba(223,255,0,.055),rgba(255,255,255,.025));
+}
+.bw-agent-handoff-route{display:flex;align-items:center;gap:8px;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.bw-agent-handoff-route span{font-weight:800}
+.bw-agent-handoff-route i{font-style:normal;opacity:.45}
+.bw-agent-handoff-route em{
+  margin-left:auto;font-style:normal;padding:5px 8px;border-radius:999px;
+  background:rgba(255,255,255,.07);font-size:8px
+}
+.bw-agent-handoff.status-proposed .bw-agent-handoff-route em{color:#dfff00;border:1px solid rgba(223,255,0,.18)}
+.bw-agent-handoff.status-accepted .bw-agent-handoff-route em,
+.bw-agent-handoff.status-consumed .bw-agent-handoff-route em{color:#6ae2aa;border:1px solid rgba(106,226,170,.22)}
+.bw-agent-handoff.status-blocked .bw-agent-handoff-route em{color:#ffb86b;border:1px solid rgba(255,184,107,.22)}
+.bw-agent-handoff h3{margin:9px 0 6px;font-size:15px}
+.bw-agent-handoff>p{margin:0;font-size:11px;line-height:1.5;opacity:.78;max-width:980px}
+.bw-agent-handoff-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.bw-agent-handoff-meta span{
+  padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.055);
+  font-size:9px;opacity:.82
+}
+.bw-agent-handoff details{margin-top:10px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px}
+.bw-agent-handoff summary{cursor:pointer;font-size:9px;font-weight:700;opacity:.72}
+.bw-agent-handoff ol{margin:8px 0 0;padding-left:20px;font-size:9px;line-height:1.55;opacity:.7}
+.bw-agent-handoff-actions{display:flex;align-items:center;gap:10px;margin-top:11px}
+.bw-agent-handoff-actions button{
+  border:0;border-radius:10px;padding:8px 10px;background:#dfff00;color:#10110d;
+  font-size:10px;font-weight:800;cursor:pointer
+}
+.bw-agent-handoff-actions button:hover{filter:brightness(.96);transform:translateY(-1px)}
+.bw-agent-handoff-actions button:disabled{cursor:wait;opacity:.55}
+.bw-agent-handoff-actions span{font-size:8px;text-transform:uppercase;letter-spacing:.07em;opacity:.48}
+@media(max-width:760px){
+  .bw-agent-handoff-actions{align-items:flex-start;flex-direction:column}
+  .bw-agent-handoff-actions button{width:100%}
+}
