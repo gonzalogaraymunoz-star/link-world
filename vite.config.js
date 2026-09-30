@@ -1,6 +1,15 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   server: { port: 4173 },
-  preview: { port: 4173 }
+  preview: { port: 4173 },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(process.cwd(), 'index.html'),
+        queEsLink: resolve(process.cwd(), 'que-es-link/index.html')
+      }
+    }
+  }
 });
