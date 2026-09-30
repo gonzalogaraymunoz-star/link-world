@@ -138,7 +138,7 @@ app.innerHTML = [
 "        <button class='le-process-step' data-step='5'><span>5</span>" + icon('brain') + "<b>Aprende</b><small>Usa el resultado para decidir mejor.</small></button>",
 "        <button class='le-process-step' data-step='6'><span>6</span>" + icon('leaf') + "<b>Crece</b><small>Abre nuevas conexiones cuando tienen sentido.</small></button>",
 "      </div>",
-"      <div class='le-process-explain' id='le-process-explain'><b>1 · Entiende</b><p>LINK parte observando el negocio: qué ofrece, a quién atiende, qué procesos ya tiene y dónde existe una necesidad concreta.</p></div>",
+"      <div class='le-process-explain' id='le-process-explain'><b>Entiende</b><p>Identifica qué ofrece el negocio, a quién atiende, qué necesita y dónde existe una oportunidad concreta.</p></div>",
 "      <div class='le-flow-strip'><span>Negocio</span><i>→</i><span>Necesidad</span><i>→</i><span>Conexión</span><i>→</i><span>Acción</span><i>→</i><span>Resultado</span><i>→</i><span>Aprendizaje</span></div>",
 "    </section>",
 "    <section class='le-associative le-section' id='asociativos'>",
@@ -157,20 +157,23 @@ app.innerHTML = [
 "        </div>",
 "      </div>",
 "      <div class='le-assoc-cards'>",
-"        <article><div class='le-title-icon'>" + icon('music') + "</div><h3>Experiencias compartidas</h3><p>Un hotel puede recomendar un concierto, una cena, un tour o un servicio. El negocio asociado gana una oportunidad y el hotel mejora la experiencia del huésped.</p><span>Hospitalidad → Experiencia → Cliente</span></article>",
-"        <article><div class='le-title-icon'>" + icon('van') + "</div><h3>Servicios conectados</h3><p>Un negocio puede completar su oferta con proveedores de transporte, producción, bienestar u otros servicios sin tener que convertirse en operador de todo.</p><span>Necesidad → Proveedor → Servicio</span></article>",
-"        <article><div class='le-title-icon'>" + icon('star') + "</div><h3>Promoción cruzada</h3><p>Dos negocios que comparten público pueden recomendarse, crear beneficios conjuntos o construir una oferta que sea más valiosa que cada parte por separado.</p><span>Audiencia → Alianza → Nueva oportunidad</span></article>",
+"        <button class='le-assoc-card' data-assoc='beneficios'><div class='le-title-icon'>" + icon('tag') + "</div><h3>Beneficios compartidos</h3><p>Un negocio crea una ventaja y otro la acerca al cliente.</p><span>Beneficio → Recomendación → Venta</span><em>Ver cómo funciona →</em></button>",
+"        <button class='le-assoc-card' data-assoc='experiencias'><div class='le-title-icon'>" + icon('music') + "</div><h3>Experiencias compartidas</h3><p>Una experiencia complementa lo que otro negocio ya entrega.</p><span>Hospitalidad → Experiencia → Cliente</span><em>Ver ejemplos →</em></button>",
+"        <button class='le-assoc-card' data-assoc='servicios'><div class='le-title-icon'>" + icon('van') + "</div><h3>Servicios conectados</h3><p>Un negocio suma capacidad sin tener que operar todo.</p><span>Necesidad → Proveedor → Servicio</span><em>Ver ejemplos →</em></button>",
+"        <button class='le-assoc-card' data-assoc='promocion'><div class='le-title-icon'>" + icon('star') + "</div><h3>Promoción cruzada</h3><p>Dos negocios comparten audiencia y construyen una oportunidad conjunta.</p><span>Audiencia → Alianza → Oportunidad</span><em>Ver ejemplos →</em></button>",
+"        <button class='le-assoc-card' data-assoc='operacion'><div class='le-title-icon'>" + icon('gear') + "</div><h3>Operación complementaria</h3><p>Una parte de la operación puede resolverse con otro negocio.</p><span>Necesidad → Capacidad → Operación</span><em>Ver ejemplos →</em></button>",
+"        <button class='le-assoc-card' data-assoc='derivacion'><div class='le-title-icon'>" + icon('link') + "</div><h3>Derivación local</h3><p>Un punto LINK acerca al cliente a otra opción útil cercana.</p><span>Contexto → Derivación → Resultado</span><em>Ver ejemplos →</em></button>",
 "      </div>",
 "    </section>",
 "    <section class='le-benefits le-section' id='ejemplos'>",
 "      <div class='le-section-head'><div><span class='le-eyebrow'>LO QUE PUEDE ACTIVARSE</span><h2>¿Qué cambia cuando un negocio se conecta?</h2><p>LINK no promete que todo se active a la vez. Estas son capacidades que pueden aparecer cuando tienen sentido para el negocio.</p></div></div>",
 "      <div class='le-benefit-grid'>",
-"        <article>" + icon('chart') + "<h3>Más ventas</h3><p>Nuevas ocasiones de compra, reserva o contratación.</p></article>",
-"        <article>" + icon('marketing') + "<h3>Más visibilidad</h3><p>Presencia en otros puntos de contacto y negocios conectados.</p></article>",
-"        <article>" + icon('gear') + "<h3>Mejor organización</h3><p>Procesos más claros y herramientas compartidas.</p></article>",
-"        <article>" + icon('bolt') + "<h3>Automatización</h3><p>Menos tareas repetitivas y más foco en operar.</p></article>",
-"        <article>" + icon('chart') + "<h3>Más control</h3><p>Información útil para saber qué está funcionando.</p></article>",
-"        <article>" + icon('handshake') + "<h3>Nuevas alianzas</h3><p>Relaciones concretas con negocios complementarios.</p></article>",
+"        <button class='le-benefit-card' data-benefit='ventas'>" + icon('chart') + "<h3>Más ventas</h3><p>Nuevas ocasiones de compra, reserva o contratación.</p><em>Ver ejemplo →</em></button>",
+"        <button class='le-benefit-card' data-benefit='visibilidad'>" + icon('marketing') + "<h3>Más visibilidad</h3><p>Presencia en más puntos de contacto.</p><em>Ver ejemplo →</em></button>",
+"        <button class='le-benefit-card' data-benefit='organizacion'>" + icon('gear') + "<h3>Mejor organización</h3><p>Procesos más claros y coordinados.</p><em>Ver ejemplo →</em></button>",
+"        <button class='le-benefit-card' data-benefit='automatizacion'>" + icon('bolt') + "<h3>Automatización</h3><p>Menos tareas repetitivas y más foco.</p><em>Ver ejemplo →</em></button>",
+"        <button class='le-benefit-card' data-benefit='control'>" + icon('chart') + "<h3>Más control</h3><p>Información útil para saber qué funciona.</p><em>Ver ejemplo →</em></button>",
+"        <button class='le-benefit-card' data-benefit='alianzas'>" + icon('handshake') + "<h3>Nuevas alianzas</h3><p>Relaciones concretas con negocios complementarios.</p><em>Ver ejemplo →</em></button>",
 "      </div>",
 "    </section>",
 "    <section class='le-principle le-section'>",
@@ -208,6 +211,22 @@ app.innerHTML = [
 "  <footer class='le-footer'><a class='le-brand' href='/'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a><p>Negocios independientes. Conexiones útiles. Más posibilidades.</p></footer>",
 "</div>"
 ].join('');
+
+app.insertAdjacentHTML('beforeend', [
+  "<div class='le-detail-layer' id='le-detail-layer' aria-hidden='true'>",
+  "  <button class='le-detail-backdrop' data-detail-close aria-label='Cerrar explicación'></button>",
+  "  <aside class='le-detail-pop' role='dialog' aria-modal='true' aria-labelledby='le-detail-title'>",
+  "    <button class='le-detail-close' data-detail-close aria-label='Cerrar'>×</button>",
+  "    <span class='le-detail-kicker' id='le-detail-kicker'>LINK</span>",
+  "    <h3 id='le-detail-title'></h3>",
+  "    <p class='le-detail-meaning' id='le-detail-meaning'></p>",
+  "    <div class='le-detail-block'><span>QUÉ HACE LINK</span><p id='le-detail-action'></p></div>",
+  "    <div class='le-detail-block le-detail-example'><span>EJEMPLO</span><p id='le-detail-example'></p><div class='le-detail-chips' id='le-detail-chips'></div></div>",
+  "    <div class='le-detail-key' id='le-detail-key'></div>",
+  "  </aside>",
+  "</div>"
+].join(''));
+
 
 const networkCopy = {
   clientes: ['Clientes', 'LINK puede conectar tu negocio con nuevas ocasiones de compra, reserva o recomendación.'],
@@ -274,21 +293,77 @@ function renderBusiness(key) {
 document.querySelectorAll('[data-business]').forEach((button) => button.addEventListener('click', () => renderBusiness(button.dataset.business)));
 renderBusiness('hotel');
 
-const processCopy = {
-  1: ['1 · Entiende', 'LINK parte observando el negocio: qué ofrece, a quién atiende, qué procesos ya tiene y dónde existe una necesidad concreta.'],
-  2: ['2 · Conecta', 'Busca una relación útil: un cliente, un proveedor, otro negocio, una herramienta o un canal que pueda resolver esa necesidad.'],
-  3: ['3 · Activa', 'La relación se transforma en una acción: una recomendación, una campaña, una reserva, un beneficio, una coordinación o un cobro.'],
-  4: ['4 · Comprueba', 'LINK diferencia la intención del resultado. Lo importante es saber si la acción ocurrió y qué produjo.'],
-  5: ['5 · Aprende', 'Cada resultado aporta contexto para repetir lo que funciona, corregir lo que no y tomar mejores decisiones.'],
-  6: ['6 · Crece', 'Cuando una relación demuestra valor, puede repetirse, conectarse con otras o convertirse en una nueva capacidad para la red.']
+const detailLayer = document.querySelector('#le-detail-layer');
+const detailTitle = document.querySelector('#le-detail-title');
+const detailKicker = document.querySelector('#le-detail-kicker');
+const detailMeaning = document.querySelector('#le-detail-meaning');
+const detailAction = document.querySelector('#le-detail-action');
+const detailExample = document.querySelector('#le-detail-example');
+const detailChips = document.querySelector('#le-detail-chips');
+const detailKey = document.querySelector('#le-detail-key');
+
+function openDetail(detail) {
+  if (!detailLayer || !detail) return;
+  detailKicker.textContent = detail.kicker || 'LINK';
+  detailTitle.textContent = detail.title || '';
+  detailMeaning.textContent = detail.meaning || '';
+  detailAction.textContent = detail.action || '';
+  detailExample.textContent = detail.example || '';
+  detailChips.innerHTML = (detail.chips || []).map(item => '<span>'+item+'</span>').join('');
+  detailKey.innerHTML = detail.key ? '<b>Idea clave</b><span>'+detail.key+'</span>' : '';
+  detailLayer.classList.add('open');
+  detailLayer.setAttribute('aria-hidden','false');
+  document.body.classList.add('le-detail-open');
+}
+function closeDetail() {
+  detailLayer?.classList.remove('open');
+  detailLayer?.setAttribute('aria-hidden','true');
+  document.body.classList.remove('le-detail-open');
+}
+document.querySelectorAll('[data-detail-close]').forEach(el => el.addEventListener('click', closeDetail));
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDetail(); });
+
+const processDetails = {
+  1: {kicker:'1 · ENTIENDE',title:'Primero entiende el negocio.',meaning:'LINK observa antes de mover nada.',action:'Identifica qué ofrece el negocio, a quién atiende, qué necesita y dónde existe una oportunidad concreta.',example:'Un hotel recibe huéspedes que preguntan dónde cenar o qué hacer por la tarde.',chips:['Oferta','Cliente','Necesidad'],key:'No se conecta por conectar: primero se entiende el contexto.'},
+  2: {kicker:'2 · CONECTA',title:'Busca la relación más útil.',meaning:'LINK encuentra quién o qué puede resolver esa necesidad.',action:'Relaciona al negocio con clientes, aliados, servicios, herramientas o canales que tienen sentido para el caso.',example:'Ese hotel puede conectarse con un restaurante, un tour o un traslado.',chips:['Aliado','Servicio','Herramienta'],key:'La conexión tiene que resolver algo real.'},
+  3: {kicker:'3 · ACTIVA',title:'La conexión se vuelve acción.',meaning:'La relación deja de ser una idea y empieza a operar.',action:'Puede convertirse en una recomendación, beneficio, reserva, campaña, coordinación o cobro.',example:'El hotel comparte un beneficio para cenar o reserva una experiencia para su huésped.',chips:['Beneficio','Reserva','Coordinación'],key:'LINK busca acciones concretas, no relaciones decorativas.'},
+  4: {kicker:'4 · COMPRUEBA',title:'Mide qué ocurrió de verdad.',meaning:'LINK separa intención de resultado.',action:'Comprueba si hubo consulta, activación, visita, reserva, compra o uso efectivo de la conexión.',example:'Se registra si la persona fue al restaurante y si esa recomendación terminó en venta.',chips:['Origen','Activación','Venta'],key:'Lo que no se comprueba todavía no cuenta como resultado.'},
+  5: {kicker:'5 · APRENDE',title:'El resultado deja aprendizaje.',meaning:'LINK usa lo ocurrido para decidir mejor la siguiente vez.',action:'Detecta qué funciona, qué no y qué conviene repetir, ajustar o descartar.',example:'Si un beneficio de cena convierte mejor que otro, esa ruta puede fortalecerse.',chips:['Resultado','Patrón','Decisión'],key:'Cada acción útil aumenta el contexto del sistema.'},
+  6: {kicker:'6 · CRECE',title:'Lo que funciona puede escalar.',meaning:'LINK abre nuevas conexiones sólo cuando agregan valor.',action:'Una relación probada puede repetirse, sumar aliados o convertirse en un producto asociativo.',example:'Una ruta hotel + restaurante puede después sumar tour, traslado o evento.',chips:['Repetir','Escalar','Conectar'],key:'Crecer no es sumar cosas; es ampliar relaciones que ya demostraron valor.'}
 };
 document.querySelectorAll('[data-step]').forEach((button) => {
   button.addEventListener('click', () => {
     document.querySelectorAll('[data-step]').forEach((b) => b.classList.toggle('active', b === button));
-    const copy = processCopy[button.dataset.step];
-    document.querySelector('#le-process-explain').innerHTML = '<b>' + copy[0] + '</b><p>' + copy[1] + '</p>';
+    const detail = processDetails[button.dataset.step];
+    document.querySelector('#le-process-explain').innerHTML = '<b>' + detail.kicker.replace(' · ',' · ').replace(/^\d+ · /,'') + '</b><p>' + detail.action + '</p>';
+    openDetail(detail);
   });
 });
+
+const associationDetails = {
+  beneficios:{kicker:'ASOCIACIÓN · BENEFICIOS',title:'Beneficios compartidos',meaning:'Un negocio crea una ventaja y otro la acerca al cliente.',action:'LINK registra quién originó la oportunidad, dónde se activó y qué resultado produjo.',example:'Un hotel entrega a su huésped un beneficio en un restaurante cercano.',chips:['Hotel + Restaurante','Tour + Restaurante','Comercio + Hotel'],key:'El beneficio es un puente entre negocios, no sólo un descuento.'},
+  experiencias:{kicker:'ASOCIACIÓN · EXPERIENCIAS',title:'Experiencias compartidas',meaning:'Una experiencia complementa lo que otro negocio ya entrega.',action:'LINK permite que un punto de contacto recomiende y coordine una experiencia de otro negocio.',example:'Un hotel puede acercar una cena, concierto, tour o experiencia de bienestar.',chips:['Hotel + Concierto','Hotel + Cena','Restaurante + Música en vivo','Hotel + Tour'],key:'El cliente recibe una experiencia más completa y ambos negocios ganan valor.'},
+  servicios:{kicker:'ASOCIACIÓN · SERVICIOS',title:'Servicios conectados',meaning:'Un negocio suma capacidad sin tener que operar todo.',action:'LINK conecta necesidades operativas con proveedores que pueden resolverlas.',example:'Un hotel puede ofrecer traslado sin transformarse en una empresa de transporte.',chips:['Hotel + Transfer','Hotel + Wellness','Tour + Transporte','Evento + Producción'],key:'La red amplía capacidad sin duplicar estructuras.'},
+  promocion:{kicker:'ASOCIACIÓN · PROMOCIÓN',title:'Promoción cruzada',meaning:'Negocios con público compatible pueden recomendarse.',action:'LINK ayuda a ordenar la oferta conjunta y a medir qué canal originó la oportunidad.',example:'Un café y una pastelería pueden crear un beneficio conjunto para una misma audiencia.',chips:['Café + Pastelería','Bar + Karaoke','Restaurante + Evento','Hotel + Comercio local'],key:'Compartir audiencia puede crear demanda nueva para ambos.'},
+  operacion:{kicker:'ASOCIACIÓN · OPERACIÓN',title:'Operación complementaria',meaning:'Una parte del trabajo puede vivir en otro negocio especializado.',action:'LINK conecta la operación, deja responsables claros y mantiene trazabilidad del resultado.',example:'Un evento puede apoyarse en ticketing, producción técnica o transporte sin internalizar esas áreas.',chips:['Evento + Ticketing','Hotel + Recepción digital','Restaurante + Marketing','Transfer + Hotel'],key:'La asociación también puede ser operativa, no sólo comercial.'},
+  derivacion:{kicker:'ASOCIACIÓN · DERIVACIÓN',title:'Derivación local',meaning:'El cliente recibe una opción útil en el momento correcto.',action:'LINK convierte cercanía y contexto en una recomendación trazable entre negocios.',example:'La recepción de un hotel puede derivar una cena, un tour o un servicio cercano.',chips:['Hotel → Restaurante','Restaurante → Show','Tour → Transfer','Comercio → Experiencia'],key:'La oportunidad aparece donde el cliente ya está tomando una decisión.'}
+};
+document.querySelectorAll('[data-assoc]').forEach(button => {
+  button.addEventListener('click', () => openDetail(associationDetails[button.dataset.assoc]));
+});
+
+const benefitDetails = {
+  ventas:{kicker:'CAPACIDAD · VENTAS',title:'Más ventas',meaning:'Aparecen nuevas ocasiones de compra, reserva o contratación.',action:'LINK abre canales donde otro negocio, una experiencia o un servicio puede generar una oportunidad comercial.',example:'Un hotel deriva una cena o un tour y esa recomendación termina en venta.',chips:['Consulta','Reserva','Venta'],key:'La venta puede nacer fuera del negocio que finalmente la recibe.'},
+  visibilidad:{kicker:'CAPACIDAD · VISIBILIDAD',title:'Más visibilidad',meaning:'El negocio aparece en más puntos de contacto relevantes.',action:'LINK puede hacer visible una oferta dentro de otros negocios, canales, mensajes o beneficios asociados.',example:'Un restaurante aparece ante huéspedes de hoteles cercanos.',chips:['Hotel','RRSS','Beneficio'],key:'No es aparecer en todas partes; es aparecer donde hay contexto.'},
+  organizacion:{kicker:'CAPACIDAD · ORGANIZACIÓN',title:'Mejor organización',meaning:'Las conexiones necesitan procesos claros para no perderse.',action:'LINK ordena cómo se registra, deriva, sigue y comprueba cada oportunidad.',example:'Una recomendación deja de depender sólo de memoria o WhatsApp disperso.',chips:['Registro','Responsable','Seguimiento'],key:'Ordenar la relación permite repetirla.'},
+  automatizacion:{kicker:'CAPACIDAD · AUTOMATIZACIÓN',title:'Automatización',meaning:'Las tareas repetitivas pueden convertirse en flujo.',action:'LINK conecta formularios, registros, avisos y acciones para reducir trabajo manual.',example:'Una solicitud puede registrarse, clasificarse y quedar lista para seguimiento automáticamente.',chips:['Formulario','Registro','Seguimiento'],key:'Automatizar sirve cuando libera tiempo sin perder control.'},
+  control:{kicker:'CAPACIDAD · CONTROL',title:'Más control',meaning:'El negocio puede ver qué conexión está funcionando.',action:'LINK conserva origen, estado y resultado para comparar acciones y alianzas.',example:'Se puede saber qué hotel está generando visitas o qué beneficio convierte mejor.',chips:['Origen','Resultado','Comparación'],key:'Lo importante no es tener más datos, sino saber qué produjo valor.'},
+  alianzas:{kicker:'CAPACIDAD · ALIANZAS',title:'Nuevas alianzas',meaning:'Negocios complementarios pueden construir algo juntos.',action:'LINK convierte una coincidencia en una relación operable y medible.',example:'Hotel, restaurante, traslado y experiencia pueden trabajar como una red alrededor del mismo huésped.',chips:['Hotel','Restaurante','Transfer','Experiencia'],key:'Una alianza vale cuando mejora la experiencia y genera resultado para las partes.'}
+};
+document.querySelectorAll('[data-benefit]').forEach(button => {
+  button.addEventListener('click', () => openDetail(benefitDetails[button.dataset.benefit]));
+});
+
 
 const modelState = { price: 100000, clientBenefit: 15, commission: 10, ally: 0 };
 const clp = new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0});
