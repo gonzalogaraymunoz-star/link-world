@@ -260,3 +260,82 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
   .lw-smoke-line{min-height:1.58em;height:1.58em;margin-top:.30em}
   .lw-join-copy>p{margin-top:54px}
 }
+
+
+/* Coordinated transformation story */
+.lw-join-support-wrap{
+  position:relative;
+  max-width:650px;
+  margin:72px 0 0;
+  padding-left:42px;
+}
+.lw-journey-count{
+  position:absolute;
+  left:0;
+  top:5px;
+  color:#61615a;
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.12em;
+}
+.lw-join-support{
+  position:relative;
+  min-height:74px;
+  margin:0!important;
+  color:#aaa9a1;
+  font-size:clamp(15px,1.45vw,19px);
+  line-height:1.58;
+  letter-spacing:-.01em;
+}
+.lw-support-phrase{
+  position:absolute;
+  inset:0 auto auto 0;
+  width:100%;
+  display:block;
+  opacity:1;
+  transform:translate3d(0,0,0);
+  filter:blur(0);
+  will-change:opacity,transform,filter;
+}
+.lw-support-phrase strong{color:#f1f0e9}
+.lw-support-next{opacity:0;pointer-events:none}
+.lw-support-current.lw-support-out{
+  animation:lwSupportOut .72s cubic-bezier(.42,0,.26,1) forwards;
+}
+.lw-support-next.lw-support-in{
+  animation:lwSupportIn .78s cubic-bezier(.22,.72,.22,1) .18s forwards;
+}
+@keyframes lwSupportOut{
+  0%{opacity:1;filter:blur(0);transform:translate3d(0,0,0)}
+  55%{opacity:.42;filter:blur(1.5px);transform:translate3d(0,-5px,0)}
+  100%{opacity:0;filter:blur(4px);transform:translate3d(0,-9px,0)}
+}
+@keyframes lwSupportIn{
+  0%{opacity:0;filter:blur(4px);transform:translate3d(0,9px,0)}
+  60%{opacity:.7;filter:blur(1px);transform:translate3d(0,2px,0)}
+  100%{opacity:1;filter:blur(0);transform:translate3d(0,0,0)}
+}
+
+/* Override the earlier static support rules. */
+.lw-join-copy>p{margin:0}
+.lw-join-support,
+.lw-join-support.lw-support-sweep{
+  opacity:1;
+  filter:none;
+  transform:none;
+  animation:none;
+}
+@media(max-width:900px){
+  .lw-join-support-wrap{margin-top:60px}
+  .lw-join-support{min-height:82px}
+}
+@media(max-width:600px){
+  .lw-join-support-wrap{margin-top:52px;padding-left:0;padding-top:20px}
+  .lw-journey-count{top:0}
+  .lw-join-support{min-height:104px;font-size:14px;line-height:1.6}
+}
+@media (prefers-reduced-motion:reduce){
+  .lw-support-current.lw-support-out,
+  .lw-support-next.lw-support-in{animation:none}
+  .lw-support-next{display:none}
+}
