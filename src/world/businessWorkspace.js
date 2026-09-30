@@ -854,7 +854,7 @@ function close(){
   const url=new URL(window.location.href);url.searchParams.delete('business');
   window.history.replaceState({},'',url.pathname+url.search+url.hash);
 }
-async function openBusiness(id,clientId=null,productId=null){
+async function openBusiness(id,clientId=null,productId=null,focus=null){
   const url=new URL(window.location.href);url.searchParams.set('business',id);
   window.history.replaceState({},'',url.pathname+url.search+url.hash);
   state.open=true;state.client=null;$('#business-workspace').classList.remove('hidden');
@@ -864,6 +864,7 @@ async function openBusiness(id,clientId=null,productId=null){
     await loadBusiness(id);
     if(clientId&&state.clients.some(client=>client.id===clientId))openClient(clientId,productId);
     else renderBusiness();
+    if(focus==='crm')requestAnimationFrame(()=>setTimeout(openCrmCore,40));
   }
   catch(e){notice(e.message||'No se pudo abrir la ficha.',true);$('#bw-content').innerHTML='<div class="bw-loading">No pudimos leer esta ficha.</div>';}
 }
@@ -876,7 +877,8 @@ function mount(){
     const id=String(event.detail?.id||'');
     const clientId=event.detail?.clientId?String(event.detail.clientId):null;
     const productId=event.detail?.productId?String(event.detail.productId):null;
-    if(id)openBusiness(id,clientId,productId);
+    const focus=event.detail?.focus?String(event.detail.focus):null;
+    if(id)openBusiness(id,clientId,productId,focus);
   });
   const deepLinkBusiness=new URLSearchParams(window.location.search).get('business');
   if(deepLinkBusiness&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deepLinkBusiness)){
