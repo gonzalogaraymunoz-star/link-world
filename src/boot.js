@@ -7,6 +7,7 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
 });
 const LINK_WHATSAPP='https://wa.me/qr/ZYDZ5QZBDG4AJ1';
+const IS_LOGIN_ROUTE=/^\/ingreso(?:\/|$)/.test(window.location.pathname);
 
 function escapeHtml(value=''){
   return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -100,7 +101,11 @@ function renderGate(message=''){
     }
     status.textContent='Acceso confirmado.';
     status.dataset.state='ok';
-    window.location.reload();
+    if(IS_LOGIN_ROUTE){
+      window.location.replace('/');
+    }else{
+      window.location.reload();
+    }
   });
 }
 
@@ -114,6 +119,10 @@ async function boot(){
   if(check.error||check.data!==true){
     await db.auth.signOut();
     renderGate('Esta cuenta todavía no pertenece a LINK World.');
+    return;
+  }
+  if(IS_LOGIN_ROUTE){
+    window.location.replace('/');
     return;
   }
   document.documentElement.classList.remove('lw-auth-html');

@@ -12,7 +12,7 @@ app.innerHTML=[
 "  <div class='lw-join-orbit o1'></div><div class='lw-join-orbit o2'></div>",
 "  <header class='lw-join-top'>",
 "    <a class='lw-join-brand' href='/que-es-link/' aria-label='Volver a ¿Qué es LINK?'><img src='/link-world-mark.svg' alt=''><span><b>LINK.</b> World</span></a>",
-"    <a class='lw-join-member' href='/'>Ya soy parte <span>→</span></a>",
+"    <a class='lw-join-member' href='/ingreso/'>Ya soy parte <span>→</span></a>",
 "  </header>",
 "  <section class='lw-join-hero'>",
 "    <div class='lw-join-copy'>",
