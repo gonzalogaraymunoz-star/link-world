@@ -19,7 +19,7 @@ const RRSS_PANEL_URL='https://linkrrss.vercel.app';
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,gameState:null,crmState:null,crmLeads:[],crmQuotes:[],crmOutcomes:[],crmEvents:[],taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,gameState:null,crmState:null,crmLeads:[],crmQuotes:[],crmOutcomes:[],crmEvents:[],taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,agentJourney:[],busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -70,7 +70,7 @@ async function loadBusiness(businessId){
         .eq('business_id',businessId).maybeSingle()
     : Promise.resolve({data:null,error:null});
   const [b,c,p,r,s,rrss,game]=await Promise.all([
-    db.from('link_world_businesses').select('id,slug,name,sector,city,country,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
+    db.from('link_world_businesses').select('id,global_id,slug,name,sector,city,country,summary,google_place_id,owned_facts,evidence,verification_status,updated_at').eq('id',businessId).single(),
     db.from('link_world_clients').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_products').select('*').eq('business_id',businessId).order('created_at',{ascending:true}),
     db.from('link_world_responsibility_profiles').select('*').order('sort_order',{ascending:true}),
@@ -101,6 +101,13 @@ async function loadBusiness(businessId){
     state.crmQuotes=crmQuotes.error?[]:(crmQuotes.data||[]);
     state.crmOutcomes=crmOutcomes.error?[]:(crmOutcomes.data||[]);
     state.crmEvents=crmEvents.error?[]:(crmEvents.data||[]);
+  }
+  state.agentJourney=[];
+  if(state.canWrite){
+    const {data:journey,error:journeyError}=await db.from('link_business_agent_journey_v')
+      .select('business_id,business_global_id,stage_number,stage_key,stage_name,customer_state_in,customer_state_out,director_slug,director_name,director_runtime,runtime_route,autonomy_mode,execution_enabled,mission_code,mission_title,problem_statement,diagnosis,expected_outcome,mission_status,priority,assigned_agent_slug,evidence_requested,evidence_received,evidence_validated,evidence_rejected,last_evidence_at,parameter_count,observation_count,last_observed_at')
+      .eq('business_id',businessId).order('stage_number',{ascending:true});
+    state.agentJourney=journeyError?[]:(journey||[]);
   }
   state.taxiHotelOperations=[];
   state.taxiHotelOperationsError=null;
@@ -180,6 +187,63 @@ function injectGameState(root){
   });
 }
 
+
+
+function agentJourneyMarkup(){
+  if(!state.canWrite)return '';
+  const rows=Array.isArray(state.agentJourney)?state.agentJourney:[];
+  if(!rows.length)return '';
+  const cards=rows.map(row=>{
+    const alive=row.director_runtime==='vercel';
+    const assigned=row.assigned_agent_slug===row.director_slug;
+    const evidenceOk=Number(row.evidence_validated||0)>0;
+    const observed=Number(row.observation_count||0)>0;
+    const stateClass=!alive?'offline':!assigned?'blocked':evidenceOk&&observed?'learning':'active';
+    const stateLabel=!alive?'Sin runtime':!assigned?'Sin asignar':evidenceOk&&observed?'Aprendiendo':'Observando';
+    return '<article class="bw-agent-stage '+stateClass+'" data-agent-stage="'+safe(row.stage_key)+'">'+
+      '<div class="bw-agent-stage-head"><span class="bw-agent-step">'+safe(row.stage_number)+'</span><div><small>'+safe(row.customer_state_in||'')+' → '+safe(row.customer_state_out||'')+'</small><h3>'+safe(row.stage_name)+'</h3></div><em>'+safe(stateLabel)+'</em></div>'+
+      '<p>'+safe(row.mission_title||'Sin misión activa')+'</p>'+
+      '<div class="bw-agent-stage-meta"><span><b>'+safe(row.director_name||row.director_slug)+'</b> '+safe(String(row.autonomy_mode||'shadow').toUpperCase())+'</span><span><b>'+safe(row.evidence_validated||0)+'/'+safe(row.evidence_requested||0)+'</b> evidencia</span><span><b>'+safe(row.observation_count||0)+'/'+safe(row.parameter_count||0)+'</b> KPI observados</span></div>'+
+      '<div class="bw-agent-stage-actions"><button type="button" class="bw-agent-run" data-agent="'+safe(row.director_slug)+'" data-stage="'+safe(row.stage_key)+'">Ejecutar lectura</button><span>'+safe(row.mission_status||'sin misión')+'</span></div>'+
+      '<div class="bw-agent-result" data-agent-result="'+safe(row.director_slug)+'"></div>'+
+    '</article>';
+  }).join('');
+  return '<section class="bw-agent-journey" id="bw-agent-journey">'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">CONTROL CENTRAL / LINK AGENTS</span><h2>Journey operativo</h2><p>Marketing → Ventas → Cierre → Onboarding → Entrega → Postventa. Los Directores observan Caracol con memoria aislada. Sin evidencia validada no hay avance.</p></div><span class="bw-agent-live">'+rows.filter(x=>x.director_runtime==='vercel').length+' / '+rows.length+' runtimes vivos</span></div>'+
+    '<div class="bw-agent-flow">'+cards+'</div>'+
+  '</section>';
+}
+async function runStageDirector(button){
+  const slug=button.dataset.agent,stage=button.dataset.stage;
+  const resultEl=document.querySelector('[data-agent-result="'+slug+'"]');
+  button.disabled=true;
+  button.textContent='Leyendo Caracol…';
+  if(resultEl){resultEl.textContent='Consultando señales, misión, permisos, evidencia y parámetros reales…';resultEl.classList.add('visible');}
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    if(!session?.access_token)throw new Error('Necesitas una sesión LINK activa.');
+    const response=await fetch('/api/agents/'+encodeURIComponent(slug),{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'observe',
+        businessGlobalId:state.business.global_id,
+        prompt:'Revisa Caracol en tu etapa '+stage+'. Identifica el hecho principal, la restricción actual, las fuentes faltantes, la evidencia pendiente y el siguiente movimiento mínimo verificable. No ejecutes mutaciones externas y no inventes métricas.'
+      })
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||('Runtime '+response.status));
+    if(resultEl)resultEl.textContent=data.answer||'Lectura completada sin texto.';
+  }catch(error){
+    if(resultEl)resultEl.textContent='Error: '+(error.message||error);
+  }finally{
+    button.disabled=false;
+    button.textContent='Ejecutar lectura';
+  }
+}
+function bindAgentJourney(root){
+  root.querySelectorAll('.bw-agent-run').forEach(button=>button.addEventListener('click',()=>runStageDirector(button)));
+}
 
 const crmStageNames={new:'Nuevo',qualified:'Calificado',contacted:'Contactado',proposal:'Propuesta',won:'Ganado',lost:'Perdido'};
 function crmDate(v){
@@ -552,6 +616,7 @@ function renderClientBusinessCell(){
   root.innerHTML=[
     '<section class="bw-client-head"><div><button id="bw-close-client-cell" class="bw-back" type="button">← LINK WORLD</button><span class="bw-kicker">FICHA DE CLIENTE / '+safe(contract.code||'CARACOL')+'</span><h1>'+safe(state.business.name)+'</h1><p>'+safe(state.business.summary||'Cliente activo del ecosistema LINK.')+'</p><div class="bw-tags"><span>Cliente activo</span><span>'+active.length+' productos vendidos activos</span></div></div><button id="bw-client-cell-director" type="button">✦ Revisar con Director</button></section>',
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
+    agentJourneyMarkup(),
     rrssApparatusMarkup(),
     financialCorePanelMarkup(),
     crmCoreMarkup(),
@@ -560,6 +625,7 @@ function renderClientBusinessCell(){
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
+  bindAgentJourney(root);
   bindRrssApparatus(root);
   bindCrmCore(root);
   injectGameState(root);
