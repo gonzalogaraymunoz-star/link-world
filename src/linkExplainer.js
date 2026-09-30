@@ -402,12 +402,6 @@ document.querySelector('#le-link-input')?.addEventListener('input', event => {
   renderCouponBusinessModel();
 });
 renderCouponBusinessModel();
-});
-document.querySelector('#le-link-input')?.addEventListener('input', (event) => {
-  modelState.commission = event.currentTarget.value;
-  renderCouponBusinessModel();
-});
-renderCouponBusinessModel();
 
 const couponExamples = {
   'caracol-conciertos': {
