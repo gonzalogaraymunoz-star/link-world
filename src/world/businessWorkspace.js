@@ -19,7 +19,7 @@ const RRSS_PANEL_URL='https://linkrrss.vercel.app';
 const resolveEntityColor=(visual={})=>{const raw=String(visual?.assigned_color||'').trim();return visual?.color_visible===true&&/^#[0-9a-f]{6}$/i.test(raw)?raw.toLowerCase():null;};
 const colorStyle=color=>color?' style="border-left:4px solid '+safe(color)+'"':'';
 
-const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,gameState:null,taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,busy:false,canWrite:false};
+const state={open:false,business:null,clients:[],products:[],profiles:[],client:null,houseStatus:null,rrssStatus:null,gameState:null,crmState:null,crmLeads:[],crmQuotes:[],crmOutcomes:[],crmEvents:[],taxiHotelOperations:[],taxiHotelOperationsError:null,financeTransactions:[],financeDocuments:[],paymentProviderAccounts:[],taxProfiles:[],paymentDashboard:[],bancarizationProgress:null,financialCore:null,busy:false,canWrite:false};
 
 async function writeSession(){
   const {data:{session}}=await db.auth.getSession();
@@ -87,6 +87,21 @@ async function loadBusiness(businessId){
   state.houseStatus=s?.error?null:(s?.data||null);
   state.rrssStatus=rrss?.data||{business_id:businessId,rrss_status:'missing',profile_count:0,source_count:0,account_count:0,connected_account_count:0};
   state.gameState=game?.error?null:(game?.data||null);
+  state.crmState=null;state.crmLeads=[];state.crmQuotes=[];state.crmOutcomes=[];state.crmEvents=[];
+  if(state.canWrite){
+    const [crmState,crmLeads,crmQuotes,crmOutcomes,crmEvents]=await Promise.all([
+      db.from('link_crm_business_state_v').select('*').eq('business_id',businessId).maybeSingle(),
+      db.from('sales_leads').select('id,source,full_name,company,interested_product,stage,score,next_followup_at,last_contact_at,closed_at,loss_reason,created_at,updated_at').eq('business_id',businessId).order('updated_at',{ascending:false}).limit(80),
+      db.from('sales_quotes').select('id,lead_id,quote_number,status,product_key,currency,total_amount,valid_until,issued_at,accepted_at,created_at,updated_at').eq('business_id',businessId).order('updated_at',{ascending:false}).limit(80),
+      db.from('sales_cycle_outcomes').select('id,lead_id,outcome,amount,currency,verified,loss_reason,evidence_ref,confirmed_at,created_at').eq('business_id',businessId).order('confirmed_at',{ascending:false}).limit(80),
+      db.from('sales_events').select('id,lead_id,quote_id,outcome_id,event_type,event_name,actor,occurred_at,created_at').eq('business_id',businessId).order('occurred_at',{ascending:false}).limit(120)
+    ]);
+    state.crmState=crmState.error?null:(crmState.data||null);
+    state.crmLeads=crmLeads.error?[]:(crmLeads.data||[]);
+    state.crmQuotes=crmQuotes.error?[]:(crmQuotes.data||[]);
+    state.crmOutcomes=crmOutcomes.error?[]:(crmOutcomes.data||[]);
+    state.crmEvents=crmEvents.error?[]:(crmEvents.data||[]);
+  }
   state.taxiHotelOperations=[];
   state.taxiHotelOperationsError=null;
   if(state.canWrite&&state.business?.slug==='taxi-hotel'){
@@ -164,6 +179,50 @@ function injectGameState(root){
     document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
   });
 }
+
+
+const crmStageNames={new:'Nuevo',qualified:'Calificado',contacted:'Contactado',proposal:'Propuesta',won:'Ganado',lost:'Perdido'};
+function crmDate(v){
+  if(!v)return '—';
+  try{return new Intl.DateTimeFormat('es-CL',{dateStyle:'short',timeStyle:'short'}).format(new Date(v));}
+  catch{return String(v);}
+}
+function crmCoreMarkup(){
+  if(!state.canWrite){
+    return '<section class="bw-crm-core is-private" id="bw-crm-core"><div class="bw-crm-head"><div><span class="bw-kicker">LINK CRM CORE / PRIVADO</span><h2>Operación comercial</h2><p>El mini CRM aparece solo con una sesión LINK y cuando la lógica mínima del negocio está lista.</p></div><span class="bw-crm-state">Sesión requerida</span></div></section>';
+  }
+  const crm=state.crmState;
+  if(!crm){
+    return '<section class="bw-crm-core is-latent" id="bw-crm-core"><div class="bw-crm-head"><div><span class="bw-kicker">LINK CRM CORE / LATENTE</span><h2>La operación todavía no emerge</h2><p>No hay una lectura CRM válida para esta célula. El Micelio no debe inventar una superficie antes de resolver su lógica.</p></div><span class="bw-crm-state">Latente</span></div></section>';
+  }
+  if(!crm.logic_ready){
+    const missing=Array.isArray(crm.missing_logic)?crm.missing_logic:[];
+    return '<section class="bw-crm-core is-latent" id="bw-crm-core"><div class="bw-crm-head"><div><span class="bw-kicker">LINK CRM CORE / LATENTE</span><h2>Primero completar el organismo</h2><p>'+safe(crm.emergence_reason||'La superficie comercial espera su lógica mínima.')+'</p></div><span class="bw-crm-state">'+safe(crm.logic_parts_ready)+' / '+safe(crm.logic_parts_required)+'</span></div><div class="bw-crm-missing">'+missing.map(x=>'<span>'+safe(String(x).replaceAll('_',' '))+'</span>').join('')+'</div></section>';
+  }
+  const stages=['new','qualified','contacted','proposal','won','lost'];
+  const counts=Object.fromEntries(stages.map(stage=>[stage,state.crmLeads.filter(x=>x.stage===stage).length]));
+  const latest=state.crmLeads.slice(0,8);
+  return '<section class="bw-crm-core state-'+safe(crm.crm_state||'ready')+'" id="bw-crm-core">'+
+    '<div class="bw-crm-head"><div><span class="bw-kicker">LINK CRM CORE / OPERACIÓN</span><h2>Control de ventas</h2><p>'+safe(crm.emergence_reason||'La lógica comercial está disponible.')+'</p></div><div class="bw-crm-head-actions"><span class="bw-crm-state">'+safe(String(crm.crm_state||'ready').toUpperCase())+'</span><button id="bw-crm-director" type="button">✦ Gestionar con Director</button></div></div>'+
+    '<div class="bw-crm-kpis"><div><strong>'+safe(crm.open_lead_count||0)+'</strong><span>Leads abiertos</span></div><div><strong>'+safe(crm.open_quote_count||0)+'</strong><span>Cotizaciones abiertas</span></div><div><strong>'+safe(crm.verified_win_count||0)+'</strong><span>Ventas verificadas</span></div><div><strong>'+money(crm.verified_cash_amount||0,'CLP')+'</strong><span>Caja verificada</span></div></div>'+
+    '<div class="bw-crm-pipeline">'+stages.map(stage=>'<div class="stage-'+stage+'"><span>'+safe(crmStageNames[stage])+'</span><strong>'+safe(counts[stage]||0)+'</strong></div>').join('')+'</div>'+
+    '<div class="bw-crm-list"><div class="bw-crm-list-head"><span>Oportunidad</span><span>Etapa</span><span>Próximo movimiento</span></div>'+
+      (latest.length?latest.map(row=>'<article><span><b>'+safe(row.full_name||row.company||'Lead sin nombre')+'</b><small>'+safe(row.interested_product||row.source||'Origen no definido')+'</small></span><em>'+safe(crmStageNames[row.stage]||row.stage||'—')+'</em><time>'+safe(row.next_followup_at?crmDate(row.next_followup_at):(row.closed_at?'Cerrado':'Sin seguimiento'))+'</time></article>').join(''):'<div class="bw-crm-empty">Sin oportunidades todavía. El CRM está listo para recibir la primera.</div>')+
+    '</div></section>';
+}
+function bindCrmCore(root){
+  root.querySelector('#bw-crm-director')?.addEventListener('click',()=>{
+    const crm=state.crmState||{};
+    const prompt='Abre el mini CRM de '+state.business.name+' dentro de LINK WORLD. Revisa leads, cotizaciones, resultados y caja verificada. Estado CRM: '+(crm.crm_state||'sin estado')+'. Leads abiertos: '+(crm.open_lead_count||0)+'. Cotizaciones abiertas: '+(crm.open_quote_count||0)+'. Ventas verificadas: '+(crm.verified_win_count||0)+'. Decide el siguiente movimiento comercial usando evidencia real y no marques una venta ganada sin resultado verificable.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  });
+}
+function openCrmCore(){
+  const el=$('#bw-crm-core');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 
 
 function rrssApparatusMarkup(){
@@ -495,12 +554,14 @@ function renderClientBusinessCell(){
     '<section class="bw-metrics"><div><strong>'+active.length+'</strong><span>Productos vendidos</span></div><div><strong>'+commitments.length+'</strong><span>Compromisos activos</span></div><div><strong>'+money(contract.monthly_fee_clp,'CLP')+'</strong><span>RRSS / mes</span></div><div><strong>'+money(branches.find(p=>p.product_code==='CAR-KARAOKE')?.price_clp,'CLP')+'</strong><span>Karaoke / jornada</span></div></section>',
     rrssApparatusMarkup(),
     financialCorePanelMarkup(),
+    crmCoreMarkup(),
     '<section class="bw-grid"><article class="bw-panel span-2"><span class="bw-kicker">TERRITORIO</span><h2>'+(territoryLinked?'Vinculado a Google Maps':'Sin ubicación territorial')+'</h2><p>'+(territoryLinked?safe(territory.address_input||'Place ID vinculado. Los datos de Google se consultan en vivo.'):'Para un negocio físico, LINK WORLD debe pedir una dirección y resolver su Place ID antes de marcarlo en el mapa.')+'</p><div class="bw-facts">'+(territoryLinked?'<span><b>Place ID</b>'+safe(state.business.google_place_id)+'</span><span><b>Fuente</b>Google Maps en vivo</span>':'<span><b>Estado</b>Pendiente de dirección</span>')+'</div><button id="bw-territory-action" type="button">'+(territoryLinked?'Ver en Territorio':'Definir dirección')+'</button></article></section>',
     financePanelMarkup(),
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">RAMAS / PRODUCTOS VENDIDOS</span><h2>Productos activos de CARACOL</h2><p>Cada producto conserva su forma de cobro, compromiso, evidencia y respaldo financiero. <b>Color = acuerdo vigente + producto activo + pago validado.</b> Si falta pago o evidencia, permanece neutro.</p></div></div><div class="bw-product-grid">'+(branches.length?branches.map(branchCard).join(''):'<div class="bw-empty"><strong>Sin productos vendidos.</strong></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">COMPROMISOS</span><h2>Qué debemos mantener activo</h2><p>Los compromisos pertenecen a su producto. RRSS se cobra por contrato mensual; Karaoke se cobra por jornada realizada.</p></div></div><div class="bw-product-grid">'+(branches.some(p=>Array.isArray(p.commitments)&&p.commitments.length)?branches.flatMap(p=>(p.commitments||[]).map(c=>commitmentCard(c,p))).join(''):'<div class="bw-empty"><strong>Sin compromisos sincronizados.</strong></div>')+'</div></section>'
   ].join('');
   bindRrssApparatus(root);
+  bindCrmCore(root);
   injectGameState(root);
   $('#bw-close-client-cell').addEventListener('click',close);
   $('#bw-client-cell-director').addEventListener('click',()=>{
@@ -569,27 +630,30 @@ function renderOperationalHouseBusinessCell(){
       '<h1>'+safe(state.business.name)+'</h1>',
       '<p>'+safe(f.tagline||state.business.summary||'Casa operativa conectada al ecosistema LINK.')+'</p>',
       '<div class="bw-tags"><span>'+safe(houseLabel)+'</span><span>'+partners.length+' contrapartes</span><span class="status">'+safe(overallLabel)+'</span></div></div>',
-      '<div class="bw-head-actions"><button id="bw-operational-house-director" type="button">✦ Revisar con Director</button><button id="bw-refresh-operational-house" type="button">↻ Actualizar</button></div>',
+      '<div class="bw-head-actions"><button id="bw-open-crm-top" class="bw-primary" type="button">Abrir operación</button><button id="bw-operational-house-director" type="button">✦ Revisar con Director</button><button id="bw-refresh-operational-house" type="button">↻ Actualizar</button></div>',
     '</section>',
     '<section class="bw-metrics"><div><strong>'+partners.length+'</strong><span>Contrapartes observadas</span></div><div><strong>'+safe(network.active_catalog_products??'—')+'</strong><span>'+safe(productTitle)+'</span></div><div><strong>'+safe(network.supplier_records??'—')+'</strong><span>'+safe(providerTitle)+'</span></div><div><strong>'+safe(network.services??'—')+'</strong><span>'+safe(transactionTitle)+'</span></div></section>',
     rrssApparatusMarkup(),
     '<section class="bw-grid">',
       '<article class="bw-panel span-2"><span class="bw-kicker">ARQUITECTURA / '+safe(f.cell_archetype||'operational_house_v1')+'</span><h2>Una casa · múltiples aparatos de venta</h2><p>Los canales comerciales pueden captar y convertir oportunidades, mientras la verdad transaccional permanece en '+safe(sourceName)+'. LINK WORLD conserva identidad, relaciones, capacidades, estado y eventos mínimos; no crea una segunda operación.</p><div class="bw-facts"><span><b>Fuente operacional</b>'+safe(sourceProject)+'</span><span><b>Política de copia</b>Proyección solamente · sin transacciones sensibles</span><span><b>Bridge</b>'+safe(bridgeLabel)+'</span></div></article>',
       live?'<article class="bw-panel span-2"><span class="bw-kicker">SALUD / PROJECTION ENGINE</span><h2>'+safe(overallLabel)+'</h2><p>La salud separa estructura, transporte y proyección. Un binding registrado no necesita copiar su sistema fuente para considerarse correcto.</p><div class="bw-facts"><span><b>Estructura</b>'+safe(live.structure_status)+'</span><span><b>Transporte</b>'+safe(live.transport_status)+'</span><span><b>Proyección</b>'+safe(live.projection_status)+'</span><span><b>Cobertura</b>'+safe(coverageLabel)+'</span><span><b>Eventos observados</b>'+safe(observedEvents)+'</span></div></article>':'',
-      '<article class="bw-panel"><span class="bw-kicker">SUPERFICIES</span><h2>Ventas ↔ Operación</h2><p>Las superficies externas siguen siendo responsables de ejecutar su dominio. LINK WORLD las observa y conecta mediante bindings versionados.</p><div class="bw-form-actions"><button id="bw-open-sales" type="button">Abrir Ventas ↗</button><button id="bw-open-ops" type="button">Abrir Operación ↗</button></div></article>',
+      '<article class="bw-panel"><span class="bw-kicker">SUPERFICIES</span><h2>Ventas ↔ Operación</h2><p>El mini CRM es la superficie común de control comercial. El sistema fuente sigue ejecutando el dominio específico del negocio.</p><div class="bw-form-actions"><button id="bw-open-sales" type="button">Abrir Ventas ↗</button><button id="bw-open-ops" type="button">Sistema fuente ↗</button></div></article>',
       '<article class="bw-panel"><span class="bw-kicker">FLUJO</span><h2>'+safe(flowTitle)+'</h2><div class="bw-cycle">'+flow.map((x,i)=>'<span><b>'+(i+1)+'</b>'+safe(x)+'</span>').join('')+'</div></article>',
       '<article class="bw-panel span-2"><span class="bw-kicker">CAPACIDADES</span><h2>Qué aporta esta casa al ecosistema</h2><div class="bw-capabilities">'+capabilities.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><span>'+safe(x)+'</span></div>').join('')+'</div></article>',
     '</section>',
     financialCorePanelMarkup(),
+    crmCoreMarkup(),
     taxiHotelOperationsPanelMarkup(),
     mercadoPagoPanelMarkup(),
     '<section class="bw-clients-section"><div class="bw-section-head"><div><span class="bw-kicker">RED / LINKS</span><h2>'+safe(counterpartyTitle)+'</h2><p>Son proyecciones de identidad desde '+safe(counterpartySource)+'. Un registro activo no equivale por sí solo a un convenio económico codificado.</p></div><span class="bw-open-mode">'+partners.length+' vínculos reales</span></div><div class="bw-client-grid">'+(partners.length?partners.map(partnerCard).join(''):'<div class="bw-empty"><strong>Sin contrapartes proyectadas.</strong><span>Las relaciones deben existir en la fuente o contar con evidencia antes de incorporarse a LINK WORLD.</span></div>')+'</div></section>',
     '<section class="bw-products-section"><div class="bw-section-head"><div><span class="bw-kicker">CATÁLOGO / PROYECCIÓN</span><h2>'+safe(network.active_catalog_products??0)+' '+safe(productTitle.toLowerCase())+' sin duplicarlos</h2><p>El catálogo canónico sigue en '+safe(sourceName)+' ('+safe(catalogSource)+'). LINK WORLD observa identidad y capacidad de distribución; no mantiene una segunda copia de precios, reservas o estados transaccionales.</p></div></div><div class="bw-capabilities">'+Object.entries(categories).map(([k,v])=>'<div><b>'+safe(v)+'</b><span>'+safe(String(k).replaceAll('_',' '))+'</span></div>').join('')+'</div></section>'
   ].join('');
   bindRrssApparatus(root);
+  bindCrmCore(root);
   bindMercadoPagoPanel(root);
   $('#bw-close-operational-house').addEventListener('click',close);
   $('#bw-refresh-operational-house').addEventListener('click',refresh);
+  $('#bw-open-crm-top')?.addEventListener('click',openCrmCore);
   $('#bw-operational-house-director').addEventListener('click',()=>{
     const health=live?(' Estado observado: estructura '+live.structure_status+', transporte '+live.transport_status+', proyección '+live.projection_status+', overall '+live.overall_status+'. Los event_counts son posteriores a la activación y no equivalen al histórico total.'):'';
     const prompt='Revisa '+state.business.name+' como '+houseLabel+' dentro de LINK WORLD. Lee su red de contrapartes, capacidades, fuentes operacionales, aparatos de venta y estado del bridge.'+health+' Respeta la separación de verdad del arquetipo '+(f.cell_archetype||'operational_house_v1')+'; no copies datos sensibles ni inventes acuerdos económicos.';
@@ -629,7 +693,7 @@ function renderBusiness(){
       '<h1>'+safe(state.business.name)+'</h1>',
       '<p>'+safe(f.tagline||state.business.summary||'')+'</p>',
       '<div class="bw-tags">'+identity.map(x=>'<span>'+safe(x)+'</span>').join('')+'<span class="status">'+safe(f.status||statusLabel(state.business.verification_status))+'</span></div></div>',
-      '<div class="bw-head-actions"><button id="bw-open-director" type="button">✦ Conversar con Director</button><button id="bw-refresh" type="button">↻ Actualizar</button></div>',
+      '<div class="bw-head-actions"><button id="bw-open-crm-top" class="bw-primary" type="button">Abrir operación</button><button id="bw-open-director" type="button">✦ Conversar con Director</button><button id="bw-refresh" type="button">↻ Actualizar</button></div>',
     '</section>',
     '<section class="bw-metrics"><div><strong>'+m.clients+'</strong><span>Clientes / convenios</span></div><div><strong>'+m.products+'</strong><span>Productos</span></div><div><strong>'+m.active+'</strong><span>Activos</span></div><div><strong>'+m.blocked+'</strong><span>Bloqueados</span></div></section>',
     rrssApparatusMarkup(),
@@ -653,6 +717,7 @@ function renderBusiness(){
   injectGameState(root);
   $('#bw-close-top').addEventListener('click',close);
   $('#bw-refresh').addEventListener('click',refresh);
+  $('#bw-open-crm-top')?.addEventListener('click',openCrmCore);
   $('#bw-open-director').addEventListener('click',()=>{
     const prompt='Analiza '+state.business.name+' usando solo los datos autorizados de LINK WORLD. Distingue hechos, decisiones pendientes y próximos pasos.';
     close();
