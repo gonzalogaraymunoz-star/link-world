@@ -1154,3 +1154,10 @@ body.link-explainer-body ::selection{background:var(--le-acid);color:var(--le-in
     font-size:34px;
   }
 }
+
+
+@media(max-width:430px){
+  .le-network-node.n3,
+  .le-network-node.n6{bottom:auto}
+  .le-network-caption{top:420px;bottom:auto}
+}
