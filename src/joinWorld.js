@@ -17,7 +17,7 @@ app.innerHTML=[
 "    <div class='lw-join-copy'>",
 "      <span class='lw-join-kicker'><i></i> DE NEGOCIO AISLADO A NEGOCIO CONECTADO</span>",
 "      <h1><span class='lw-join-fixed'>Conozcámonos.</span><span class='lw-smoke-line' aria-label='Entendemos tu negocio.'><em class='lw-smoke-phrase lw-smoke-current'>Entendemos tu negocio.</em><em class='lw-smoke-phrase lw-smoke-next' aria-hidden='true'></em><i class='lw-smoke-haze' aria-hidden='true'></i></span></h1>",
-"      <div class='lw-join-support-wrap'><span class='lw-journey-count' id='lw-journey-count'>01 / 05</span><p class='lw-join-support' aria-live='polite'><span class='lw-support-phrase lw-support-current'><strong>Primero lo hacemos visible.</strong> Vemos qué vendes, cómo operas, quiénes son tus clientes y dónde hoy se pierden tiempo u oportunidades.</span><span class='lw-support-phrase lw-support-next' aria-hidden='true'></span></p></div>",
+"      <div class='lw-join-support-wrap'><span class='lw-journey-count' id='lw-journey-count'>01 / 05</span><p class='lw-join-support' aria-live='polite'><span class='lw-support-phrase lw-support-current'><strong>Primero entendemos cómo funciona.</strong> Qué vendes, cómo operas, quiénes son tus clientes y dónde hoy se pierde tiempo o una oportunidad.</span><span class='lw-support-phrase lw-support-next' aria-hidden='true'></span></p></div>",
 "    </div>",
 "    <aside class='lw-join-card'>",
 "      <span class='lw-join-card-label'>SER PARTE</span>",
@@ -47,28 +47,28 @@ app.innerHTML=[
 const journeyFrames = [
   {
     headline:'Entendemos tu negocio.',
-    lead:'Primero lo hacemos visible.',
-    body:'Vemos qué vendes, cómo operas, quiénes son tus clientes y dónde hoy se pierden tiempo u oportunidades.'
+    lead:'Primero entendemos cómo funciona.',
+    body:'Qué vendes, cómo operas, quiénes son tus clientes y dónde hoy se pierde tiempo o una oportunidad.'
   },
   {
-    headline:'Detectamos lo que falta.',
-    lead:'Encontramos la oportunidad.',
-    body:'Identificamos procesos, relaciones o capacidades que podrían generar más valor si estuvieran conectados.'
+    headline:'Detectamos oportunidades.',
+    lead:'Encontramos dónde LINK puede aportar.',
+    body:'Identificamos procesos, relaciones o capacidades que pueden generar más valor si se conectan.'
   },
   {
-    headline:'Conectamos capacidades útiles.',
-    lead:'Sumamos sólo lo que aporta.',
-    body:'Acercamos aliados, clientes, servicios o herramientas cuando resuelven una necesidad concreta del negocio.'
+    headline:'Conectamos capacidades.',
+    lead:'Sumamos sólo lo que realmente necesitas.',
+    body:'Aliados, clientes, servicios o herramientas entran cuando resuelven una necesidad concreta.'
   },
   {
-    headline:'Activamos nuevas operaciones.',
-    lead:'La conexión empieza a trabajar.',
-    body:'La convertimos en algo real: una venta, una reserva, un servicio, una automatización o una nueva alianza.'
+    headline:'Activamos operaciones.',
+    lead:'La conexión empieza a producir valor.',
+    body:'Puede transformarse en una venta, una reserva, un servicio, una automatización o una alianza.'
   },
   {
-    headline:'Medimos, aprendemos y crecemos.',
-    lead:'El resultado abre la siguiente conexión.',
-    body:'Vemos qué funcionó, qué generó valor y qué nuevas posibilidades puede activar tu negocio dentro de LINK.'
+    headline:'Aprendemos y escalamos.',
+    lead:'Lo que funciona abre la siguiente conexión.',
+    body:'Medimos resultados y usamos ese aprendizaje para ampliar las posibilidades de tu negocio.'
   }
 ];
 
