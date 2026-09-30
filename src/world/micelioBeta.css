@@ -590,3 +590,18 @@
   .micelio-node.is-agent .micelio-node-label,
   .micelio-node.is-process .micelio-node-label{font-size:7px}
 }
+
+
+/* CRM CORE · emergent surface. No UI before logic readiness. */
+.micelio-crm-emergence{margin-top:12px;border:1px solid var(--my-line);border-radius:14px;padding:11px;background:var(--my-panel)}
+.micelio-crm-emergence header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.micelio-crm-emergence header span{font-size:7px;font-weight:800;letter-spacing:.12em;color:var(--my-muted)}
+.micelio-crm-emergence header b{font-size:8px}
+.micelio-crm-emergence p{margin:7px 0 0;font-size:8px;line-height:1.45;color:var(--my-muted)}
+.micelio-crm-emergence>div{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}
+.micelio-crm-emergence>div span{border:1px solid var(--my-line);border-radius:9px;padding:7px;text-align:center}
+.micelio-crm-emergence>div strong,.micelio-crm-emergence>div small{display:block}
+.micelio-crm-emergence>div strong{font-size:15px}.micelio-crm-emergence>div small{margin-top:2px;font-size:6px;color:var(--my-muted)}
+.micelio-crm-emergence.is-ready{border-left:3px solid var(--my-active)}
+.micelio-crm-emergence.is-latent{border-left:3px solid var(--my-proposed)}
+.micelio-crm-emergence.is-latent>small{display:block;margin-top:7px;font-size:7px;color:var(--my-proposed)}
