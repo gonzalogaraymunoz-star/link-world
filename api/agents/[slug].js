@@ -351,6 +351,23 @@ function summarizeJourneyStageSignals(stageKey, data) {
     blockedIncomingHandoffs: blockedIncoming.length,
   };
 
+  if (stageKey === 'ventas') {
+    const qualifiedLeads = leads.filter(row => row?.stage === 'qualified');
+    return {
+      ...base,
+      source: 'link_rrss_and_sales_core',
+      salesSignals: {
+        leads: leads.length,
+        qualifiedLeads: qualifiedLeads.length,
+        quotes: quotes.length,
+        verifiedOutcomes: verifiedOutcomes.length,
+      },
+      readiness: qualifiedLeads.length
+        ? 'qualified_prospect_present'
+        : 'blocked_no_verified_prospect',
+    };
+  }
+
   if (stageKey === 'cierre') {
     return {
       ...base,
