@@ -66,3 +66,116 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
  .lw-join-whisper{width:calc(100% - 24px);border-radius:18px;justify-content:flex-start}
  .lw-join-footer{padding:18px 16px;display:grid;justify-content:start}
 }
+
+
+/* Frase viva · transición humo */
+.lw-join-fixed{display:block}
+.lw-smoke-line{
+  display:block;
+  position:relative;
+  height:1.05em;
+  color:var(--j-acid);
+  overflow:visible;
+  isolation:isolate;
+}
+.lw-smoke-phrase{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  display:block;
+  font-style:normal;
+  color:var(--j-acid);
+  opacity:1;
+  filter:blur(0);
+  transform:translate3d(0,0,0) scale(1);
+  transform-origin:left center;
+  will-change:opacity,filter,transform,letter-spacing;
+  backface-visibility:hidden;
+}
+.lw-smoke-next{opacity:0;pointer-events:none}
+.lw-smoke-current.lw-smoke-out{
+  animation:lwSmokeOut .98s cubic-bezier(.42,0,.26,1) forwards;
+}
+.lw-smoke-next.lw-smoke-in{
+  animation:lwSmokeIn .98s cubic-bezier(.22,.72,.22,1) forwards;
+}
+.lw-smoke-haze{
+  position:absolute;
+  left:-2%;
+  top:18%;
+  width:82%;
+  height:68%;
+  pointer-events:none;
+  z-index:-1;
+  opacity:0;
+  filter:blur(22px);
+  background:
+    radial-gradient(ellipse at 24% 48%,rgba(223,255,0,.17),transparent 46%),
+    radial-gradient(ellipse at 61% 42%,rgba(255,255,255,.075),transparent 54%);
+  transform:translate3d(0,8px,0) scale(.94);
+}
+.lw-smoke-haze.active{
+  animation:lwSmokeHaze .98s ease-out forwards;
+}
+@keyframes lwSmokeOut{
+  0%{
+    opacity:1;
+    filter:blur(0);
+    transform:translate3d(0,0,0) scale(1);
+    text-shadow:0 0 0 rgba(223,255,0,0);
+  }
+  38%{
+    opacity:.68;
+    filter:blur(2.5px);
+    transform:translate3d(2px,-2px,0) scale(1.004);
+    text-shadow:0 -3px 18px rgba(223,255,0,.16);
+  }
+  72%{
+    opacity:.18;
+    filter:blur(9px);
+    transform:translate3d(8px,-9px,0) scale(1.012);
+    text-shadow:0 -8px 30px rgba(223,255,0,.11);
+  }
+  100%{
+    opacity:0;
+    filter:blur(16px);
+    transform:translate3d(14px,-16px,0) scale(1.018);
+    text-shadow:0 -10px 38px rgba(223,255,0,0);
+  }
+}
+@keyframes lwSmokeIn{
+  0%{
+    opacity:0;
+    filter:blur(16px);
+    transform:translate3d(-10px,13px,0) scale(.988);
+    text-shadow:0 8px 30px rgba(223,255,0,.12);
+  }
+  42%{
+    opacity:.32;
+    filter:blur(8px);
+    transform:translate3d(-4px,6px,0) scale(.994);
+  }
+  76%{
+    opacity:.82;
+    filter:blur(2px);
+    transform:translate3d(0,1px,0) scale(.999);
+  }
+  100%{
+    opacity:1;
+    filter:blur(0);
+    transform:translate3d(0,0,0) scale(1);
+    text-shadow:0 0 0 rgba(223,255,0,0);
+  }
+}
+@keyframes lwSmokeHaze{
+  0%{opacity:0;transform:translate3d(-2px,10px,0) scale(.92)}
+  45%{opacity:.78;transform:translate3d(8px,-2px,0) scale(1.02)}
+  100%{opacity:0;transform:translate3d(20px,-13px,0) scale(1.08)}
+}
+@media (prefers-reduced-motion:reduce){
+  .lw-smoke-current.lw-smoke-out,
+  .lw-smoke-next.lw-smoke-in,
+  .lw-smoke-haze.active{animation:none}
+  .lw-smoke-next{display:none}
+}
