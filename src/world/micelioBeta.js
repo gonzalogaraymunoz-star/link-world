@@ -101,6 +101,9 @@ function memberReads(){
     readSource('gameStates',db.from('link_game_operating_state_v')
       .select('business_id,name,slug,temperature,conversion_percent,game_state,game_state_label,awaiting_evidence_count,last_verified_action_at,last_action_id,last_action_title,last_action_category,last_heat_awarded,next_action_due_at,overdue,highest_priority,assessment_at,urgency_hours,hours_remaining,attention_mode,panel_tone,suggested_action,suggested_prompt')
       .order('conversion_percent',{ascending:false})),
+    readSource('crmStates',db.from('link_crm_business_state_v')
+      .select('business_id,global_id,name,slug,logic_parts_ready,logic_parts_required,missing_logic,logic_ready,lead_count,open_lead_count,followup_due_count,quote_count,open_quote_count,accepted_quote_count,verified_win_count,verified_sales_amount,sales_event_count,verified_cash_amount,last_sales_activity_at,crm_state,emergence_reason')
+      .order('name',{ascending:true})),
     readSource('gameEvidenceQueue',db.from('link_game_evidence_review_v')
       .select('evidence_id,action_id,business_id,business_name,action_title,category,evidence_type,evidence_ref,summary,verification_status,created_at,prompt,conversion_before,conversion_after')
       .order('created_at',{ascending:true}).limit(120)),
@@ -403,8 +406,12 @@ function inspectorMarkup(state){
     if(node){
       const bindings=node.bindings||[];
       const gs=node.type==='business'?state.game?.stateByBusiness?.[node.businessId]||null:null;
+      const crm=node.type==='business'?state.crmByBusiness.get(String(node.businessId))||null:null;
       const gamePanel=gs?'<section class="micelio-passport-game game-'+safe(gs.game_state)+'"><header><span>ESTADO DEL JUEGO</span><b>'+safe(gs.game_state_label)+'</b></header><div><strong>'+Math.round(Number(gs.temperature||0))+'°</strong><i>·</i><strong>'+Math.round(Number(gs.conversion_percent||0))+'%</strong><small>conversión</small></div><p>'+safe(gs.suggested_action||'')+'</p>'+(Number(gs.awaiting_evidence_count||0)?'<em>'+safe(gs.awaiting_evidence_count)+' acción(es) esperan evidencia.</em>':'')+(gs.suggested_prompt?'<button data-game-copy-prompt="'+safe(gs.suggested_prompt)+'" type="button">Copiar siguiente prompt →</button>':'')+'</section>':'';
-      return '<button class="micelio-sheet-close" data-action="close-passport" type="button" aria-label="Cerrar">×</button><span class="micelio-eyebrow">PASAPORTE SEMÁNTICO</span><h2>'+safe(node.label)+'</h2><p class="micelio-subtitle">'+safe(node.sublabel)+'</p>'+gamePanel+'<div class="micelio-passport-state status-'+node.status+'"><span></span>'+safe(stateNames[node.status])+'</div><dl><div><dt>Tipo</dt><dd>'+safe(typeNames[node.type])+'</dd></div><div><dt>Estado fuente</dt><dd>'+safe(labelize(node.stage))+'</dd></div><div><dt>Identidad</dt><dd title="'+safe(node.id)+'">'+safe(node.id)+'</dd></div><div><dt>Actualización</dt><dd>'+safe(formatDate(node.updatedAt))+'</dd></div><div><dt>Señales</dt><dd>'+(node.signal?.total||0)+'</dd></div><div><dt>Evidencias</dt><dd>'+(node.evidenceCount||'Sin adjuntos')+'</dd></div></dl>'+(node.summary?'<div class="micelio-why"><span>CONTEXTO</span><p>'+safe(node.summary)+'</p></div>':'')+(bindings.length?'<div class="micelio-binding-list"><span>ORGÁNULOS CONECTADOS</span>'+bindings.slice(0,8).map(item=>'<p><b>'+safe(labelize(item.organelle_key))+'</b><small>'+safe(item.provider_domain||item.resource_name||item.status||'Registrado')+'</small></p>').join('')+'</div>':'')+'<div class="micelio-passport-actions"><button data-reach="upstream" type="button">Aguas arriba</button><button data-reach="downstream" type="button">Aguas abajo</button>'+(node.businessId?'<button class="is-primary" data-action="open-record" type="button">Abrir ficha LINK</button>':'')+'</div>';
+      const crmPanel=crm?(crm.logic_ready
+        ?'<section class="micelio-crm-emergence is-ready"><header><span>CRM CORE / EMERGENTE</span><b>'+safe(String(crm.crm_state||'ready').toUpperCase())+'</b></header><p>'+safe(crm.emergence_reason||'La lógica mínima está completa.')+'</p><div><span><strong>'+safe(crm.open_lead_count||0)+'</strong><small>leads abiertos</small></span><span><strong>'+safe(crm.open_quote_count||0)+'</strong><small>cotizaciones</small></span><span><strong>'+safe(crm.verified_win_count||0)+'</strong><small>ventas verificadas</small></span></div></section>'
+        :'<section class="micelio-crm-emergence is-latent"><header><span>CRM CORE / LATENTE</span><b>'+safe(crm.logic_parts_ready)+' / '+safe(crm.logic_parts_required)+'</b></header><p>'+safe(crm.emergence_reason||'La operación todavía no emerge.')+'</p><small>Falta: '+safe((crm.missing_logic||[]).join(' · ')||'lógica por resolver')+'</small></section>'):'';
+      return '<button class="micelio-sheet-close" data-action="close-passport" type="button" aria-label="Cerrar">×</button><span class="micelio-eyebrow">PASAPORTE SEMÁNTICO</span><h2>'+safe(node.label)+'</h2><p class="micelio-subtitle">'+safe(node.sublabel)+'</p>'+gamePanel+crmPanel+'<div class="micelio-passport-state status-'+node.status+'"><span></span>'+safe(stateNames[node.status])+'</div><dl><div><dt>Tipo</dt><dd>'+safe(typeNames[node.type])+'</dd></div><div><dt>Estado fuente</dt><dd>'+safe(labelize(node.stage))+'</dd></div><div><dt>Identidad</dt><dd title="'+safe(node.id)+'">'+safe(node.id)+'</dd></div><div><dt>Actualización</dt><dd>'+safe(formatDate(node.updatedAt))+'</dd></div><div><dt>Señales</dt><dd>'+(node.signal?.total||0)+'</dd></div><div><dt>Evidencias</dt><dd>'+(node.evidenceCount||'Sin adjuntos')+'</dd></div></dl>'+(node.summary?'<div class="micelio-why"><span>CONTEXTO</span><p>'+safe(node.summary)+'</p></div>':'')+(bindings.length?'<div class="micelio-binding-list"><span>ORGÁNULOS CONECTADOS</span>'+bindings.slice(0,8).map(item=>'<p><b>'+safe(labelize(item.organelle_key))+'</b><small>'+safe(item.provider_domain||item.resource_name||item.status||'Registrado')+'</small></p>').join('')+'</div>':'')+'<div class="micelio-passport-actions"><button data-reach="upstream" type="button">Aguas arriba</button><button data-reach="downstream" type="button">Aguas abajo</button>'+(node.businessId&&crm?.logic_ready?'<button class="is-primary" data-action="open-operation" type="button">Abrir operación</button>':'')+(node.businessId?'<button data-action="open-record" type="button">Abrir ficha LINK</button>':'')+'</div>';
     }
   }
   return '<div class="micelio-empty-inspector"><span>◎</span><h2>Explora el organismo.</h2><p>Selecciona un círculo o una ruta para abrir su pasaporte semántico.</p></div>';
@@ -490,7 +497,7 @@ function shellMarkup(state){
 export function mountMicelioBeta(selector='#lw-micelio'){
   const root=document.querySelector(selector);
   if(!root)return {open(){},close(){},refresh(){}};
-  const state={open:false,loading:false,member:false,model:null,evolution:[],game:null,fatal:null,warnings:[],view:'evolution',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,recommendationIndex:0,recommendationPaused:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
+  const state={open:false,loading:false,member:false,model:null,evolution:[],game:null,crmByBusiness:new Map(),fatal:null,warnings:[],view:'evolution',selectedNode:null,lastNode:null,localDepth:1,selectedEdge:null,reach:null,reachDirection:null,readEdges:readProgress(),theme:initialTheme(),lastRefresh:null,authError:null,camera:cameraBase(),panel:null,finderQuery:'',lens:[],radarOpen:false,recommendationIndex:0,recommendationPaused:false,story:{playing:false,index:0},route:{source:null,target:null,result:null,error:null,index:0,playing:false},renderContext:null};
   let channel=null,pollTimer=null,refreshTimer=null,storyTimer=null,routeTimer=null,recommendationTimer=null;
 
   const clearPlayback=()=>{
@@ -650,6 +657,11 @@ export function mountMicelioBeta(selector='#lw-micelio'){
       else{state.route.result=result;state.route.index=0;state.view=result.nodes.some(id=>['client','product'].includes(state.model.nodes.find(node=>node.id===id)?.type))?'records':'organism';state.camera=cameraForIds(graphContext(state),result.nodes);state.selectedNode=null;state.selectedEdge=null;}
       render();return;
     }
+    if(action==='open-operation'){
+      const node=state.model?.nodes.find(item=>item.id===state.selectedNode);
+      if(node?.businessId)document.dispatchEvent(new CustomEvent('linkworld:open-business',{detail:{id:node.businessId,focus:'crm',graphNodeId:node.id}}));
+      return;
+    }
     if(action==='open-record'){openCanonicalRecord(state.selectedNode);return;}
     if(action.startsWith('local-depth-')){
       state.localDepth=Math.max(1,Math.min(3,Number(action.slice(-1))||1));state.view='local';state.camera=cameraBase();render();return;
@@ -765,7 +777,7 @@ export function mountMicelioBeta(selector='#lw-micelio'){
     const coreFailure=results.find(result=>result.key==='businesses'&&result.error);
     if(coreFailure){state.fatal=coreFailure.error;state.loading=false;render();return;}
     const firstLoad=!state.model;
-    state.member=member;state.warnings=warnings;state.model=buildMicelioModel(rows,{member,capturedAt:new Date().toISOString(),warnings});state.evolution=member?buildEvolution(rows):[];state.game=buildMicelioGame(rows,state.evolution);state.recommendationIndex=Math.min(state.recommendationIndex,Math.max(0,(state.game?.recommendations?.length||1)-1));state.lastRefresh=new Date().toISOString();state.loading=false;
+    state.member=member;state.warnings=warnings;state.model=buildMicelioModel(rows,{member,capturedAt:new Date().toISOString(),warnings});state.evolution=member?buildEvolution(rows):[];state.game=buildMicelioGame(rows,state.evolution);state.crmByBusiness=new Map((rows.crmStates||[]).map(row=>[String(row.business_id),row]));state.recommendationIndex=Math.min(state.recommendationIndex,Math.max(0,(state.game?.recommendations?.length||1)-1));state.lastRefresh=new Date().toISOString();state.loading=false;
     if(firstLoad)state.camera=cameraBase();
     if(state.selectedNode&&!state.model.nodes.some(node=>node.id===state.selectedNode))state.selectedNode=null;
     if(state.selectedEdge&&!state.model.edges.some(edge=>edge.id===state.selectedEdge))state.selectedEdge=null;
