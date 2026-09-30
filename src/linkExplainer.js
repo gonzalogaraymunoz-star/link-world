@@ -1,6 +1,10 @@
+import {createClient} from '@supabase/supabase-js';
+import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './world/connection.js';
 import './linkExplainer.css';
 
 const app = document.querySelector('#app');
+const db = createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const LINK_WHATSAPP = 'https://wa.me/qr/ZYDZ5QZBDG4AJ1';
 document.documentElement.lang = 'es';
 document.title = '¿Qué es LINK? · LINK World';
 document.body.classList.add('link-explainer-body');
@@ -31,7 +35,7 @@ app.innerHTML = [
 "  <header class='le-header'>",
 "    <a class='le-brand' href='/' aria-label='Volver a LINK World'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a>",
 "    <nav class='le-nav' aria-label='Contenido de LINK'>",
-"      <a href='#que-es'>Qué es</a><a href='#modelo-link-cupones'>Modelo</a><a href='#como-funciona'>Cómo funciona</a><a href='#asociativos'>Asociativos</a><a href='#ejemplos'>Ejemplos</a>",
+"      <a href='#que-es'>Qué es</a><a href='#modelo-link-cupones'>Modelo</a><a href='#como-funciona'>Cómo funciona</a><a href='#asociativos'>Asociativos</a><a href='#ejemplos'>Ejemplos</a><a href='#contacto'>Contacto</a>",
 "    </nav>",
 "    <a class='le-back' href='/'>Entrar a LINK World <span>→</span></a>",
 "  </header>",
@@ -174,8 +178,30 @@ app.innerHTML = [
 "      <blockquote>LINK toma lo que hoy está disperso —negocios, necesidades, personas, herramientas y oportunidades— y lo convierte en relaciones que pueden generar valor.</blockquote>",
 "      <p>El negocio sigue siendo el centro. LINK no reemplaza su identidad: amplía lo que puede hacer conectado con otros.</p>",
 "    </section>",
+"    <section class='le-contact le-section' id='contacto'>",
+"      <div class='le-contact-copy'>",
+"        <span class='le-eyebrow'>CONECTA TU NEGOCIO</span>",
+"        <h2>Cuéntanos dónde encontrarte.</h2>",
+"        <p>Deja tu Instagram o tu WhatsApp. LINK registra la solicitud, pero <strong>no la incorpora al Micelio hasta confirmar que el contacto es real.</strong></p>",
+"        <a class='le-whatsapp-direct' href='https://wa.me/qr/ZYDZ5QZBDG4AJ1' target='_blank' rel='noopener noreferrer'><span class='le-wa-dot'>●</span><span><b>Hablar directamente por WhatsApp</b><small>Abrir contacto LINK</small></span><i>↗</i></a>",
+"        <div class='le-contact-rule'><span>1</span><p>Recibimos el contacto.</p><span>2</span><p>Confirmamos que existe.</p><span>3</span><p>Recién entonces puede entrar al Micelio.</p></div>",
+"      </div>",
+"      <form class='le-contact-form' id='le-contact-form' novalidate>",
+"        <div class='le-form-head'><span>Solicitud de conexión</span><small>2 minutos</small></div>",
+"        <label><span>Negocio *</span><input id='le-contact-business' name='business' type='text' minlength='2' maxlength='120' autocomplete='organization' placeholder='Nombre de tu negocio' required></label>",
+"        <label><span>Tu nombre</span><input id='le-contact-name' name='name' type='text' maxlength='120' autocomplete='name' placeholder='Cómo te llamas'></label>",
+"        <div class='le-form-split'>",
+"          <label><span>Instagram</span><input id='le-contact-instagram' name='instagram' type='text' maxlength='180' inputmode='url' placeholder='@usuario o instagram.com/usuario'></label>",
+"          <label><span>WhatsApp</span><input id='le-contact-whatsapp' name='whatsapp' type='tel' maxlength='24' autocomplete='tel' placeholder='+56 9 1234 5678'></label>",
+"        </div>",
+"        <label class='le-honeypot' aria-hidden='true' tabindex='-1'><span>Sitio web</span><input id='le-contact-website' type='text' autocomplete='off' tabindex='-1'></label>",
+"        <p class='le-form-note'>Necesitamos al menos Instagram o WhatsApp. El contacto queda <strong>pendiente de verificación</strong> antes de crear cualquier conexión real.</p>",
+"        <button class='le-contact-submit' id='le-contact-submit' type='submit'>Enviar solicitud <span>→</span></button>",
+"        <div class='le-contact-status' id='le-contact-status' role='status' aria-live='polite'></div>",
+"      </form>",
+"    </section>",
 "    <section class='le-cta le-section'>",
-"      <div><span class='le-eyebrow'>LINK WORLD</span><h2>Tu negocio puede entrar a LINK.</h2><p>Empieza entendiendo cómo funciona tu negocio y qué conexiones podrían aportarle valor.</p></div>",
+"      <div><span class='le-eyebrow'>LINK WORLD</span><h2>Explora cómo vive la red.</h2><p>LINK World muestra los negocios, relaciones y aprendizajes que ya fueron incorporados al sistema.</p></div>",
 "      <div class='le-cta-actions'><a class='le-primary' href='/'>Explorar LINK World <span>→</span></a><a class='le-secondary' href='#que-es'>Volver arriba</a></div>",
 "    </section>",
 "  </main>",
@@ -344,6 +370,88 @@ function renderCoupon(key) {
 }
 document.querySelectorAll('[data-coupon]').forEach((button) => button.addEventListener('click', () => renderCoupon(button.dataset.coupon)));
 renderCoupon('hotel');
+
+const instagramOk = value => {
+  const v = String(value||'').trim();
+  if (!v) return true;
+  return /^@[A-Za-z0-9._]{1,30}$/.test(v) || /^https?:\/\/(www\.)?instagram\.com\/[A-Za-z0-9._]{1,30}\/?([?#].*)?$/i.test(v);
+};
+const whatsappDigits = value => String(value||'').replace(/\D/g,'');
+const contactStatus = (type, html) => {
+  const box = document.querySelector('#le-contact-status');
+  if (!box) return;
+  box.dataset.state = type;
+  box.innerHTML = html;
+};
+document.querySelector('#le-contact-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const business = document.querySelector('#le-contact-business')?.value.trim() || '';
+  const name = document.querySelector('#le-contact-name')?.value.trim() || '';
+  const instagram = document.querySelector('#le-contact-instagram')?.value.trim() || '';
+  const whatsappRaw = document.querySelector('#le-contact-whatsapp')?.value.trim() || '';
+  const honeypot = document.querySelector('#le-contact-website')?.value.trim() || '';
+  const whatsapp = whatsappDigits(whatsappRaw);
+  const button = document.querySelector('#le-contact-submit');
+
+  if (honeypot) return;
+  if (business.length < 2) {
+    contactStatus('error','<b>Falta el nombre del negocio.</b><span>Escribe al menos 2 caracteres.</span>');
+    return;
+  }
+  if (!instagram && !whatsapp) {
+    contactStatus('error','<b>Necesitamos una forma de comprobar el contacto.</b><span>Agrega Instagram o WhatsApp.</span>');
+    return;
+  }
+  if (!instagramOk(instagram)) {
+    contactStatus('error','<b>Ese Instagram no parece válido.</b><span>Usa @usuario o el enlace completo del perfil.</span>');
+    return;
+  }
+  if (whatsapp && (whatsapp.length < 8 || whatsapp.length > 15)) {
+    contactStatus('error','<b>Ese número de WhatsApp no parece válido.</b><span>Incluye código de país.</span>');
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'Enviando…';
+  contactStatus('loading','<b>Registrando la solicitud…</b><span>Aún no entra al Micelio.</span>');
+
+  const {data,error} = await db.rpc('link_world_submit_public_contact',{
+    p_business_name: business,
+    p_contact_name: name || null,
+    p_instagram: instagram || null,
+    p_whatsapp: whatsappRaw || null,
+    p_source_url: window.location.pathname + window.location.search
+  });
+
+  button.disabled = false;
+  button.innerHTML = 'Enviar solicitud <span>→</span>';
+
+  if (error) {
+    contactStatus('error','<b>No pudimos registrar la solicitud.</b><span>'+String(error.message||'Intenta nuevamente.').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</span>');
+    return;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const code = row?.verification_code || '';
+  const codeHtml = code ? '<code>'+code+'</code>' : '';
+  const needsWhatsapp = Boolean(whatsapp);
+  const verificationAction = needsWhatsapp
+    ? '<button type="button" id="le-copy-wa-code">Copiar código y abrir WhatsApp ↗</button>'
+    : '<a href="'+LINK_WHATSAPP+'" target="_blank" rel="noopener noreferrer">Abrir WhatsApp LINK ↗</a>';
+  contactStatus('success',
+    '<b>Solicitud recibida · pendiente de verificación.</b>'+
+    '<span>Tu negocio todavía no aparece en el Micelio. Primero comprobamos que el contacto exista.</span>'+
+    (code ? '<div class="le-verification-code"><small>Código de verificación</small>'+codeHtml+'</div>' : '')+
+    '<div class="le-status-actions">'+verificationAction+'</div>'
+  );
+  const waButton = document.querySelector('#le-copy-wa-code');
+  waButton?.addEventListener('click', async () => {
+    if (code) {
+      try { await navigator.clipboard.writeText(code); } catch {}
+    }
+    window.open(LINK_WHATSAPP,'_blank','noopener,noreferrer');
+  });
+});
 
 document.querySelectorAll('.le-nav a').forEach((anchor) => {
   anchor.addEventListener('click', () => document.querySelector('.le-nav')?.classList.remove('open'));
