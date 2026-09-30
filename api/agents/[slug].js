@@ -206,6 +206,56 @@ function summarizeMarketingSignals({ posts = [], conversations = [], snapshots =
   };
 }
 
+async function loadRrssMessages(token, conversationIds) {
+  if (!conversationIds.length) return [];
+  return supabaseRows(
+    token,
+    'link_rrss_messages',
+    `select=id,conversation_id,external_message_id,direction,sender_id,sender_name,message,attachments,delivery_status,sent_via,platform_created_at,updated_at&conversation_id=${inFilter(conversationIds)}&order=platform_created_at.desc.nullslast&limit=500`,
+  );
+}
+
+function summarizeSalesSignals({ conversations = [], messages = [] }) {
+  const incoming = messages.filter(row => row?.direction === 'incoming');
+  const outgoing = messages.filter(row => row?.direction === 'outgoing');
+  const unknown = messages.filter(row => !['incoming','outgoing'].includes(row?.direction));
+  const conversationsWithIncoming = new Set(incoming.map(row => row.conversation_id).filter(Boolean));
+  return {
+    capturedAt: new Date().toISOString(),
+    source: 'link_rrss_zernio_messages',
+    conversationSignals: {
+      conversations: conversations.length,
+      messages: messages.length,
+      incomingMessages: incoming.length,
+      outgoingMessages: outgoing.length,
+      unknownDirectionMessages: unknown.length,
+      conversationsWithIncoming: conversationsWithIncoming.size,
+      directionAvailable: (incoming.length + outgoing.length) > 0,
+      latestIncomingAt: incoming.map(row => row.platform_created_at).filter(Boolean).sort().at(-1) || null,
+    },
+    canonicalParameterCoverage: {
+      opt_in_rate: {
+        status: incoming.length ? 'classifiable' : 'missing',
+        note: incoming.length
+          ? 'Hay mensajes entrantes con dirección verificable; falta clasificar intención para calcular opt-in real.'
+          : 'No hay mensajes entrantes con dirección disponible todavía.',
+      },
+      efectividad_del_lead_magnet: {
+        status: 'partial',
+        note: 'Requiere atribución desde publicación/campaña hacia conversación e intención.',
+      },
+      cpl: {
+        status: 'missing',
+        note: 'Requiere costo de adquisición y prospectos calificados.',
+      },
+      costo_por_prospecto_calificado: {
+        status: 'missing',
+        note: 'Requiere costo y prospectos calificados verificados.',
+      },
+    },
+  };
+}
+
 async function loadRrssContext(token, business) {
   if (!business?.id) return { profiles: [], sources: [], accounts: [], posts: [], conversations: [], snapshots: [], signals: null };
 
@@ -255,14 +305,19 @@ async function loadRrssContext(token, business) {
     ),
   ]);
 
+  const conversationIds = conversations.map(row => row.id).filter(Boolean);
+  const messages = conversationIds.length ? await loadRrssMessages(token, conversationIds) : [];
+
   return {
     profiles,
     sources,
     accounts,
     posts,
     conversations,
+    messages,
     snapshots,
     signals: summarizeMarketingSignals({ posts, conversations, snapshots, accounts }),
+    salesSignals: summarizeSalesSignals({ conversations, messages }),
   };
 }
 
@@ -319,6 +374,7 @@ async function loadAgentContext(token, agent, business) {
     try {
       data.rrss = await loadRrssContext(token, business);
       if (stageKey === 'marketing') data.stageSignals = data.rrss.signals;
+      if (stageKey === 'ventas') data.stageSignals = data.rrss.salesSignals;
     } catch (error) {
       data.rrss = { profiles: [], sources: [], accounts: [], posts: [], conversations: [], snapshots: [], signals: null };
       unavailable.push({ key: 'rrss', error: short(error?.message || 'unavailable', 240) });
