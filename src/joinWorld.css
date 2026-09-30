@@ -27,9 +27,22 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
 .lw-join-copy{max-width:730px}
 .lw-join-kicker{display:inline-flex;align-items:center;gap:8px;color:#8c8b84;font-size:9px;font-weight:850;letter-spacing:.18em}
 .lw-join-kicker i{width:6px;height:6px;border-radius:50%;background:var(--j-acid);box-shadow:0 0 18px rgba(223,255,0,.75)}
-.lw-join-copy h1{margin:18px 0 24px;font-size:clamp(60px,8.2vw,118px);line-height:.84;letter-spacing:-.077em;font-weight:930}
+.lw-join-copy h1{
+    margin:18px 0 0;
+    font-size:clamp(58px,7.4vw,104px);
+    line-height:.88;
+    letter-spacing:-.058em;
+    font-weight:930
+  }
 .lw-join-copy h1 em{font-style:normal;color:var(--j-acid)}
-.lw-join-copy>p{max-width:650px;margin:0;color:#aaa9a1;font-size:clamp(16px,1.7vw,22px);line-height:1.48;letter-spacing:-.018em}
+.lw-join-copy>p{
+    max-width:620px;
+    margin:52px 0 0;
+    color:#aaa9a1;
+    font-size:clamp(15px,1.45vw,19px);
+    line-height:1.58;
+    letter-spacing:-.01em
+  }
 .lw-join-copy>p strong{color:#f1f0e9}
 .lw-join-card{padding:30px;border:1px solid var(--j-line);border-radius:28px;background:rgba(20,20,17,.80);box-shadow:0 30px 90px rgba(0,0,0,.36);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .lw-join-card-label{display:inline-flex;padding:6px 8px;border:1px solid rgba(223,255,0,.25);border-radius:999px;color:var(--j-acid);font-size:7px;font-weight:850;letter-spacing:.16em}
@@ -52,15 +65,18 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
 .lw-join-footer a{color:#6e6d66;text-decoration:none}.lw-join-footer a:hover{color:white}
 @media(max-width:900px){
  .lw-join-hero{grid-template-columns:1fr;gap:42px;padding:54px 0 70px}
- .lw-join-copy h1{font-size:clamp(58px,14vw,96px)}
+ .lw-join-copy h1{font-size:clamp(56px,12.5vw,88px)}
+ .lw-smoke-line{font-size:.75em;height:1.28em;margin-top:.22em}
+ .lw-join-copy>p{margin-top:44px}
  .lw-join-card{max-width:620px;width:100%}
 }
 @media(max-width:600px){
  .lw-join-top{height:66px;padding:0 16px}.lw-join-brand img{width:29px;height:29px}.lw-join-brand span{font-size:17px}
  .lw-join-member{font-size:9px}
  .lw-join-hero{width:calc(100% - 24px);padding:44px 0 58px}
- .lw-join-copy h1{font-size:54px}
- .lw-join-copy>p{font-size:15px}
+ .lw-join-copy h1{font-size:50px;line-height:.92;letter-spacing:-.05em}
+ .lw-smoke-line{font-size:.72em;height:1.34em;margin-top:.28em;letter-spacing:-.025em}
+ .lw-join-copy>p{font-size:14px;margin-top:38px;line-height:1.6}
  .lw-join-card{padding:21px;border-radius:22px}
  .lw-join-card h2{font-size:31px}
  .lw-join-whisper{width:calc(100% - 24px);border-radius:18px;justify-content:flex-start}
@@ -69,14 +85,22 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
 
 
 /* Frase viva · transición humo */
-.lw-join-fixed{display:block}
+.lw-join-fixed{
+  display:block;
+  max-width:680px;
+}
 .lw-smoke-line{
   display:block;
   position:relative;
-  height:1.05em;
+  width:min(720px,100%);
+  height:1.2em;
+  margin-top:.18em;
   color:var(--j-acid);
   overflow:visible;
   isolation:isolate;
+  font-size:.72em;
+  line-height:1.02;
+  letter-spacing:-.038em;
 }
 .lw-smoke-phrase{
   position:absolute;
@@ -84,6 +108,7 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
   top:0;
   width:100%;
   display:block;
+  white-space:normal;
   font-style:normal;
   color:var(--j-acid);
   opacity:1;
@@ -176,6 +201,43 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
 @media (prefers-reduced-motion:reduce){
   .lw-smoke-current.lw-smoke-out,
   .lw-smoke-next.lw-smoke-in,
-  .lw-smoke-haze.active{animation:none}
+  .lw-smoke-haze.active,
+  .lw-join-support.lw-support-sweep{animation:none}
   .lw-smoke-next{display:none}
+}
+
+
+.lw-join-support{
+  position:relative;
+  will-change:transform,opacity,filter;
+}
+.lw-join-support.lw-support-sweep{
+  animation:lwSupportSweep .98s cubic-bezier(.22,.72,.22,1);
+}
+@keyframes lwSupportSweep{
+  0%{
+    opacity:1;
+    filter:blur(0);
+    transform:translate3d(0,0,0);
+  }
+  34%{
+    opacity:.42;
+    filter:blur(3px);
+    transform:translate3d(0,-10px,0);
+  }
+  62%{
+    opacity:.18;
+    filter:blur(7px);
+    transform:translate3d(0,-18px,0);
+  }
+  78%{
+    opacity:.38;
+    filter:blur(4px);
+    transform:translate3d(0,10px,0);
+  }
+  100%{
+    opacity:1;
+    filter:blur(0);
+    transform:translate3d(0,0,0);
+  }
 }
