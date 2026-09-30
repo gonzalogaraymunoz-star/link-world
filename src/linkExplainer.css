@@ -519,3 +519,201 @@ body.link-explainer-body ::selection{background:var(--le-acid);color:var(--le-in
   .le-model-summary strong{font-size:15px}
   .le-business-copy h3,.le-assoc-copy h3{font-size:31px}
 }
+
+
+/* LINK Cupones · editable agreement simulator */
+.le-model-edit-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+.le-model-edit{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 118px;
+  align-items:center;
+  gap:12px;
+  padding:11px 12px;
+  border:1px solid #d8d2c4;
+  border-radius:14px;
+  background:var(--le-paper);
+}
+.le-model-edit>span{
+  font-size:10px;
+  font-weight:760;
+  color:var(--le-ink);
+}
+.le-model-edit>div{
+  height:38px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:0 9px;
+  border:1px solid #d7d0c0;
+  border-radius:10px;
+  background:#f7f4eb;
+}
+.le-model-edit input{
+  width:100%;
+  min-width:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--le-ink);
+  font-size:17px;
+  font-weight:850;
+  text-align:right;
+}
+.le-model-edit b{
+  font-size:11px;
+  color:#777167;
+}
+.le-model-minimum{
+  margin-top:10px;
+  min-height:52px;
+  padding:10px 13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid #cfd6bd;
+  border-radius:14px;
+  background:#f3f7e8;
+}
+.le-model-minimum span{
+  font-size:9px;
+  color:#68655e;
+  font-weight:760;
+}
+.le-model-minimum strong{
+  font-size:13px;
+  white-space:nowrap;
+}
+.le-model-minimum[data-state="ok"]{
+  border-color:#abc06b;
+  background:#f0f8d7;
+}
+.le-model-minimum[data-state="low"]{
+  border-color:#d6b88b;
+  background:#fff1dd;
+}
+.le-model-minimum[data-state="invalid"]{
+  border-color:#d59a8b;
+  background:#ffe9e4;
+}
+.le-model-results{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  align-content:center;
+}
+.le-model-results .le-model-plus{
+  display:none;
+}
+.le-model-results article.client,
+.le-model-results article.link,
+.le-model-results article.ally{
+  min-height:190px;
+}
+.le-model-results article.ally{
+  background:#f1ece1;
+}
+.le-model-total-card{
+  grid-column:1/-1;
+  min-height:112px;
+  padding:18px 20px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  grid-template-rows:auto auto;
+  gap:4px 18px;
+  align-items:center;
+  border:1px solid #c8c3b5;
+  border-radius:18px;
+  background:linear-gradient(90deg,var(--le-acid-soft),#fffef9);
+}
+.le-model-total-card>span{
+  grid-column:1;
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.14em;
+}
+.le-model-total-card>strong{
+  grid-column:2;
+  grid-row:1/3;
+  font-size:40px;
+  letter-spacing:-.055em;
+}
+.le-model-total-card>small{
+  grid-column:3;
+  grid-row:1;
+  font-size:12px;
+  font-weight:800;
+}
+.le-model-total-card>p{
+  grid-column:1/4;
+  margin:2px 0 0;
+  font-size:9px;
+  color:var(--le-muted);
+}
+.le-model-summary{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.le-model-footnote{
+  max-width:1060px;
+}
+@media(max-width:900px){
+  .le-model-results{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .le-model-results article.ally{
+    grid-column:1;
+  }
+  .le-model-total-card{
+    grid-column:1/-1;
+  }
+  .le-model-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .le-model-summary>div:nth-child(3){
+    border-left:0;
+    border-top:1px solid var(--le-line);
+  }
+  .le-model-summary>div:nth-child(4){
+    border-top:1px solid var(--le-line);
+  }
+}
+@media(max-width:760px){
+  .le-model-edit{
+    grid-template-columns:1fr 96px;
+  }
+  .le-model-results{
+    grid-template-columns:1fr;
+  }
+  .le-model-results article.ally{
+    grid-column:auto;
+  }
+  .le-model-total-card{
+    grid-column:auto;
+    grid-template-columns:1fr auto;
+    grid-template-rows:auto auto auto;
+  }
+  .le-model-total-card>strong{
+    grid-column:2;
+    grid-row:1/3;
+    font-size:34px;
+  }
+  .le-model-total-card>small{
+    grid-column:1;
+    grid-row:2;
+  }
+  .le-model-total-card>p{
+    grid-column:1/3;
+  }
+  .le-model-summary{
+    grid-template-columns:1fr;
+  }
+  .le-model-summary>div+div,
+  .le-model-summary>div:nth-child(3),
+  .le-model-summary>div:nth-child(4){
+    border-left:0;
+    border-top:1px solid var(--le-line);
+  }
+}
