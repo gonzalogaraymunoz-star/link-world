@@ -15,14 +15,14 @@ app.innerHTML=[
 "  </header>",
 "  <section class='lw-join-hero'>",
 "    <div class='lw-join-copy'>",
-"      <span class='lw-join-kicker'><i></i> CONEXIÓN PARA NEGOCIOS</span>",
-"      <h1><span class='lw-join-fixed'>Conozcámonos.</span><span class='lw-smoke-line' aria-label='Entendemos tu negocio.'><em class='lw-smoke-phrase lw-smoke-current'>Entendemos tu negocio.</em><em class='lw-smoke-phrase lw-smoke-next' aria-hidden='true'></em><i class='lw-smoke-haze' aria-hidden='true'></i></span></h1>",
-"      <p class='lw-join-support'><strong>Empezamos con una conversación.</strong> Entendemos tu negocio, detectamos oportunidades y activamos las conexiones que pueden aportar valor.</p>",
+"      <span class='lw-join-kicker'><i></i> DE NEGOCIO AISLADO A NEGOCIO CONECTADO</span>",
+"      <h1><span class='lw-join-fixed'>Conozcámonos.</span><span class='lw-smoke-line' aria-label='Entendemos cómo funciona hoy.'><em class='lw-smoke-phrase lw-smoke-current'>Entendemos cómo funciona hoy.</em><em class='lw-smoke-phrase lw-smoke-next' aria-hidden='true'></em><i class='lw-smoke-haze' aria-hidden='true'></i></span></h1>",
+"      <div class='lw-join-support-wrap'><span class='lw-journey-count' id='lw-journey-count'>01 / 05</span><p class='lw-join-support' aria-live='polite'><span class='lw-support-phrase lw-support-current'><strong>Mapeamos tu negocio.</strong> Vemos qué vendes, cómo operas y dónde hoy se pierden tiempo, clientes u oportunidades.</span><span class='lw-support-phrase lw-support-next' aria-hidden='true'></span></p></div>",
 "    </div>",
 "    <aside class='lw-join-card'>",
 "      <span class='lw-join-card-label'>SER PARTE</span>",
-"      <h2>Empecemos por conocernos.</h2>",
-"      <p>Cuéntanos qué hace tu negocio. Agendamos una reunión, identificamos capacidades útiles y diseñamos la mejor forma de integrarte a LINK.</p>",
+"      <h2>Empecemos por entender tu negocio.</h2>",
+"      <p>La primera conversación nos sirve para ver qué ya funciona, qué está aislado y dónde una conexión puede transformarse en una capacidad real.</p>",
 "      <a class='lw-join-wa' href='"+LINK_WHATSAPP+"' target='_blank' rel='noopener noreferrer'>",
 "        <span class='lw-join-wa-dot'><i></i></span>",
 "        <span><small>CONTACTAR A LINK</small><b>Empezar por WhatsApp</b></span>",
@@ -44,58 +44,98 @@ app.innerHTML=[
 ].join('');
 
 
-const smokePhrases = [
-  'Entendemos tu negocio.',
-  'Encontramos dónde conecta.',
-  'Activamos capacidades útiles.',
-  'Diseñamos conexiones reales.',
-  'Comenzamos tu integración.'
-]
+const journeyFrames = [
+  {
+    headline:'Entendemos cómo funciona hoy.',
+    lead:'Mapeamos tu negocio.',
+    body:'Vemos qué vendes, cómo operas y dónde hoy se pierden tiempo, clientes u oportunidades.'
+  },
+  {
+    headline:'Encontramos lo que hoy está aislado.',
+    lead:'Detectamos oportunidades.',
+    body:'Identificamos procesos, relaciones y capacidades que podrían generar más valor si estuvieran conectados.'
+  },
+  {
+    headline:'Conectamos lo que realmente necesitas.',
+    lead:'Activamos capacidades útiles.',
+    body:'Acercamos aliados, clientes, servicios o herramientas sólo cuando resuelven una necesidad concreta.'
+  },
+  {
+    headline:'Convertimos conexiones en operación.',
+    lead:'La conexión empieza a trabajar.',
+    body:'La llevamos a acciones reales: una venta, una reserva, un servicio, una automatización o una nueva alianza.'
+  },
+  {
+    headline:'Tu negocio empieza a aprender conectado.',
+    lead:'El resultado abre la siguiente conexión.',
+    body:'Medimos qué funcionó, qué generó valor y qué nuevas posibilidades puede activar el negocio dentro de LINK.'
+  }
+];
 
 const smokeCurrent = document.querySelector('.lw-smoke-current');
 const smokeNext = document.querySelector('.lw-smoke-next');
 const smokeLine = document.querySelector('.lw-smoke-line');
 const smokeHaze = document.querySelector('.lw-smoke-haze');
+const supportCurrent = document.querySelector('.lw-support-current');
+const supportNext = document.querySelector('.lw-support-next');
+const journeyCount = document.querySelector('#lw-journey-count');
 
-if (smokeCurrent && smokeNext && smokeLine) {
+if (smokeCurrent && smokeNext && smokeLine && supportCurrent && supportNext) {
   let smokeIndex = 0;
   let smokeAnimating = false;
   let smokeTimer = null;
 
-  // Ritmo: cada frase queda realmente disponible para lectura antes de la transición.
-  const HOLD_MS = 5200;
-  const FIRST_HOLD_MS = 5600;
+  const HOLD_MS = 5600;
+  const FIRST_HOLD_MS = 6200;
   const TRANSITION_MS = 1250;
+
+  const supportMarkup = frame =>
+    '<strong>'+frame.lead+'</strong> '+frame.body;
 
   const scheduleNext = (delay = HOLD_MS) => {
     window.clearTimeout(smokeTimer);
-    smokeTimer = window.setTimeout(rotateSmokePhrase, delay);
+    smokeTimer = window.setTimeout(rotateJourney, delay);
   };
 
-  const rotateSmokePhrase = () => {
+  const rotateJourney = () => {
     if (smokeAnimating) return;
     smokeAnimating = true;
 
-    const nextIndex = (smokeIndex + 1) % smokePhrases.length;
-    smokeNext.textContent = smokePhrases[nextIndex];
+    const nextIndex = (smokeIndex + 1) % journeyFrames.length;
+    const nextFrame = journeyFrames[nextIndex];
+
+    smokeNext.textContent = nextFrame.headline;
+    supportNext.innerHTML = supportMarkup(nextFrame);
+
     smokeNext.classList.remove('lw-smoke-in');
     smokeCurrent.classList.remove('lw-smoke-out');
+    supportNext.classList.remove('lw-support-in');
+    supportCurrent.classList.remove('lw-support-out');
     smokeHaze?.classList.remove('active');
 
     requestAnimationFrame(() => {
-      // Sale primero la frase actual; la siguiente entra una fracción después.
       smokeCurrent.classList.add('lw-smoke-out');
       smokeNext.classList.add('lw-smoke-in');
+      supportCurrent.classList.add('lw-support-out');
+      supportNext.classList.add('lw-support-in');
       smokeHaze?.classList.add('active');
     });
 
     window.setTimeout(() => {
       smokeIndex = nextIndex;
-      smokeCurrent.textContent = smokePhrases[smokeIndex];
-      smokeLine.setAttribute('aria-label', smokePhrases[smokeIndex]);
+      const frame = journeyFrames[smokeIndex];
+
+      smokeCurrent.textContent = frame.headline;
+      smokeLine.setAttribute('aria-label', frame.headline);
+      supportCurrent.innerHTML = supportMarkup(frame);
+      journeyCount.textContent = String(smokeIndex + 1).padStart(2,'0')+' / '+String(journeyFrames.length).padStart(2,'0');
+
       smokeCurrent.classList.remove('lw-smoke-out');
       smokeNext.classList.remove('lw-smoke-in');
+      supportCurrent.classList.remove('lw-support-out');
+      supportNext.classList.remove('lw-support-in');
       smokeNext.textContent = '';
+      supportNext.innerHTML = '';
       smokeHaze?.classList.remove('active');
       smokeAnimating = false;
       scheduleNext(HOLD_MS);
