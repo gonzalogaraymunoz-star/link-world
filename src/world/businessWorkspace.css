@@ -267,3 +267,28 @@
 .bw-game-state.game-red_close,.bw-game-state.game-critical_frozen{border-color:#d8342f;box-shadow:inset 4px 0 0 #d8342f;background:#fff7f6}.bw-game-state.game-red_close .bw-game-thermometer>div i,.bw-game-state.game-critical_frozen .bw-game-thermometer>div i{background:#d8342f}.bw-game-state.game-red_close h2,.bw-game-state.game-critical_frozen h2{color:#b82c28}
 .bw-game-state.game-converted{box-shadow:inset 4px 0 0 #52a06d;background:#f6fbf7}.bw-game-state.game-converted .bw-game-thermometer>div i{background:#52a06d}
 @media(max-width:800px){.bw-game-state{grid-template-columns:1fr}.bw-game-actions{justify-items:start}.bw-game-thermometer{grid-template-columns:1fr auto auto}}
+
+
+/* LINK CRM CORE · emerges only when Micelio logic is ready */
+.bw-crm-core{margin:20px 0;padding:20px;border:1px solid var(--bw-line,#d9d9d2);border-radius:22px;background:var(--bw-panel,#fff);box-shadow:0 18px 50px rgba(0,0,0,.04)}
+.bw-crm-core.is-latent{background:color-mix(in srgb,var(--bw-panel,#fff) 94%,#f0eadb 6%)}
+.bw-crm-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.bw-crm-head h2{margin:5px 0 6px;font-size:clamp(22px,2.4vw,34px);letter-spacing:-.04em}
+.bw-crm-head p{margin:0;max-width:760px;color:var(--bw-muted,#6d6d66);line-height:1.55}
+.bw-crm-head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.bw-crm-head-actions button{border:1px solid var(--bw-line,#d9d9d2);border-radius:999px;background:transparent;padding:9px 12px;font-weight:700}
+.bw-crm-state{display:inline-flex;border:1px solid var(--bw-line,#d9d9d2);border-radius:999px;padding:7px 10px;font-size:9px;font-weight:800;letter-spacing:.08em}
+.bw-crm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}
+.bw-crm-kpis>div{border:1px solid var(--bw-line,#d9d9d2);border-radius:14px;padding:12px;background:color-mix(in srgb,var(--bw-panel,#fff) 96%,#000 4%)}
+.bw-crm-kpis strong{display:block;font-size:22px;letter-spacing:-.04em}.bw-crm-kpis span{display:block;margin-top:3px;font-size:9px;color:var(--bw-muted,#6d6d66)}
+.bw-crm-pipeline{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:14px}
+.bw-crm-pipeline>div{border:1px solid var(--bw-line,#d9d9d2);border-radius:12px;padding:9px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.bw-crm-pipeline span{font-size:9px;color:var(--bw-muted,#6d6d66)}.bw-crm-pipeline strong{font-size:16px}
+.bw-crm-list{border-top:1px solid var(--bw-line,#d9d9d2)}
+.bw-crm-list-head,.bw-crm-list article{display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(90px,.6fr) minmax(120px,.8fr);gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--bw-line,#d9d9d2)}
+.bw-crm-list-head{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--bw-muted,#6d6d66)}
+.bw-crm-list article span b,.bw-crm-list article span small{display:block}.bw-crm-list article span small{margin-top:3px;color:var(--bw-muted,#6d6d66);font-size:9px}
+.bw-crm-list article em{font-style:normal;font-size:10px;font-weight:700}.bw-crm-list article time{font-size:9px;color:var(--bw-muted,#6d6d66)}
+.bw-crm-empty{padding:16px 4px;color:var(--bw-muted,#6d6d66);font-size:10px}
+.bw-crm-missing{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.bw-crm-missing span{border:1px dashed var(--bw-line,#d9d9d2);border-radius:999px;padding:6px 9px;font-size:9px}
+@media(max-width:760px){.bw-crm-head{display:block}.bw-crm-head-actions{justify-content:flex-start;margin-top:10px}.bw-crm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.bw-crm-pipeline{grid-template-columns:repeat(2,minmax(0,1fr))}.bw-crm-list-head{display:none}.bw-crm-list article{grid-template-columns:1fr auto}.bw-crm-list article time{grid-column:1/-1}}
