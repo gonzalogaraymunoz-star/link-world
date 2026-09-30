@@ -118,9 +118,158 @@ async function loadBusiness(token, businessGlobalId) {
   return rows?.[0] || null;
 }
 
-async function loadAgentContext(token, agent, businessGlobalId) {
+
+function finiteNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function sumMetric(rows, key) {
+  return rows.reduce((sum, row) => sum + (finiteNumber(row?.metrics?.[key]) || 0), 0);
+}
+
+function avgMetric(rows, key) {
+  const values = rows.map(row => finiteNumber(row?.metrics?.[key])).filter(value => value !== null);
+  if (!values.length) return null;
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
+}
+
+function maxMetric(rows, key) {
+  const values = rows.map(row => finiteNumber(row?.metrics?.[key])).filter(value => value !== null);
+  return values.length ? Math.max(...values) : null;
+}
+
+function inFilter(values) {
+  return values.length ? `in.(${values.map(value => encodeURIComponent(value)).join(',')})` : '';
+}
+
+function summarizeMarketingSignals({ posts = [], conversations = [], snapshots = [], accounts = [] }) {
+  const published = posts.filter(row => row?.published_at);
+  const unread = conversations.reduce((sum, row) => sum + (finiteNumber(row?.unread_count) || 0), 0);
+  const websiteClicks = sumMetric(published, 'website_clicks') || sumMetric(published, 'websiteClicks');
+  const profileViews = sumMetric(published, 'profile_views') || sumMetric(published, 'profileViews');
+
+  return {
+    capturedAt: new Date().toISOString(),
+    source: 'link_rrss_zernio',
+    connectedAccounts: accounts.map(account => ({
+      platform: account.platform,
+      username: account.username,
+      status: account.status,
+      canPost: account.can_post === true,
+      canAnalytics: account.can_analytics === true,
+      lastSyncedAt: account.last_synced_at || null,
+    })),
+    publicationSignals: {
+      posts: published.length,
+      avgReach: avgMetric(published, 'reach'),
+      maxReach: maxMetric(published, 'reach'),
+      avgViews: avgMetric(published, 'views'),
+      avgEngagementRate: avgMetric(published, 'engagementRate'),
+      avgReelsSkipRate: avgMetric(published, 'reelsSkipRate'),
+      shares: sumMetric(published, 'shares'),
+      comments: sumMetric(published, 'comments'),
+      saves: sumMetric(published, 'saves'),
+      websiteClicks,
+      profileViews,
+      latestPublishedAt: published[0]?.published_at || null,
+    },
+    conversationSignals: {
+      conversations: conversations.length,
+      unread,
+      latestMessageAt: conversations
+        .map(row => row?.last_message_at)
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null,
+    },
+    snapshotSignals: {
+      snapshots: snapshots.length,
+      latestFetchedAt: snapshots
+        .map(row => row?.fetched_at)
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null,
+    },
+    canonicalParameterCoverage: {
+      trafico_cualificado: {
+        status: published.length ? 'partial_attention_only' : 'missing',
+        note: published.length
+          ? 'Hay atención medible en RRSS, pero falta atribución verificable desde contenido/DM hacia contacto, visita o compra.'
+          : 'No hay publicaciones suficientes para observar atención.',
+      },
+      ctr: { status: 'missing', note: 'No hay señal validada de impresiones + clics atribuibles para calcular CTR.' },
+      cpm: { status: 'missing', note: 'No hay gasto publicitario + impresiones validadas para calcular CPM.' },
+      cac_temprano: { status: 'missing', note: 'No hay costo + adquisición atribuida validados para calcular CAC temprano.' },
+      bounce_rate: { status: 'missing', note: 'No hay analítica web/sesión validada para calcular bounce rate.' },
+    },
+  };
+}
+
+async function loadRrssContext(token, business) {
+  if (!business?.id) return { profiles: [], sources: [], accounts: [], posts: [], conversations: [], snapshots: [], signals: null };
+
+  const profiles = await supabaseRows(
+    token,
+    'link_rrss_profiles',
+    `select=id,business_id,name,slug,status,metadata,updated_at&business_id=eq.${business.id}&order=updated_at.desc&limit=20`,
+  );
+  const profileIds = profiles.map(row => row.id).filter(Boolean);
+  if (!profileIds.length) return { profiles, sources: [], accounts: [], posts: [], conversations: [], snapshots: [], signals: summarizeMarketingSignals({}) };
+
+  const sources = await supabaseRows(
+    token,
+    'link_rrss_sources',
+    `select=id,profile_id,provider,label,status,external_profile_id,capabilities,last_synced_at,last_error,metadata,updated_at&profile_id=${inFilter(profileIds)}&order=updated_at.desc&limit=30`,
+  );
+  const sourceIds = sources.map(row => row.id).filter(Boolean);
+
+  const accounts = sourceIds.length
+    ? await supabaseRows(
+        token,
+        'link_rrss_accounts',
+        `select=id,source_id,platform,username,display_name,status,can_post,can_analytics,last_synced_at,metadata,updated_at&source_id=${inFilter(sourceIds)}&order=updated_at.desc&limit=30`,
+      )
+    : [];
+  const accountIds = accounts.map(row => row.id).filter(Boolean);
+
+  const [posts, conversations, snapshots] = await Promise.all([
+    accountIds.length
+      ? supabaseRows(
+          token,
+          'link_rrss_posts',
+          `select=id,account_id,status,media_type,content,thumbnail_url,post_url,published_at,scheduled_for,metrics,updated_at&account_id=${inFilter(accountIds)}&published_at=not.is.null&order=published_at.desc&limit=60`,
+        )
+      : Promise.resolve([]),
+    accountIds.length
+      ? supabaseRows(
+          token,
+          'link_rrss_conversations',
+          `select=id,account_id,participant_username,status,unread_count,last_message,last_message_at,updated_at&account_id=${inFilter(accountIds)}&order=last_message_at.desc.nullslast&limit=80`,
+        )
+      : Promise.resolve([]),
+    supabaseRows(
+      token,
+      'link_rrss_snapshots',
+      `select=cache_key,business_id,source_id,account_id,module,status,payload,error,fetched_at,stale_after,updated_at&business_id=eq.${business.id}&order=fetched_at.desc&limit=24`,
+    ),
+  ]);
+
+  return {
+    profiles,
+    sources,
+    accounts,
+    posts,
+    conversations,
+    snapshots,
+    signals: summarizeMarketingSignals({ posts, conversations, snapshots, accounts }),
+  };
+}
+
+async function loadAgentContext(token, agent, business) {
   const slug = agent.slug;
   const stageKey = agent.metadata?.stage_key || '';
+  const businessGlobalId = business?.global_id || '';
   const specs = [
     ['grants', 'agent_action_grants', `select=action_key,autonomy_level,approval_required,enabled,constraints,updated_at&agent_slug=eq.${encodeURIComponent(slug)}&enabled=eq.true&order=action_key.asc&limit=80`],
     ['parameters', 'agent_stage_parameters', `select=id,stage_key,parameter_key,label,direction,unit,description,source,metadata,updated_at&agent_slug=eq.${encodeURIComponent(slug)}&order=parameter_key.asc&limit=80`],
@@ -130,10 +279,9 @@ async function loadAgentContext(token, agent, businessGlobalId) {
   if (businessGlobalId) {
     specs.push(
       ['missions', 'agent_missions', `select=id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,assigned_agent_slug,status,priority,metadata,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&stage_key=eq.${encodeURIComponent(stageKey)}&order=updated_at.desc&limit=30`],
-      ['evidence', 'agent_mission_evidence', 'select=id,mission_id,evidence_type,evidence_ref,evidence_payload,verification_status,verified_at,created_at&order=created_at.desc&limit=50'],
       ['relations', 'entity_relations', `select=source_global_id,target_global_id,relation_type,state,metadata,updated_at&or=(source_global_id.eq.${encodeURIComponent(businessGlobalId)},target_global_id.eq.${encodeURIComponent(businessGlobalId)})&order=updated_at.desc&limit=40`],
       ['activity', 'link_world_activity', `select=action,target_type,target_id,origin,note,metadata,created_at&target_id=eq.${encodeURIComponent(businessGlobalId)}&order=created_at.desc&limit=40`],
-      ['rrssSnapshots', 'link_rrss_snapshots', `select=profile_id,snapshot_type,period_start,period_end,metrics,source,created_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=created_at.desc&limit=12`],
+      ['parameterObservations', 'agent_parameter_observations', `select=id,parameter_id,business_global_id,value_numeric,value_text,observed_at,evidence,source,metadata,created_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=observed_at.desc&limit=80`],
       ['salesLeads', 'sales_leads', `select=id,business_global_id,status,source,created_at,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=updated_at.desc&limit=30`],
       ['salesEvents', 'sales_events', `select=lead_id,event_type,source,occurred_at,metadata&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=occurred_at.desc&limit=40`],
       ['calendar', 'link_world_calendar_events', `select=business_global_id,title,start_at,end_at,status,source_type,external_id,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=start_at.desc&limit=30`],
@@ -149,6 +297,31 @@ async function loadAgentContext(token, agent, businessGlobalId) {
     const item = settled[i];
     if (item.status === 'fulfilled') data[key] = item.value[1];
     else unavailable.push({ key, error: short(item.reason?.message || 'unavailable', 240) });
+  }
+
+
+  if (businessGlobalId) {
+    const missionIds = (data.missions || []).map(row => row.id).filter(Boolean);
+    try {
+      data.evidence = missionIds.length
+        ? await supabaseRows(
+            token,
+            'agent_mission_evidence',
+            `select=id,mission_id,requirement_key,description,evidence_type,status,requested_by_agent,provided_by,evidence_uri,note,metadata,requested_at,received_at,validated_at&mission_id=${inFilter(missionIds)}&order=requested_at.desc&limit=80`,
+          )
+        : [];
+    } catch (error) {
+      data.evidence = [];
+      unavailable.push({ key: 'evidence', error: short(error?.message || 'unavailable', 240) });
+    }
+
+    try {
+      data.rrss = await loadRrssContext(token, business);
+      if (stageKey === 'marketing') data.stageSignals = data.rrss.signals;
+    } catch (error) {
+      data.rrss = { profiles: [], sources: [], accounts: [], posts: [], conversations: [], snapshots: [], signals: null };
+      unavailable.push({ key: 'rrss', error: short(error?.message || 'unavailable', 240) });
+    }
   }
 
   const scopeKey = businessGlobalId ? `${slug}:${businessGlobalId}` : slug;
@@ -346,15 +519,16 @@ export default async function handler(req, res) {
     const businessGlobalId = short(body.businessGlobalId, 180);
 
     const agent = await loadAgentIdentity(token, slug);
-    const [doctrine, business, context] = await Promise.all([
+    const [doctrine, business] = await Promise.all([
       loadDoctrine(),
       loadBusiness(token, businessGlobalId),
-      loadAgentContext(token, agent, businessGlobalId),
     ]);
 
     if (businessGlobalId && !business) {
       return json(res, 404, { error: 'Negocio no encontrado o no autorizado para esta sesión.' });
     }
+
+    const context = await loadAgentContext(token, agent, business);
 
     const liveState = {
       capturedAt: new Date().toISOString(),
@@ -427,6 +601,8 @@ export default async function handler(req, res) {
       doctrineHash: doctrine.hash,
       unavailableSources: context.unavailable.map(x => x.key),
       memoryScope: context.memoryScopeKey,
+      signals: context.data.stageSignals || null,
+      parameterObservations: Array.isArray(context.data.parameterObservations) ? context.data.parameterObservations.length : 0,
       archiveId: archive.id,
       archiveStatus: archive.ok ? 'saved' : 'failed',
       mutatingActionsExecuted: 0,
