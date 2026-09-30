@@ -44,9 +44,9 @@ app.innerHTML = [
 "      <div class='le-hero-copy'>",
 "        <span class='le-eyebrow'>LINK · PARA NEGOCIOS</span>",
 "        <h1>Tu negocio<br>no está solo.</h1>",
-"        <p class='le-lead'><strong>LINK conecta negocios, personas, herramientas y oportunidades</strong> para que cada negocio pueda hacer más, sin perder su identidad.</p>",
+"        <p class='le-lead'><strong>LINK conecta lo que tu negocio hace con lo que otros necesitan.</strong> Ventas, marketing, reservas, pagos, tecnología, eventos, transporte y alianzas pueden activarse cuando aportan valor.</p>",
 "        <div class='le-hero-actions'><a class='le-primary' href='#modelo-link-cupones'>Ver modelo LINK Cupones <span>→</span></a><a class='le-secondary' href='#como-funciona'>Cómo funciona LINK</a></div>",
-"        <p class='le-note'>No es una fórmula única. LINK activa sólo las conexiones que tienen sentido para cada negocio.</p>",
+"        <p class='le-note'>Cada negocio activa una combinación distinta de capacidades según su realidad, sus oportunidades y sus objetivos.</p>",
 "      </div>",
 "      <div class='le-network-wrap' aria-label='Red de posibilidades alrededor de un negocio'>",
 "        <div class='le-network-lines' aria-hidden='true'></div>",
@@ -65,12 +65,12 @@ app.innerHTML = [
 "        <div>",
 "          <span class='le-eyebrow'>UN EJEMPLO CONCRETO · LINK CUPONES</span>",
 "          <h2>Así una conexión se convierte en negocio.</h2>",
-"          <p><strong>LINK Cupones no vende publicidad.</strong> Un negocio ofrece un beneficio útil para atraer una venta, otro punto LINK puede acercarlo al cliente y LINK cobra sólo cuando esa venta es atribuible a la conexión.</p>",
+"          <p><strong>LINK Cupones convierte distribución en una venta medible.</strong> Un negocio ofrece un beneficio útil, otro punto LINK puede acercarlo al cliente y LINK participa cuando la conexión genera una venta atribuible.</p>",
 "        </div>",
 "        <div class='le-model-rule'>",
 "          <span>Regla simple</span>",
 "          <strong>Cliente gana + negocio vende + LINK participa del resultado.</strong>",
-"          <small>Los porcentajes se acuerdan por producto. No se aplica una bolsa universal ni se duplican descuento y comisión.</small>",
+"          <small>Los porcentajes se acuerdan por producto y se distribuyen según el rol de cada participante en la venta.</small>",
 "        </div>",
 "      </div>",
 "      <div class='le-model-board'>",
@@ -145,7 +145,7 @@ app.innerHTML = [
 "      <div class='le-section-head'><div><span class='le-eyebrow'>NEGOCIOS QUE CRECEN JUNTOS</span><h2>La lógica asociativa de LINK</h2><p>LINK también puede crear productos donde dos o más negocios se ayudan entre sí. El cliente recibe una mejor experiencia y cada negocio obtiene una nueva oportunidad.</p></div></div>",
 "      <div class='le-assoc-feature'>",
 "        <div class='le-assoc-copy'><div class='le-title-icon'>" + icon('tag') + "</div><span class='le-eyebrow'>EJEMPLOS · ASOCIACIONES LINK</span><h3>Una necesidad puede convertirse en una relación útil.</h3><p>Los negocios pueden asociarse de distintas maneras: compartiendo beneficios, servicios, experiencias, producción, tecnología o canales de venta. Toca un caso para ver la lógica.</p>",
-"          <div class='le-coupon-select le-ecosystem-cases'><button class='active' data-coupon='caracol-cupones'><b>Caracol + LINK Cupones</b><small>beneficio compartido</small></button><button data-coupon='hotel-transfer'><b>Hotel Experience + Transfer</b><small>servicio complementario</small></button><button data-coupon='hotel-kizu'><b>Hotel Experience + KIZU PRO</b><small>experiencia compartida</small></button><button data-coupon='caracol-kizu'><b>Caracol + KIZU PRO</b><small>producción + público</small></button><button data-coupon='caracol-digital'><b>Caracol + LINK Digital</b><small>capacidad digital</small></button><button data-coupon='flash-digital'><b>Flash Botox + LINK Digital</b><small>operación digital</small></button></div>",
+"          <div class='le-coupon-select le-ecosystem-cases'><button class='active' data-coupon='caracol-conciertos'><b>Caracol + LINK Conciertos</b><small>programación + público</small></button><button data-coupon='hotel-transfer'><b>Hotel Experience + Transfer Hotel Atacama</b><small>servicio complementario</small></button><button data-coupon='lama-hotel'><b>Lama Travelers + Hotel Experience</b><small>turismo + hospitalidad</small></button><button data-coupon='caracol-link'><b>Caracol + LINK</b><small>marketing + trazabilidad</small></button><button data-coupon='hotel-conciertos'><b>Hotel + LINK Conciertos</b><small>hospitalidad + cultura</small></button><button data-coupon='transfer-hotel'><b>Transfer Hotel Atacama + Hotel Experience</b><small>movilidad + huésped</small></button></div>",
 "          <div class='le-coupon-example' id='le-coupon-example'></div>",
 "        </div>",
 "        <div class='le-assoc-flow'>",
@@ -179,15 +179,15 @@ app.innerHTML = [
 "    <section class='le-principle le-section'>",
 "      <span class='le-eyebrow'>LA IDEA CENTRAL</span>",
 "      <blockquote>LINK toma lo que hoy está disperso —negocios, necesidades, personas, herramientas y oportunidades— y lo convierte en relaciones que pueden generar valor.</blockquote>",
-"      <p>El negocio sigue siendo el centro. LINK no reemplaza su identidad: amplía lo que puede hacer conectado con otros.</p>",
+"      <p>El negocio sigue siendo el centro. LINK amplía lo que puede hacer al conectarlo con capacidades complementarias.</p>",
 "    </section>",
 "    <section class='le-contact le-section' id='contacto'>",
 "      <div class='le-contact-copy'>",
 "        <span class='le-eyebrow'>CONECTA TU NEGOCIO</span>",
-"        <h2>Cuéntanos dónde encontrarte.</h2>",
-"        <p>Deja tu Instagram o tu WhatsApp. LINK registra la solicitud, pero <strong>no la incorpora al Micelio hasta confirmar que el contacto es real.</strong></p>",
+"        <h2>Empecemos por conocernos.</h2>",
+"        <p>Déjanos tu Instagram o WhatsApp. Desde ahí coordinamos una conversación para conocer tu negocio, sus capacidades y las conexiones que pueden aportar valor.</p>",
 "        <a class='le-whatsapp-direct' href='https://wa.me/qr/ZYDZ5QZBDG4AJ1' target='_blank' rel='noopener noreferrer'><span class='le-wa-dot'>●</span><span><b>Hablar directamente por WhatsApp</b><small>Abrir contacto LINK</small></span><i>↗</i></a>",
-"        <div class='le-contact-rule'><span>1</span><p>Recibimos el contacto.</p><span>2</span><p>Confirmamos que existe.</p><span>3</span><p>Recién entonces puede entrar al Micelio.</p></div>",
+"        <div class='le-contact-rule'><span>1</span><p>Recibimos tu contacto.</p><span>2</span><p>Agendamos una reunión para conocer tu negocio.</p><span>3</span><p>Diseñamos la conexión y comenzamos tu integración.</p></div>",
 "      </div>",
 "      <form class='le-contact-form' id='le-contact-form' novalidate>",
 "        <div class='le-form-head'><span>Solicitud de conexión</span><small>2 minutos</small></div>",
@@ -198,7 +198,7 @@ app.innerHTML = [
 "          <label><span>WhatsApp</span><input id='le-contact-whatsapp' name='whatsapp' type='tel' maxlength='24' autocomplete='tel' placeholder='+56 9 1234 5678'></label>",
 "        </div>",
 "        <label class='le-honeypot' aria-hidden='true' tabindex='-1'><span>Sitio web</span><input id='le-contact-website' type='text' autocomplete='off' tabindex='-1'></label>",
-"        <p class='le-form-note'>Necesitamos al menos Instagram o WhatsApp. El contacto queda <strong>pendiente de verificación</strong> antes de crear cualquier conexión real.</p>",
+"        <p class='le-form-note'>Comparte Instagram o WhatsApp para preparar la reunión y validar el contacto antes de diseñar la conexión.</p>",
 "        <button class='le-contact-submit' id='le-contact-submit' type='submit'>Enviar solicitud <span>→</span></button>",
 "        <div class='le-contact-status' id='le-contact-status' role='status' aria-live='polite'></div>",
 "      </form>",
@@ -341,12 +341,12 @@ document.querySelectorAll('[data-step]').forEach((button) => {
 });
 
 const associationDetails = {
-  beneficios:{kicker:'ASOCIACIÓN · BENEFICIOS',title:'Beneficios compartidos',meaning:'Un negocio crea una ventaja y otro la acerca al cliente.',action:'LINK registra quién originó la oportunidad, dónde se activó y qué resultado produjo.',example:'Un hotel entrega a su huésped un beneficio en un restaurante cercano.',chips:['Caracol + LINK Cupones','Hotel Experience + LINK Cupones','Comercio + Hotel'],key:'El beneficio es un puente entre negocios, no sólo un descuento.'},
-  experiencias:{kicker:'ASOCIACIÓN · EXPERIENCIAS',title:'Experiencias compartidas',meaning:'Una experiencia complementa lo que otro negocio ya entrega.',action:'LINK permite que un punto de contacto recomiende y coordine una experiencia de otro negocio.',example:'Un hotel puede acercar una cena, concierto, tour o experiencia de bienestar.',chips:['Hotel Experience + KIZU PRO','Caracol + KIZU PRO','Hotel + Cena','Hotel + Tour'],key:'El cliente recibe una experiencia más completa y ambos negocios ganan valor.'},
-  servicios:{kicker:'ASOCIACIÓN · SERVICIOS',title:'Servicios conectados',meaning:'Un negocio suma capacidad sin tener que operar todo.',action:'LINK conecta necesidades operativas con proveedores que pueden resolverlas.',example:'Un hotel puede ofrecer traslado sin transformarse en una empresa de transporte.',chips:['Hotel Experience + Transfer Hotel Atacama','Hotel + Wellness','Tour + Transporte','KIZU PRO + Producción'],key:'La red amplía capacidad sin duplicar estructuras.'},
-  promocion:{kicker:'ASOCIACIÓN · PROMOCIÓN',title:'Promoción cruzada',meaning:'Negocios con público compatible pueden recomendarse.',action:'LINK ayuda a ordenar la oferta conjunta y a medir qué canal originó la oportunidad.',example:'Un café y una pastelería pueden crear un beneficio conjunto para una misma audiencia.',chips:['Caracol + LINK Cupones','Caracol + KIZU PRO','Hotel Experience + Comercio local','Bar + Evento'],key:'Compartir audiencia puede crear demanda nueva para ambos.'},
-  operacion:{kicker:'ASOCIACIÓN · OPERACIÓN',title:'Operación complementaria',meaning:'Una parte del trabajo puede vivir en otro negocio especializado.',action:'LINK conecta la operación, deja responsables claros y mantiene trazabilidad del resultado.',example:'Un evento puede apoyarse en ticketing, producción técnica o transporte sin internalizar esas áreas.',chips:['Caracol + LINK Digital','Flash Botox + LINK Digital','Hotel Experience + Transfer','KIZU PRO + Producción'],key:'La asociación también puede ser operativa, no sólo comercial.'},
-  derivacion:{kicker:'ASOCIACIÓN · DERIVACIÓN',title:'Derivación local',meaning:'El cliente recibe una opción útil en el momento correcto.',action:'LINK convierte cercanía y contexto en una recomendación trazable entre negocios.',example:'La recepción de un hotel puede derivar una cena, un tour o un servicio cercano.',chips:['Hotel Experience → Transfer','Hotel Experience → KIZU PRO','Caracol → LINK Cupones','Caracol → Evento'],key:'La oportunidad aparece donde el cliente ya está tomando una decisión.'}
+  beneficios:{kicker:'ASOCIACIÓN · BENEFICIOS',title:'Beneficios compartidos',meaning:'Un negocio crea una ventaja y otro la acerca al cliente.',action:'LINK registra quién originó la oportunidad, dónde se activó y qué resultado produjo.',example:'Un hotel entrega a su huésped un beneficio en un restaurante cercano.',chips:['Caracol + LINK','Hotel Experience + Transfer Hotel Atacama','Lama Travelers + Hotel Experience'],key:'El beneficio es un puente entre negocios, no sólo un descuento.'},
+  experiencias:{kicker:'ASOCIACIÓN · EXPERIENCIAS',title:'Experiencias compartidas',meaning:'Una experiencia complementa lo que otro negocio ya entrega.',action:'LINK permite que un punto de contacto recomiende y coordine una experiencia de otro negocio.',example:'Un hotel puede acercar una cena, concierto, tour o experiencia de bienestar.',chips:['Hotel + LINK Conciertos','Caracol + LINK Conciertos','Lama Travelers + Hotel Experience'],key:'El cliente recibe una experiencia más completa y ambos negocios ganan valor.'},
+  servicios:{kicker:'ASOCIACIÓN · SERVICIOS',title:'Servicios conectados',meaning:'Un negocio suma capacidad sin tener que operar todo.',action:'LINK conecta necesidades operativas con proveedores que pueden resolverlas.',example:'Un hotel puede ofrecer traslado sin transformarse en una empresa de transporte.',chips:['Hotel Experience + Transfer Hotel Atacama','Transfer Hotel Atacama + Hotel Experience','Lama Travelers + Hotel Experience'],key:'La red amplía capacidad sin duplicar estructuras.'},
+  promocion:{kicker:'ASOCIACIÓN · PROMOCIÓN',title:'Promoción cruzada',meaning:'Negocios con público compatible pueden recomendarse.',action:'LINK ayuda a ordenar la oferta conjunta y a medir qué canal originó la oportunidad.',example:'Un café y una pastelería pueden crear un beneficio conjunto para una misma audiencia.',chips:['Caracol + LINK','Caracol + LINK Conciertos','Hotel + LINK Conciertos'],key:'Compartir audiencia puede crear demanda nueva para ambos.'},
+  operacion:{kicker:'ASOCIACIÓN · OPERACIÓN',title:'Operación complementaria',meaning:'Una parte del trabajo puede vivir en otro negocio especializado.',action:'LINK conecta la operación, deja responsables claros y mantiene trazabilidad del resultado.',example:'Un evento puede apoyarse en ticketing, producción técnica o transporte sin internalizar esas áreas.',chips:['Caracol + LINK','Hotel Experience + Transfer Hotel Atacama','Hotel + LINK Conciertos'],key:'La asociación también puede ser operativa, no sólo comercial.'},
+  derivacion:{kicker:'ASOCIACIÓN · DERIVACIÓN',title:'Derivación local',meaning:'El cliente recibe una opción útil en el momento correcto.',action:'LINK convierte cercanía y contexto en una recomendación trazable entre negocios.',example:'La recepción de un hotel puede derivar una cena, un tour o un servicio cercano.',chips:['Hotel Experience → Transfer Hotel Atacama','Hotel → LINK Conciertos','Caracol → LINK','Lama Travelers → Hotel Experience'],key:'La oportunidad aparece donde el cliente ya está tomando una decisión.'}
 };
 document.querySelectorAll('[data-assoc]').forEach(button => {
   button.addEventListener('click', () => openDetail(associationDetails[button.dataset.assoc]));
@@ -434,41 +434,41 @@ document.querySelector('#le-ally-input')?.addEventListener('input', (event) => {
 renderCouponBusinessModel();
 
 const couponExamples = {
-  'caracol-cupones': {
-    title:'Caracol + LINK Cupones',
-    type:'Beneficio compartido',
-    description:'Caracol puede crear un beneficio para atraer una visita. LINK Cupones lo distribuye dentro de la red y deja trazabilidad de origen, activación y resultado.',
-    flow:'Beneficio → Distribución → Visita → Venta'
+  'caracol-conciertos': {
+    title:'Caracol + LINK Conciertos',
+    type:'Programación + público',
+    description:'Caracol aporta espacio, ambiente y público. LINK Conciertos conecta artistas, programación y producción para convertir una noche en una experiencia comercial repetible.',
+    flow:'Espacio → Programación → Público → Consumo'
   },
   'hotel-transfer': {
     title:'Hotel Experience + Transfer Hotel Atacama',
     type:'Servicio complementario',
-    description:'Un huésped que necesita traslado puede resolverlo desde la experiencia hotelera. El hotel mejora su servicio y el proveedor recibe una oportunidad contextualizada.',
+    description:'La experiencia hotelera suma una solución de traslado contextualizada para el huésped. El hotel amplía su servicio y Transfer Hotel Atacama recibe una oportunidad concreta.',
     flow:'Huésped → Necesidad → Transfer → Servicio'
   },
-  'hotel-kizu': {
-    title:'Hotel Experience + KIZU PRO',
-    type:'Experiencia compartida',
-    description:'La hotelería puede incorporar música, conciertos o programación artística como parte de la experiencia del huésped sin producir todo internamente.',
-    flow:'Hotel → Experiencia → Producción → Huésped'
+  'lama-hotel': {
+    title:'Lama Travelers + Hotel Experience',
+    type:'Turismo + hospitalidad',
+    description:'Un viajero puede conectar alojamiento y experiencia turística dentro de una misma relación. Cada negocio mantiene su especialidad y el cliente recibe una solución más completa.',
+    flow:'Viajero → Hotel → Experiencia → Estadía'
   },
-  'caracol-kizu': {
-    title:'Caracol + KIZU PRO',
-    type:'Producción + público',
-    description:'Caracol aporta espacio y audiencia; KIZU PRO puede aportar artistas, booking o producción. La asociación transforma programación cultural en una experiencia comercial.',
-    flow:'Espacio → Artista → Evento → Consumo'
+  'caracol-link': {
+    title:'Caracol + LINK',
+    type:'Marketing + trazabilidad',
+    description:'Caracol puede conectar contenido, campañas, beneficios y conversaciones con visitas medibles. LINK aporta distribución, seguimiento y aprendizaje sobre qué acciones generan resultado.',
+    flow:'Contenido → Conversación → Visita → Resultado'
   },
-  'caracol-digital': {
-    title:'Caracol + LINK Digital',
-    type:'Capacidad digital',
-    description:'Un negocio operativo puede sumar herramientas digitales para ordenar contenido, captación, CRM o seguimiento sin tener que desarrollar esa capacidad desde cero.',
-    flow:'Negocio → Sistema → Datos → Seguimiento'
+  'hotel-conciertos': {
+    title:'Hotel + LINK Conciertos',
+    type:'Hospitalidad + cultura',
+    description:'Un hotel puede incorporar música, artistas o programación cultural como parte de la experiencia del huésped mediante una capacidad especializada de LINK.',
+    flow:'Hotel → Artista → Experiencia → Huésped'
   },
-  'flash-digital': {
-    title:'Flash Botox + LINK Digital',
-    type:'Operación digital',
-    description:'Un servicio por agenda puede apoyarse en una capa digital para captar solicitudes, ordenar horarios, confirmar pagos y reducir coordinación manual.',
-    flow:'Solicitud → Agenda → Pago → Servicio'
+  'transfer-hotel': {
+    title:'Transfer Hotel Atacama + Hotel Experience',
+    type:'Movilidad + huésped',
+    description:'La movilidad se integra a la experiencia del huésped desde el momento adecuado: llegada, salida o traslado local. La coordinación genera valor para ambas partes.',
+    flow:'Reserva → Traslado → Hotel → Experiencia'
   }
 }
 function renderCoupon(key) {
@@ -481,7 +481,7 @@ function renderCoupon(key) {
     '<small>'+copy.flow+'</small>';
 }
 document.querySelectorAll('[data-coupon]').forEach((button) => button.addEventListener('click', () => renderCoupon(button.dataset.coupon)));
-renderCoupon('caracol-cupones');
+renderCoupon('caracol-conciertos');
 
 const instagramOk = value => {
   const v = String(value||'').trim();
@@ -525,7 +525,7 @@ document.querySelector('#le-contact-form')?.addEventListener('submit', async eve
 
   button.disabled = true;
   button.textContent = 'Enviando…';
-  contactStatus('loading','<b>Registrando la solicitud…</b><span>Aún no entra al Micelio.</span>');
+  contactStatus('loading','<b>Registrando la solicitud…</b><span>Preparando el siguiente paso para conocernos.</span>');
 
   const {data,error} = await db.rpc('link_world_submit_public_contact',{
     p_business_name: business,
@@ -551,8 +551,8 @@ document.querySelector('#le-contact-form')?.addEventListener('submit', async eve
     ? '<button type="button" id="le-copy-wa-code">Copiar código y abrir WhatsApp ↗</button>'
     : '<a href="'+LINK_WHATSAPP+'" target="_blank" rel="noopener noreferrer">Abrir WhatsApp LINK ↗</a>';
   contactStatus('success',
-    '<b>Solicitud recibida · pendiente de verificación.</b>'+
-    '<span>Tu negocio todavía no aparece en el Micelio. Primero comprobamos que el contacto exista.</span>'+
+    '<b>Solicitud recibida.</b>'+
+    '<span>El siguiente paso es validar el contacto y coordinar una reunión para conocer tu negocio.</span>'+
     (code ? '<div class="le-verification-code"><small>Código de verificación</small>'+codeHtml+'</div>' : '')+
     '<div class="le-status-actions">'+verificationAction+'</div>'
   );
