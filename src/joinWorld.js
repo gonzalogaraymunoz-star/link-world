@@ -16,8 +16,8 @@ app.innerHTML=[
 "  <section class='lw-join-hero'>",
 "    <div class='lw-join-copy'>",
 "      <span class='lw-join-kicker'><i></i> CONEXIÓN PARA NEGOCIOS</span>",
-"      <h1><span class='lw-join-fixed'>Conocemos tu negocio.</span><span class='lw-smoke-line' aria-label='Encontramos dónde conecta.'><em class='lw-smoke-phrase lw-smoke-current'>Encontramos dónde conecta.</em><em class='lw-smoke-phrase lw-smoke-next' aria-hidden='true'></em><i class='lw-smoke-haze' aria-hidden='true'></i></span></h1>",
-"      <p><strong>LINK World conecta negocios, capacidades y oportunidades.</strong> Empezamos conociendo tu realidad y activamos las conexiones que pueden aportar valor.</p>",
+"      <h1><span class='lw-join-fixed'>Conozcámonos.</span><span class='lw-smoke-line' aria-label='Entendemos tu negocio.'><em class='lw-smoke-phrase lw-smoke-current'>Entendemos tu negocio.</em><em class='lw-smoke-phrase lw-smoke-next' aria-hidden='true'></em><i class='lw-smoke-haze' aria-hidden='true'></i></span></h1>",
+"      <p class='lw-join-support'><strong>Empezamos con una conversación.</strong> Entendemos tu negocio, detectamos oportunidades y activamos las conexiones que pueden aportar valor.</p>",
 "    </div>",
 "    <aside class='lw-join-card'>",
 "      <span class='lw-join-card-label'>SER PARTE</span>",
@@ -45,17 +45,18 @@ app.innerHTML=[
 
 
 const smokePhrases = [
+  'Entendemos tu negocio.',
   'Encontramos dónde conecta.',
   'Activamos capacidades útiles.',
   'Diseñamos conexiones reales.',
-  'Abrimos nuevas oportunidades.',
   'Comenzamos tu integración.'
-];
+]
 
 const smokeCurrent = document.querySelector('.lw-smoke-current');
 const smokeNext = document.querySelector('.lw-smoke-next');
 const smokeLine = document.querySelector('.lw-smoke-line');
 const smokeHaze = document.querySelector('.lw-smoke-haze');
+const smokeSupport = document.querySelector('.lw-join-support');
 
 if (smokeCurrent && smokeNext && smokeLine) {
   let smokeIndex = 0;
@@ -70,11 +71,13 @@ if (smokeCurrent && smokeNext && smokeLine) {
     smokeNext.classList.remove('lw-smoke-in');
     smokeCurrent.classList.remove('lw-smoke-out');
     smokeHaze?.classList.remove('active');
+    smokeSupport?.classList.remove('lw-support-sweep');
 
     requestAnimationFrame(() => {
       smokeCurrent.classList.add('lw-smoke-out');
       smokeNext.classList.add('lw-smoke-in');
       smokeHaze?.classList.add('active');
+      smokeSupport?.classList.add('lw-support-sweep');
     });
 
     window.setTimeout(() => {
@@ -85,6 +88,7 @@ if (smokeCurrent && smokeNext && smokeLine) {
       smokeNext.classList.remove('lw-smoke-in');
       smokeNext.textContent = '';
       smokeHaze?.classList.remove('active');
+      smokeSupport?.classList.remove('lw-support-sweep');
       smokeAnimating = false;
     }, 980);
   };
