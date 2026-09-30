@@ -33,11 +33,11 @@ const icon = (name) => "<span class='le-icon'>" + (icons[name] || icons.link) + 
 app.innerHTML = [
 "<div class='le-page'>",
 "  <header class='le-header'>",
-"    <a class='le-brand' href='/' aria-label='Volver a LINK World'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a>",
+"    <a class='le-brand' href='/ser-parte/' aria-label='Volver a LINK World'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a>",
 "    <nav class='le-nav' aria-label='Contenido de LINK'>",
 "      <a href='#que-es'>Qué es</a><a href='#modelo-link-cupones'>Modelo</a><a href='#como-funciona'>Cómo funciona</a><a href='#asociativos'>Asociativos</a><a href='#ejemplos'>Ejemplos</a><a href='#contacto'>Contacto</a>",
 "    </nav>",
-"    <a class='le-back' href='/'>Entrar a LINK World <span>→</span></a>",
+"    <a class='le-back' href='/ser-parte/'>Entrar a LINK World <span>→</span></a>",
 "  </header>",
 "  <main>",
 "    <section class='le-hero le-section' id='que-es'>",
@@ -205,10 +205,10 @@ app.innerHTML = [
 "    </section>",
 "    <section class='le-cta le-section'>",
 "      <div><span class='le-eyebrow'>LINK WORLD</span><h2>Explora cómo vive la red.</h2><p>LINK World muestra los negocios, relaciones y aprendizajes que ya fueron incorporados al sistema.</p></div>",
-"      <div class='le-cta-actions'><a class='le-primary' href='/'>Entrar a LINK World <span>→</span></a><a class='le-secondary' href='#que-es'>Volver arriba</a></div>",
+"      <div class='le-cta-actions'><a class='le-primary' href='/ser-parte/'>Entrar a LINK World <span>→</span></a><a class='le-secondary' href='#que-es'>Volver arriba</a></div>",
 "    </section>",
 "  </main>",
-"  <footer class='le-footer'><a class='le-brand' href='/'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a><p>Negocios independientes. Conexiones útiles. Más posibilidades.</p></footer>",
+"  <footer class='le-footer'><a class='le-brand' href='/ser-parte/'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a><p>Negocios independientes. Conexiones útiles. Más posibilidades.</p></footer>",
 "</div>"
 ].join('');
 
