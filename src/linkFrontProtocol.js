@@ -15,6 +15,11 @@ export const LINK_FRONT_PROTOCOL = Object.freeze({
     required: ['name','business','instagram','email','interest'],
     verificationRequiredBeforeMicelio: true
   },
+  whatsapp: {
+    directLinksAllowed: false,
+    requiresPrecontactForm: true,
+    rule: 'Todo acceso a WhatsApp debe ocurrir después de completar y registrar un formulario de contacto.'
+  },
   flow: [
     'front',
     'explain',
