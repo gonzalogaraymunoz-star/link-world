@@ -284,6 +284,7 @@ async function loadAgentContext(token, agent, business) {
       ['parameterObservations', 'agent_parameter_observations', `select=id,parameter_id,business_global_id,value_numeric,value_text,observed_at,evidence,source,metadata,created_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=observed_at.desc&limit=80`],
       ['salesLeads', 'sales_leads', `select=id,business_global_id,status,source,created_at,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=updated_at.desc&limit=30`],
       ['salesEvents', 'sales_events', `select=lead_id,event_type,source,occurred_at,metadata&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=occurred_at.desc&limit=40`],
+      ['handoffs', 'agent_stage_handoffs', `select=id,business_global_id,from_stage_key,to_stage_key,from_agent_slug,to_agent_slug,source_mission_id,target_mission_id,status,signal_type,summary,payload,evidence,acceptance_criteria,blocker,proposed_at,accepted_at,consumed_at,updated_at,metadata&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&or=(from_agent_slug.eq.${encodeURIComponent(slug)},to_agent_slug.eq.${encodeURIComponent(slug)})&order=proposed_at.desc&limit=30`],
       ['calendar', 'link_world_calendar_events', `select=business_global_id,title,start_at,end_at,status,source_type,external_id,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=start_at.desc&limit=30`],
     );
   }
@@ -412,6 +413,7 @@ function buildTask(action, prompt) {
   if (action === 'observe') return `Observa tu etapa con datos reales, identifica restricciones y vacíos de fuente, y responde: ${prompt}`;
   if (action === 'diagnose') return `Diagnostica la restricción principal de tu etapa, separando hecho, inferencia, propuesta y vacío: ${prompt}`;
   if (action === 'propose') return `Propón el movimiento mínimo verificable para mejorar tu etapa sin ejecutar acciones externas: ${prompt}`;
+  if (action === 'handoff') return `Revisa los handoffs de tu etapa. Si eres emisor, verifica qué evidencia estás entregando y qué falta para que el siguiente Director pueda aceptar. Si eres receptor, clasifica la señal recibida según tus criterios de entrada, separa candidatos de prospectos reales y define la evidencia mínima para aceptar el handoff. No conviertas conversación genérica en lead: ${prompt}`;
   return prompt;
 }
 
@@ -496,7 +498,7 @@ export default async function handler(req, res) {
       state: 'supabase-control-central',
       businessContext: 'isolated-per-request',
       memoryContext: 'agent+business',
-      actions: ['chat', 'observe', 'diagnose', 'propose'],
+      actions: ['chat', 'observe', 'diagnose', 'propose', 'handoff'],
       mutatingActionsEnabled: false,
     });
   }
@@ -515,7 +517,7 @@ export default async function handler(req, res) {
       return json(res, 400, { error: `La consulta debe tener entre 2 y ${MAX_PROMPT_CHARS} caracteres.` });
     }
 
-    const action = ['chat', 'observe', 'diagnose', 'propose'].includes(body.action) ? body.action : 'chat';
+    const action = ['chat', 'observe', 'diagnose', 'propose', 'handoff'].includes(body.action) ? body.action : 'chat';
     const businessGlobalId = short(body.businessGlobalId, 180);
 
     const agent = await loadAgentIdentity(token, slug);
