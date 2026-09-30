@@ -6,6 +6,10 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
 });
 
+const THEME_KEY='link-adn-theme';
+const savedTheme=localStorage.getItem(THEME_KEY)||'gray';
+document.documentElement.dataset.theme=savedTheme;
+
 const app=document.querySelector('#app');
 document.documentElement.lang='es';
 document.body.classList.add('li-body');
@@ -201,7 +205,7 @@ function render(){
     <header class="li-top">
       <a class="li-brand" href="/"><img src="/link-world-mark.svg" alt=""><span><b>LINK.</b> ADN</span></a>
       <div class="li-progress-wrap"><span>${String(Math.min(state.step+1,7)).padStart(2,'0')} / 07</span><div class="li-progress"><i style="width:${progress()}%"></i></div></div>
-      <a class="li-explain" href="/que-es-link/">¿Qué es LINK? ↗</a>
+      <div class="li-top-right"><div class="li-theme-switch" aria-label="Tema"><button type="button" data-theme-choice="night">Noche</button><button type="button" data-theme-choice="gray">Gris</button><button type="button" data-theme-choice="day">Día</button></div><a class="li-explain" href="/que-es-link/">¿Qué es LINK? ↗</a></div>
     </header>
     <section class="li-stage" id="li-stage"></section>
   </main>`;
@@ -369,7 +373,21 @@ function renderSummary(stage){
   );
 }
 
+function bindTheme(){
+  const current=document.documentElement.dataset.theme||'gray';
+  document.querySelectorAll('[data-theme-choice]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.themeChoice===current);
+    btn.addEventListener('click',()=>{
+      const next=btn.dataset.themeChoice||'gray';
+      document.documentElement.dataset.theme=next;
+      localStorage.setItem(THEME_KEY,next);
+      document.querySelectorAll('[data-theme-choice]').forEach(item=>item.classList.toggle('active',item.dataset.themeChoice===next));
+    });
+  });
+}
+
 function bindCommon(){
+  bindTheme();
   document.querySelector('#li-back')?.addEventListener('click',()=>{state.step=Math.max(0,state.step-1);render();});
 
   document.querySelectorAll('.li-cloud').forEach(btn=>{
