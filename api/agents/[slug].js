@@ -323,6 +323,105 @@ async function loadRrssContext(token, business) {
   };
 }
 
+function summarizeJourneyStageSignals(stageKey, data) {
+  const leads = Array.isArray(data.salesLeads) ? data.salesLeads : [];
+  const quotes = Array.isArray(data.salesQuotes) ? data.salesQuotes : [];
+  const outcomes = Array.isArray(data.salesOutcomes) ? data.salesOutcomes : [];
+  const paymentIntents = Array.isArray(data.paymentIntents) ? data.paymentIntents : [];
+  const transactions = Array.isArray(data.transactions) ? data.transactions : [];
+  const calendar = Array.isArray(data.calendar) ? data.calendar : [];
+  const evidence = Array.isArray(data.evidence) ? data.evidence : [];
+  const handoffs = Array.isArray(data.handoffs) ? data.handoffs : [];
+
+  const verifiedOutcomes = outcomes.filter(row => row?.verified === true);
+  const acceptedQuotes = quotes.filter(row => row?.accepted_at || row?.status === 'accepted');
+  const approvedPayments = paymentIntents.filter(row => row?.approved_at || row?.status === 'approved');
+  const customerLinkedTransactions = transactions.filter(row =>
+    row?.closure_id || approvedPayments.some(p => p.transaction_id && p.transaction_id === row.id)
+  );
+  const validatedEvidence = evidence.filter(row => row?.status === 'validated');
+  const now = Date.now();
+  const pastCalendar = calendar.filter(row => row?.starts_at && Date.parse(row.starts_at) < now);
+  const blockedIncoming = handoffs.filter(row => row?.to_stage_key === stageKey && row?.status === 'blocked');
+
+  const base = {
+    capturedAt: new Date().toISOString(),
+    stageKey,
+    incomingHandoffs: handoffs.filter(row => row?.to_stage_key === stageKey).length,
+    blockedIncomingHandoffs: blockedIncoming.length,
+  };
+
+  if (stageKey === 'cierre') {
+    return {
+      ...base,
+      source: 'link_sales_core',
+      commercialSignals: {
+        leads: leads.length,
+        quotes: quotes.length,
+        acceptedQuotes: acceptedQuotes.length,
+        outcomes: outcomes.length,
+        verifiedOutcomes: verifiedOutcomes.length,
+        approvedPayments: approvedPayments.length,
+        customerLinkedTransactions: customerLinkedTransactions.length,
+      },
+      readiness: verifiedOutcomes.length || approvedPayments.length || customerLinkedTransactions.length
+        ? 'verifiable_commitment_present'
+        : 'blocked_no_verified_customer_commitment',
+    };
+  }
+
+  if (stageKey === 'onboarding') {
+    const confirmedCustomers = verifiedOutcomes.filter(row => ['won','sale','purchase','converted'].includes(String(row?.outcome || '').toLowerCase())).length;
+    return {
+      ...base,
+      source: 'link_sales_and_payments',
+      activationSignals: {
+        acceptedQuotes: acceptedQuotes.length,
+        approvedPayments: approvedPayments.length,
+        confirmedCustomers,
+        reservationLinkedPayments: approvedPayments.filter(row => row?.reservation_id).length,
+      },
+      conditionalStage: true,
+      readiness: confirmedCustomers || approvedPayments.length
+        ? 'customer_activation_candidate'
+        : 'not_applicable_until_verified_purchase_or_reservation',
+    };
+  }
+
+  if (stageKey === 'entrega') {
+    return {
+      ...base,
+      source: 'link_calendar_and_evidence',
+      deliverySignals: {
+        calendarEvents: calendar.length,
+        pastCalendarEvents: pastCalendar.length,
+        validatedEvidence: validatedEvidence.length,
+        calendarIsPlanningOnly: true,
+      },
+      readiness: validatedEvidence.length
+        ? 'delivery_evidence_present'
+        : 'blocked_planning_without_verified_execution',
+    };
+  }
+
+  if (stageKey === 'postventa') {
+    return {
+      ...base,
+      source: 'link_sales_rrss_and_evidence',
+      retentionSignals: {
+        verifiedCustomerOutcomes: verifiedOutcomes.length,
+        validatedEvidence: validatedEvidence.length,
+        reviewSourceAvailable: false,
+        referralSourceAvailable: false,
+        repurchaseSourceAvailable: verifiedOutcomes.length > 1,
+      },
+      readiness: 'blocked_until_delivery_and_retention_evidence',
+    };
+  }
+
+  return base;
+}
+
 async function loadAgentContext(token, agent, business) {
   const slug = agent.slug;
   const stageKey = agent.metadata?.stage_key || '';
@@ -337,12 +436,17 @@ async function loadAgentContext(token, agent, business) {
     specs.push(
       ['missions', 'agent_missions', `select=id,mission_code,business_global_id,stage_key,title,problem_statement,diagnosis,expected_outcome,created_by_agent,assigned_agent_slug,status,priority,metadata,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&stage_key=eq.${encodeURIComponent(stageKey)}&order=updated_at.desc&limit=30`],
       ['relations', 'entity_relations', `select=source_global_id,target_global_id,relation_type,state,metadata,updated_at&or=(source_global_id.eq.${encodeURIComponent(businessGlobalId)},target_global_id.eq.${encodeURIComponent(businessGlobalId)})&order=updated_at.desc&limit=40`],
-      ['activity', 'link_world_activity', `select=action,target_type,target_id,origin,note,metadata,created_at&target_id=eq.${encodeURIComponent(businessGlobalId)}&order=created_at.desc&limit=40`],
-      ['parameterObservations', 'agent_parameter_observations', `select=id,parameter_id,business_global_id,value_numeric,value_text,observed_at,evidence,source,metadata,created_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=observed_at.desc&limit=80`],
-      ['salesLeads', 'sales_leads', `select=id,business_global_id,status,source,created_at,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=updated_at.desc&limit=30`],
-      ['salesEvents', 'sales_events', `select=lead_id,event_type,source,occurred_at,metadata&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=occurred_at.desc&limit=40`],
+      ['activity', 'link_world_activity', `select=action,target_type,target_id,origin,note,metadata,created_at&target_id=eq.${business.id}&order=created_at.desc&limit=60`],
+      ['parameterObservations', 'agent_parameter_observations', `select=id,parameter_id,business_global_id,value_numeric,value_text,observed_at,evidence,source,metadata,created_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=observed_at.desc&limit=100`],
+      ['salesLeads', 'sales_leads', `select=id,business_id,source,source_page,source_cta,full_name,company,interested_product,stage,score,next_followup_at,last_contact_at,closed_at,loss_reason,created_at,updated_at&business_id=eq.${business.id}&order=updated_at.desc&limit=80`],
+      ['salesQuotes', 'sales_quotes', `select=id,lead_id,business_id,quote_number,status,product_key,currency,total_amount,valid_until,issued_at,accepted_at,created_at,updated_at&business_id=eq.${business.id}&order=updated_at.desc&limit=80`],
+      ['salesOutcomes', 'sales_cycle_outcomes', `select=id,lead_id,business_id,outcome,evidence_type,evidence_ref,amount,currency,verified,confirmed_at,created_at&business_id=eq.${business.id}&order=confirmed_at.desc.nullslast&limit=80`],
+      ['salesEvents', 'sales_events', `select=id,business_id,lead_id,quote_id,outcome_id,event_type,event_name,actor,occurred_at,created_at&business_id=eq.${business.id}&order=occurred_at.desc&limit=120`],
+      ['transactions', 'link_world_transactions', `select=id,business_id,business_global_id,product_id,closure_id,source_domain,direction,transaction_type,status,amount,currency,payment_method,documentary_status,occurred_at,paid_at,settled_at,metadata&business_id=eq.${business.id}&order=occurred_at.desc&limit=80`],
+      ['paymentIntents', 'link_payment_intents', `select=id,business_id,reservation_id,sales_quote_id,transaction_id,provider,external_reference,currency,net_amount,tax_amount,gross_amount,status,approved_at,cancelled_at,refunded_at,metadata,created_at,updated_at&business_id=eq.${business.id}&order=updated_at.desc&limit=80`],
+      ['documents', 'link_world_documents', `select=id,business_id,business_global_id,transaction_id,closure_id,product_id,source_domain,document_type,issue_date,amount,currency,file_name,metadata,created_at&business_id=eq.${business.id}&order=issue_date.desc.nullslast&limit=80`],
       ['handoffs', 'agent_stage_handoffs', `select=id,business_global_id,from_stage_key,to_stage_key,from_agent_slug,to_agent_slug,source_mission_id,target_mission_id,status,signal_type,summary,payload,evidence,acceptance_criteria,blocker,proposed_at,accepted_at,consumed_at,updated_at,metadata&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&or=(from_agent_slug.eq.${encodeURIComponent(slug)},to_agent_slug.eq.${encodeURIComponent(slug)})&order=proposed_at.desc&limit=30`],
-      ['calendar', 'link_world_calendar_events', `select=business_global_id,title,start_at,end_at,status,source_type,external_id,updated_at&business_global_id=eq.${encodeURIComponent(businessGlobalId)}&order=start_at.desc&limit=30`],
+      ['calendar', 'link_world_calendar_events', `select=id,business_id,business_global_id,title,description,starts_at,ends_at,event_kind,status,event_url,metadata,updated_at&business_id=eq.${business.id}&order=starts_at.desc&limit=120`],
     );
   }
 
@@ -373,10 +477,17 @@ async function loadAgentContext(token, agent, business) {
       unavailable.push({ key: 'evidence', error: short(error?.message || 'unavailable', 240) });
     }
 
+    if (!['marketing','ventas'].includes(stageKey)) {
+      data.stageSignals = summarizeJourneyStageSignals(stageKey, data);
+    }
+
     try {
       data.rrss = await loadRrssContext(token, business);
       if (stageKey === 'marketing') data.stageSignals = data.rrss.signals;
-      if (stageKey === 'ventas') data.stageSignals = data.rrss.salesSignals;
+      if (stageKey === 'ventas') data.stageSignals = {
+        ...data.rrss.salesSignals,
+        journey: summarizeJourneyStageSignals(stageKey, data),
+      };
     } catch (error) {
       data.rrss = { profiles: [], sources: [], accounts: [], posts: [], conversations: [], snapshots: [], signals: null };
       unavailable.push({ key: 'rrss', error: short(error?.message || 'unavailable', 240) });
