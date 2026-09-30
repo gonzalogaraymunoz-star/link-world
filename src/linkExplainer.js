@@ -186,7 +186,7 @@ app.innerHTML = [
 "        <span class='le-eyebrow'>CONECTA TU NEGOCIO</span>",
 "        <h2>Empecemos por conocernos.</h2>",
 "        <p>Déjanos tu Instagram o WhatsApp. Desde ahí coordinamos una conversación para conocer tu negocio, sus capacidades y las conexiones que pueden aportar valor.</p>",
-"        <a class='le-whatsapp-direct' href='https://wa.me/qr/ZYDZ5QZBDG4AJ1' target='_blank' rel='noopener noreferrer'><span class='le-wa-dot'>●</span><span><b>Hablar directamente por WhatsApp</b><small>Abrir contacto LINK</small></span><i>↗</i></a>",
+"        <button class='le-whatsapp-direct' id='le-whatsapp-gate' type='button'><span class='le-wa-dot'>●</span><span><b>Hablar por WhatsApp</b><small>Completa primero la solicitud</small></span><i>↓</i></button>",
 "        <div class='le-contact-rule'><span>1</span><p>Recibimos tu contacto.</p><span>2</span><p>Agendamos una reunión para conocer tu negocio.</p><span>3</span><p>Diseñamos la conexión y comenzamos tu integración.</p></div>",
 "      </div>",
 "      <form class='le-contact-form' id='le-contact-form' novalidate>",
@@ -465,6 +465,12 @@ function renderCoupon(key) {
 }
 document.querySelectorAll('[data-coupon]').forEach((button) => button.addEventListener('click', () => renderCoupon(button.dataset.coupon)));
 renderCoupon('caracol-conciertos');
+
+document.querySelector('#le-whatsapp-gate')?.addEventListener('click', () => {
+  const form = document.querySelector('#le-contact-form');
+  form?.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(() => document.querySelector('#le-contact-business')?.focus(), 380);
+});
 
 const instagramOk = value => {
   const v = String(value||'').trim();
