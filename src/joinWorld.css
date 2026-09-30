@@ -37,7 +37,7 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
 .lw-join-copy h1 em{font-style:normal;color:var(--j-acid)}
 .lw-join-copy>p{
     max-width:620px;
-    margin:52px 0 0;
+    margin:76px 0 0;
     color:#aaa9a1;
     font-size:clamp(15px,1.45vw,19px);
     line-height:1.58;
@@ -93,8 +93,9 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
   display:block;
   position:relative;
   width:min(720px,100%);
-  height:1.2em;
-  margin-top:.18em;
+  min-height:1.32em;
+  height:1.32em;
+  margin-top:.24em;
   color:var(--j-acid);
   overflow:visible;
   isolation:isolate;
@@ -120,10 +121,10 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
 }
 .lw-smoke-next{opacity:0;pointer-events:none}
 .lw-smoke-current.lw-smoke-out{
-  animation:lwSmokeOut .98s cubic-bezier(.42,0,.26,1) forwards;
+  animation:lwSmokeOut .92s cubic-bezier(.42,0,.26,1) forwards;
 }
 .lw-smoke-next.lw-smoke-in{
-  animation:lwSmokeIn .98s cubic-bezier(.22,.72,.22,1) forwards;
+  animation:lwSmokeIn .98s cubic-bezier(.22,.72,.22,1) .18s forwards;
 }
 .lw-smoke-haze{
   position:absolute;
@@ -141,7 +142,7 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
   transform:translate3d(0,8px,0) scale(.94);
 }
 .lw-smoke-haze.active{
-  animation:lwSmokeHaze .98s ease-out forwards;
+  animation:lwSmokeHaze 1.12s ease-out forwards;
 }
 @keyframes lwSmokeOut{
   0%{
@@ -240,4 +241,22 @@ body.lw-join-body{margin:0;min-height:100vh;background:var(--j-bg);color:var(--j
     filter:blur(0);
     transform:translate3d(0,0,0);
   }
+}
+
+
+/* Timing polish: the supporting paragraph stays still while the headline breathes. */
+.lw-join-support,
+.lw-join-support.lw-support-sweep{
+  opacity:1;
+  filter:none;
+  transform:none;
+  animation:none!important;
+}
+@media(max-width:900px){
+  .lw-smoke-line{min-height:1.42em;height:1.42em;margin-top:.26em}
+  .lw-join-copy>p{margin-top:62px}
+}
+@media(max-width:600px){
+  .lw-smoke-line{min-height:1.58em;height:1.58em;margin-top:.30em}
+  .lw-join-copy>p{margin-top:54px}
 }
