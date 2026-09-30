@@ -74,24 +74,27 @@ app.innerHTML = [
 "          <span class='le-model-label'>Simula una venta</span>",
 "          <label for='le-model-price'>Precio base del producto</label>",
 "          <div class='le-price-input'><span>$</span><input id='le-model-price' type='number' min='1000' step='1000' value='100000' inputmode='numeric' aria-label='Precio base del producto en pesos chilenos'></div>",
-"          <span class='le-model-label le-model-label-spaced'>Participación LINK</span>",
-"          <div class='le-model-options' role='group' aria-label='Porcentaje de comisión de LINK'>",
-"            <button class='active' data-model-commission='5'>5% <small>Distribución</small></button>",
-"            <button data-model-commission='7.5'>7,5% <small>Distribución + adquisición</small></button>",
-"            <button data-model-commission='10'>10% <small>Adquisición + conversión</small></button>",
+"          <span class='le-model-label le-model-label-spaced'>Distribuye el acuerdo</span>",
+"          <div class='le-model-edit-grid'>",
+"            <label class='le-model-edit'><span>Beneficio cliente</span><div><input id='le-client-input' type='number' min='0' max='100' step='0.5' value='15' inputmode='decimal'><b>%</b></div></label>",
+"            <label class='le-model-edit'><span>Participación LINK</span><div><input id='le-link-input' type='number' min='0' max='100' step='0.5' value='10' inputmode='decimal'><b>%</b></div></label>",
+"            <label class='le-model-edit'><span>Aliado / referente</span><div><input id='le-ally-input' type='number' min='0' max='100' step='0.5' value='0' inputmode='decimal'><b>%</b></div></label>",
 "          </div>",
-"          <p class='le-model-helper'>Para hacer visible la mecánica usamos un <strong>beneficio típico de 15% para el cliente</strong>. El porcentaje real se define según el convenio y la economía del producto.</p>",
+"          <div class='le-model-minimum' id='le-model-minimum'><span>Mínimo para acuerdo LINK</span><strong id='le-minimum-status'>25% ✓</strong></div>",
+"          <p class='le-model-helper'>Puedes escribir <strong>el monto y los porcentajes que quieras</strong>. La condición es que la suma destinada a cliente + LINK + aliado sea de <strong>25% o más</strong> del precio base.</p>",
 "        </div>",
 "        <div class='le-model-results' aria-live='polite'>",
-"          <article class='client'><span>CLIENTE</span><strong id='le-client-benefit'>15%</strong><small id='le-client-benefit-money'>—</small><p>Beneficio sobre el precio base.</p></article>",
+"          <article class='client'><span>CLIENTE</span><strong id='le-client-benefit'>15%</strong><small id='le-client-benefit-money'>—</small><p>Beneficio directo para activar la compra.</p></article>",
 "          <span class='le-model-plus'>+</span>",
-"          <article class='link'><span>LINK</span><strong id='le-link-percent'>5%</strong><small id='le-link-money'>—</small><p>Comisión sólo cuando la venta es atribuible.</p></article>",
-"          <span class='le-model-plus'>=</span>",
-"          <article class='acquisition'><span>COSTO DE ADQUISICIÓN</span><strong id='le-total-percent'>20%</strong><small id='le-total-money'>—</small><p>Beneficio cliente + participación LINK.</p></article>",
+"          <article class='link'><span>LINK</span><strong id='le-link-percent'>10%</strong><small id='le-link-money'>—</small><p>Participación por generar y medir la conexión.</p></article>",
+"          <span class='le-model-plus'>+</span>",
+"          <article class='ally'><span>ALIADO</span><strong id='le-ally-percent'>0%</strong><small id='le-ally-money'>—</small><p>Participación opcional para quien refiere la venta.</p></article>",
+"          <div class='le-model-total-card'><span>APORTE TOTAL DEL NEGOCIO</span><strong id='le-total-percent'>25%</strong><small id='le-total-money'>—</small><p id='le-total-rule'>Cumple el mínimo LINK.</p></div>",
 "          <div class='le-model-summary'>",
 "            <div><span>Cliente paga</span><strong id='le-client-pays'>—</strong></div>",
-"            <div><span>Negocio recibe</span><strong id='le-business-receives'>—</strong></div>",
+"            <div><span>Negocio recibe neto</span><strong id='le-business-receives'>—</strong></div>",
 "            <div><span>LINK recibe</span><strong id='le-link-receives'>—</strong></div>",
+"            <div><span>Aliado recibe</span><strong id='le-ally-receives'>—</strong></div>",
 "          </div>",
 "        </div>",
 "      </div>",
@@ -261,35 +264,71 @@ document.querySelectorAll('[data-step]').forEach((button) => {
   });
 });
 
-const modelState = { price: 100000, clientBenefit: 15, commission: 5 };
+const modelState = { price: 100000, clientBenefit: 15, commission: 10, ally: 0 };
 const clp = new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0});
+const clampPercent = (value) => Math.min(100, Math.max(0, Number(value) || 0));
 function renderCouponBusinessModel() {
-  const price = Math.max(1000, Number(modelState.price) || 100000);
-  const clientMoney = price * modelState.clientBenefit / 100;
-  const linkMoney = price * modelState.commission / 100;
-  const totalMoney = clientMoney + linkMoney;
-  const clientPays = price - clientMoney;
-  const businessReceives = price - totalMoney;
-  document.querySelector('#le-client-benefit').textContent = modelState.clientBenefit.toLocaleString('es-CL') + '%';
+  const price = Math.max(0, Number(modelState.price) || 0);
+  const clientPct = clampPercent(modelState.clientBenefit);
+  const linkPct = clampPercent(modelState.commission);
+  const allyPct = clampPercent(modelState.ally);
+  const totalPct = clientPct + linkPct + allyPct;
+
+  const clientMoney = price * clientPct / 100;
+  const linkMoney = price * linkPct / 100;
+  const allyMoney = price * allyPct / 100;
+  const totalMoney = clientMoney + linkMoney + allyMoney;
+  const clientPays = Math.max(0, price - clientMoney);
+  const businessReceives = Math.max(0, clientPays - linkMoney - allyMoney);
+  const meetsMinimum = totalPct >= 25;
+  const totalIsValid = totalPct <= 100;
+
+  document.querySelector('#le-client-benefit').textContent = clientPct.toLocaleString('es-CL') + '%';
   document.querySelector('#le-client-benefit-money').textContent = clp.format(clientMoney);
-  document.querySelector('#le-link-percent').textContent = modelState.commission.toLocaleString('es-CL') + '%';
+  document.querySelector('#le-link-percent').textContent = linkPct.toLocaleString('es-CL') + '%';
   document.querySelector('#le-link-money').textContent = clp.format(linkMoney);
-  document.querySelector('#le-total-percent').textContent = (modelState.clientBenefit + modelState.commission).toLocaleString('es-CL') + '%';
+  document.querySelector('#le-ally-percent').textContent = allyPct.toLocaleString('es-CL') + '%';
+  document.querySelector('#le-ally-money').textContent = clp.format(allyMoney);
+  document.querySelector('#le-total-percent').textContent = totalPct.toLocaleString('es-CL') + '%';
   document.querySelector('#le-total-money').textContent = clp.format(totalMoney);
   document.querySelector('#le-client-pays').textContent = clp.format(clientPays);
-  document.querySelector('#le-business-receives').textContent = clp.format(businessReceives);
+  document.querySelector('#le-business-receives').textContent = totalIsValid ? clp.format(businessReceives) : 'Revisar';
   document.querySelector('#le-link-receives').textContent = clp.format(linkMoney);
+  document.querySelector('#le-ally-receives').textContent = clp.format(allyMoney);
+
+  const minimum = document.querySelector('#le-model-minimum');
+  const minimumStatus = document.querySelector('#le-minimum-status');
+  const totalRule = document.querySelector('#le-total-rule');
+  if (!totalIsValid) {
+    minimum?.setAttribute('data-state','invalid');
+    minimumStatus.textContent = 'Máximo 100%';
+    totalRule.textContent = 'La suma no puede superar el 100% del precio.';
+  } else if (meetsMinimum) {
+    minimum?.setAttribute('data-state','ok');
+    minimumStatus.textContent = totalPct.toLocaleString('es-CL') + '% ✓';
+    totalRule.textContent = 'Cumple el mínimo LINK.';
+  } else {
+    const missing = 25 - totalPct;
+    minimum?.setAttribute('data-state','low');
+    minimumStatus.textContent = totalPct.toLocaleString('es-CL') + '% · faltan ' + missing.toLocaleString('es-CL') + '%';
+    totalRule.textContent = 'Debe llegar al menos al 25% para un acuerdo LINK.';
+  }
 }
 document.querySelector('#le-model-price')?.addEventListener('input', (event) => {
   modelState.price = event.currentTarget.value;
   renderCouponBusinessModel();
 });
-document.querySelectorAll('[data-model-commission]').forEach((button) => {
-  button.addEventListener('click', () => {
-    modelState.commission = Number(button.dataset.modelCommission);
-    document.querySelectorAll('[data-model-commission]').forEach((b) => b.classList.toggle('active', b === button));
-    renderCouponBusinessModel();
-  });
+document.querySelector('#le-client-input')?.addEventListener('input', (event) => {
+  modelState.clientBenefit = event.currentTarget.value;
+  renderCouponBusinessModel();
+});
+document.querySelector('#le-link-input')?.addEventListener('input', (event) => {
+  modelState.commission = event.currentTarget.value;
+  renderCouponBusinessModel();
+});
+document.querySelector('#le-ally-input')?.addEventListener('input', (event) => {
+  modelState.ally = event.currentTarget.value;
+  renderCouponBusinessModel();
 });
 renderCouponBusinessModel();
 
