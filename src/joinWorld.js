@@ -1,3 +1,4 @@
+import {initJoinContact} from './joinContact.js';
 import './joinWorld.css';
 
 const app=document.querySelector('#app');
@@ -23,11 +24,11 @@ app.innerHTML=[
 "      <span class='lw-join-card-label'>SER PARTE</span>",
 "      <h2>Empecemos por entender tu negocio.</h2>",
 "      <p>La primera conversación nos sirve para ver qué ya funciona, qué está aislado y dónde una conexión puede transformarse en una capacidad real.</p>",
-"      <a class='lw-join-wa' href='"+LINK_WHATSAPP+"' target='_blank' rel='noopener noreferrer'>",
+"      <button class='lw-join-wa' id='lw-open-contact' type='button'>",
 "        <span class='lw-join-wa-dot'><i></i></span>",
 "        <span><small>CONTACTAR A LINK</small><b>Empezar por WhatsApp</b></span>",
 "        <em>↗</em>",
-"      </a>",
+"      </button>",
 "      <div class='lw-join-steps'>",
 "        <div><span>01</span><p>Recibimos tu contacto.</p></div>",
 "        <div><span>02</span><p>Agendamos una reunión para conocer tu negocio.</p></div>",
@@ -144,3 +145,6 @@ if (smokeCurrent && smokeNext && smokeLine && supportCurrent && supportNext) {
 
   scheduleNext(FIRST_HOLD_MS);
 }
+
+
+initJoinContact({whatsappUrl:LINK_WHATSAPP});
