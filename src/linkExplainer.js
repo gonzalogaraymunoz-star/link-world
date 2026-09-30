@@ -61,55 +61,38 @@ app.innerHTML = [
 "      </div>",
 "    </section>",
 "    <section class='le-coupon-model le-section' id='modelo-link-cupones'>",
-"      <div class='le-model-intro'>",
+"      <div class='le-model-intro le-model-intro--compact'>",
 "        <div>",
-"          <span class='le-eyebrow'>UN EJEMPLO CONCRETO · LINK CUPONES</span>",
-"          <h2>Así se calcula LINK Cupones.</h2>",
-"          <p><strong>Primero se forma el precio de venta del comercio.</strong> Al precio neto del producto se suma el IVA del comercio. Sobre ese precio final LINK calcula su comisión y el cierre se liquida mensualmente.</p>",
+"          <span class='le-eyebrow'>LINK CUPONES</span>",
+"          <h2>Una venta. Un cierre claro.</h2>",
+"          <p>El comercio vende con IVA. LINK cobra una comisión sobre esa venta y el cierre se liquida una vez al mes.</p>",
 "        </div>",
-"        <div class='le-model-rule'>",
-"          <span>Regla económica</span>",
-"          <strong>Precio neto + IVA 19% = precio de venta → comisión LINK desde 25% → fee 15% sobre la comisión.</strong>",
-"          <small>El 15% del fee se calcula sobre la comisión LINK. No es IVA y no es 15% de la venta completa.</small>",
-"        </div>",
-"      </div>",
-"      <div class='le-model-board'>",
-"        <div class='le-model-controls'>",
-"          <span class='le-model-label'>Simula una venta o un cierre mensual</span>",
-"          <label for='le-model-price'>Monto neto antes de IVA</label>",
-"          <div class='le-price-input'><span>$</span><input id='le-model-price' type='number' min='1000' step='1000' value='100000' inputmode='numeric' aria-label='Monto neto antes de IVA en pesos chilenos'></div>",
-"          <span class='le-model-label le-model-label-spaced'>Reglas del acuerdo</span>",
-"          <div class='le-model-edit-grid'>",
-"            <label class='le-model-edit'><span>IVA comercio</span><div><input id='le-vat-input' type='number' value='19' readonly aria-label='IVA del comercio'><b>%</b></div></label>",
-"            <label class='le-model-edit'><span>Comisión LINK</span><div><input id='le-link-input' type='number' min='0' max='100' step='0.5' value='25' inputmode='decimal'><b>%</b></div></label>",
-"            <label class='le-model-edit'><span>Fee boleta</span><div><input id='le-fee-input' type='number' value='15' readonly aria-label='Fee asociado a boleta'><b>%</b></div></label>",
-"          </div>",
-"          <div class='le-model-minimum' id='le-model-minimum'><span>Comisión mínima LINK</span><strong id='le-minimum-status'>25% ✓</strong></div>",
-"          <p class='le-model-helper'>La comisión se calcula sobre el <strong>precio de venta con IVA incluido</strong>. El cierre se hace <strong>una vez al mes</strong> sobre las ventas atribuidas a LINK. El fee corresponde al <strong>15% de la comisión LINK</strong>.</p>",
-"        </div>",
-"        <div class='le-model-results' aria-live='polite'>",
-"          <article class='client'><span>PRECIO NETO</span><strong id='le-net-money'>—</strong><small>Base antes de IVA</small><p>Valor neto del producto o del total vendido en el periodo.</p></article>",
-"          <span class='le-model-plus'>+</span>",
-"          <article class='link'><span>IVA COMERCIO</span><strong id='le-vat-percent'>19%</strong><small id='le-vat-money'>—</small><p>Se suma al neto para formar el precio de venta.</p></article>",
-"          <span class='le-model-plus'>=</span>",
-"          <article class='ally'><span>PRECIO DE VENTA</span><strong id='le-sale-money'>—</strong><small>IVA incluido</small><p>Esta es la base sobre la que se calcula la comisión LINK.</p></article>",
-"          <div class='le-model-total-card'><span>CIERRE LINK</span><strong id='le-total-percent'>25% + fee</strong><small id='le-total-money'>—</small><p id='le-total-rule'>Comisión mínima LINK cumplida.</p></div>",
-"          <div class='le-model-summary'>",
-"            <div><span>Precio de venta</span><strong id='le-client-pays'>—</strong></div>",
-"            <div><span>Comisión LINK</span><strong id='le-business-receives'>—</strong></div>",
-"            <div><span>Fee boleta · 15% comisión</span><strong id='le-link-receives'>—</strong></div>",
-"            <div><span>Total cierre LINK</span><strong id='le-ally-receives'>—</strong></div>",
-"          </div>",
+"        <div class='le-model-rule le-model-rule--compact'>",
+"          <span>FÓRMULA</span>",
+"          <strong>Neto + IVA 19% = venta</strong>",
+"          <small>LINK: desde 25% · Fee: 15% sobre la comisión</small>",
 "        </div>",
 "      </div>",
-"      <div class='le-model-scale'>",
-"        <div><b>Neto</b><span>Precio sin IVA</span></div><i>→</i>",
-"        <div><b>+19%</b><span>IVA del comercio</span></div><i>→</i>",
-"        <div><b>Venta</b><span>Precio final con IVA</span></div><i>→</i>",
-"        <div><b>≥25%</b><span>Comisión LINK</span></div><i>→</i>",
-"        <div><b>+15%</b><span>Fee sobre la comisión</span></div>",
+"      <div class='le-model-board le-model-board--compact'>",
+"        <div class='le-model-controls le-model-controls--compact'>",
+"          <span class='le-model-label'>SIMULAR</span>",
+"          <label for='le-model-price'>Monto neto</label>",
+"          <div class='le-price-input'><span>$</span><input id='le-model-price' type='number' min='1000' step='1000' value='100000' inputmode='numeric' aria-label='Monto neto en pesos chilenos'></div>",
+"          <label class='le-model-commission-row'><span>Comisión LINK</span><div><input id='le-link-input' type='number' min='25' max='100' step='0.5' value='25' inputmode='decimal'><b>%</b></div></label>",
+"          <div class='le-model-minimum le-model-minimum--compact' id='le-model-minimum'><span>Mínimo LINK</span><strong id='le-minimum-status'>25% ✓</strong></div>",
+"          <p class='le-model-helper le-model-helper--compact'>IVA comercio: <strong>19%</strong> · Fee: <strong>15% de la comisión LINK</strong>.</p>",
+"        </div>",
+"        <div class='le-model-simple-results' aria-live='polite'>",
+"          <div><span>Neto</span><strong id='le-net-money'>—</strong></div>",
+"          <div><span>IVA 19%</span><strong id='le-vat-money'>—</strong></div>",
+"          <div class='sale'><span>Precio de venta</span><strong id='le-sale-money'>—</strong></div>",
+"          <div><span>Comisión LINK</span><strong id='le-business-receives'>—</strong></div>",
+"          <div><span>Fee 15%</span><strong id='le-link-receives'>—</strong></div>",
+"          <div class='total'><span>Total cierre LINK</span><strong id='le-ally-receives'>—</strong></div>",
+"          <p id='le-total-rule'>Comisión mínima LINK cumplida.</p>",
+"        </div>",
 "      </div>",
-"      <p class='le-model-footnote'>Ejemplo: si el neto es $100.000, el IVA del comercio es $19.000 y la venta queda en $119.000. Con una comisión LINK de 25%, la comisión es $29.750. El fee de 15% se calcula sobre esos $29.750, no sobre los $119.000. El comercio liquida el acumulado del periodo al cierre de mes.</p>",
+"      <p class='le-model-footnote le-model-footnote--compact'>El 15% no es IVA: es un fee calculado únicamente sobre la comisión LINK.</p>",
 "    </section>",
 "    <section class='le-equation-wrap le-section'>",
 "      <div class='le-equation-copy'><span class='le-number'>1</span><div><span class='le-eyebrow'>UNA IDEA SIMPLE</span><h2>¿Qué es LINK?</h2><p>Una red donde negocios independientes pueden conectarse, colaborar y compartir capacidades. Cada uno mantiene su propia esencia; LINK hace visibles las relaciones que pueden generar valor.</p></div></div>",
@@ -186,7 +169,7 @@ app.innerHTML = [
 "        <span class='le-eyebrow'>CONECTA TU NEGOCIO</span>",
 "        <h2>Empecemos por conocernos.</h2>",
 "        <p>Déjanos tu Instagram o WhatsApp. Desde ahí coordinamos una conversación para conocer tu negocio, sus capacidades y las conexiones que pueden aportar valor.</p>",
-"        <button class='le-whatsapp-direct' id='le-whatsapp-gate' type='button'><span class='le-wa-dot'>●</span><span><b>Hablar por WhatsApp</b><small>Completa primero la solicitud</small></span><i>↓</i></button>",
+"        <button class='le-whatsapp-direct' id='le-whatsapp-gate' type='button'><span class='le-wa-dot'>●</span><span><b>Continuar por WhatsApp</b><small>Primero completa tus datos</small></span><i>→</i></button>",
 "        <div class='le-contact-rule'><span>1</span><p>Recibimos tu contacto.</p><span>2</span><p>Agendamos una reunión para conocer tu negocio.</p><span>3</span><p>Diseñamos la conexión y comenzamos tu integración.</p></div>",
 "      </div>",
 "      <form class='le-contact-form' id='le-contact-form' novalidate>",
@@ -224,6 +207,28 @@ app.insertAdjacentHTML('beforeend', [
   "    <div class='le-detail-block le-detail-example'><span>EJEMPLO</span><p id='le-detail-example'></p><div class='le-detail-chips' id='le-detail-chips'></div></div>",
   "    <div class='le-detail-key' id='le-detail-key'></div>",
   "  </aside>",
+  "</div>"
+].join(''));
+
+app.insertAdjacentHTML('beforeend', [
+  "<div class='le-wa-layer' id='le-wa-layer' aria-hidden='true'>",
+  "  <button class='le-wa-backdrop' type='button' data-wa-close aria-label='Cerrar formulario'></button>",
+  "  <section class='le-wa-sheet' role='dialog' aria-modal='true' aria-labelledby='le-wa-title'>",
+  "    <button class='le-wa-close' type='button' data-wa-close aria-label='Cerrar'>×</button>",
+  "    <span class='le-eyebrow'>ANTES DE WHATSAPP</span>",
+  "    <h3 id='le-wa-title'>¿Con quién vamos a hablar?</h3>",
+  "    <p>Déjanos lo mínimo. Lo registramos y seguimos por WhatsApp.</p>",
+  "    <form id='le-wa-form' class='le-wa-form' novalidate>",
+  "      <label><span>Negocio *</span><input id='le-wa-business' type='text' maxlength='120' autocomplete='organization' placeholder='Nombre del negocio' required></label>",
+  "      <label><span>Tu nombre</span><input id='le-wa-name' type='text' maxlength='120' autocomplete='name' placeholder='Cómo te llamas'></label>",
+  "      <div class='le-wa-split'>",
+  "        <label><span>Instagram</span><input id='le-wa-instagram' type='text' maxlength='180' placeholder='@usuario'></label>",
+  "        <label><span>Tu WhatsApp</span><input id='le-wa-phone' type='tel' maxlength='24' autocomplete='tel' placeholder='+56 9 1234 5678'></label>",
+  "      </div>",
+  "      <button class='le-contact-submit' id='le-wa-submit' type='submit'>Continuar <span>→</span></button>",
+  "      <div class='le-contact-status' id='le-wa-status' role='status' aria-live='polite'></div>",
+  "    </form>",
+  "  </section>",
   "</div>"
 ].join(''));
 
@@ -370,45 +375,33 @@ const clp = new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maxim
 const clampPercent = (value) => Math.min(100, Math.max(0, Number(value) || 0));
 function renderCouponBusinessModel() {
   const netPrice = Math.max(0, Number(modelState.netPrice) || 0);
-  const vatPct = clampPercent(modelState.vat);
-  const linkPct = clampPercent(modelState.commission);
-  const feePct = clampPercent(modelState.fee);
-
-  const vatMoney = netPrice * vatPct / 100;
+  const linkPct = Math.max(25, clampPercent(modelState.commission));
+  const vatMoney = netPrice * .19;
   const salePrice = netPrice + vatMoney;
   const commissionMoney = salePrice * linkPct / 100;
-  const feeMoney = commissionMoney * feePct / 100;
+  const feeMoney = commissionMoney * .15;
   const totalLinkClose = commissionMoney + feeMoney;
-  const meetsMinimum = linkPct >= 25;
 
   document.querySelector('#le-net-money').textContent = clp.format(netPrice);
-  document.querySelector('#le-vat-percent').textContent = vatPct.toLocaleString('es-CL') + '%';
   document.querySelector('#le-vat-money').textContent = clp.format(vatMoney);
   document.querySelector('#le-sale-money').textContent = clp.format(salePrice);
-  document.querySelector('#le-total-percent').textContent = linkPct.toLocaleString('es-CL') + '% + fee';
-  document.querySelector('#le-total-money').textContent = clp.format(totalLinkClose);
-  document.querySelector('#le-client-pays').textContent = clp.format(salePrice);
   document.querySelector('#le-business-receives').textContent = clp.format(commissionMoney);
   document.querySelector('#le-link-receives').textContent = clp.format(feeMoney);
   document.querySelector('#le-ally-receives').textContent = clp.format(totalLinkClose);
-
-  const minimum = document.querySelector('#le-model-minimum');
-  const minimumStatus = document.querySelector('#le-minimum-status');
-  const totalRule = document.querySelector('#le-total-rule');
-  if (meetsMinimum) {
-    minimum?.setAttribute('data-state','ok');
-    minimumStatus.textContent = linkPct.toLocaleString('es-CL') + '% ✓';
-    totalRule.textContent = 'Comisión mínima LINK cumplida.';
-  } else {
-    const missing = 25 - linkPct;
-    minimum?.setAttribute('data-state','low');
-    minimumStatus.textContent = linkPct.toLocaleString('es-CL') + '% · faltan ' + missing.toLocaleString('es-CL') + '%';
-    totalRule.textContent = 'La comisión LINK parte en 25% del precio de venta.';
-  }
+  document.querySelector('#le-minimum-status').textContent = linkPct.toLocaleString('es-CL') + '% ✓';
+  document.querySelector('#le-total-rule').textContent = 'Cierre mensual · comisión ' + linkPct.toLocaleString('es-CL') + '% + fee.';
 }
-document.querySelector('#le-model-price')?.addEventListener('input', (event) => {
+document.querySelector('#le-model-price')?.addEventListener('input', event => {
   modelState.netPrice = event.currentTarget.value;
   renderCouponBusinessModel();
+});
+document.querySelector('#le-link-input')?.addEventListener('input', event => {
+  const value = Math.max(25, Number(event.currentTarget.value) || 25);
+  event.currentTarget.value = value;
+  modelState.commission = value;
+  renderCouponBusinessModel();
+});
+renderCouponBusinessModel();
 });
 document.querySelector('#le-link-input')?.addEventListener('input', (event) => {
   modelState.commission = event.currentTarget.value;
@@ -466,10 +459,28 @@ function renderCoupon(key) {
 document.querySelectorAll('[data-coupon]').forEach((button) => button.addEventListener('click', () => renderCoupon(button.dataset.coupon)));
 renderCoupon('caracol-conciertos');
 
-document.querySelector('#le-whatsapp-gate')?.addEventListener('click', () => {
-  const form = document.querySelector('#le-contact-form');
-  form?.scrollIntoView({behavior:'smooth',block:'center'});
-  setTimeout(() => document.querySelector('#le-contact-business')?.focus(), 380);
+const waLayer = document.querySelector('#le-wa-layer');
+const waStatus = (type, html) => {
+  const box = document.querySelector('#le-wa-status');
+  if (!box) return;
+  box.dataset.state = type || '';
+  box.innerHTML = html || '';
+};
+const openWaGate = () => {
+  waLayer?.classList.add('open');
+  waLayer?.setAttribute('aria-hidden','false');
+  document.body.classList.add('le-wa-open');
+  setTimeout(() => document.querySelector('#le-wa-business')?.focus(), 140);
+};
+const closeWaGate = () => {
+  waLayer?.classList.remove('open');
+  waLayer?.setAttribute('aria-hidden','true');
+  document.body.classList.remove('le-wa-open');
+};
+document.querySelector('#le-whatsapp-gate')?.addEventListener('click', openWaGate);
+document.querySelectorAll('[data-wa-close]').forEach(el => el.addEventListener('click', closeWaGate));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && waLayer?.classList.contains('open')) closeWaGate();
 });
 
 const instagramOk = value => {
@@ -484,6 +495,72 @@ const contactStatus = (type, html) => {
   box.dataset.state = type;
   box.innerHTML = html;
 };
+document.querySelector('#le-wa-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const business = document.querySelector('#le-wa-business')?.value.trim() || '';
+  const name = document.querySelector('#le-wa-name')?.value.trim() || '';
+  const instagram = document.querySelector('#le-wa-instagram')?.value.trim() || '';
+  const whatsappRaw = document.querySelector('#le-wa-phone')?.value.trim() || '';
+  const whatsapp = whatsappDigits(whatsappRaw);
+  const button = document.querySelector('#le-wa-submit');
+
+  if (business.length < 2) {
+    waStatus('error','<b>Falta el negocio.</b><span>Escribe su nombre.</span>');
+    return;
+  }
+  if (!instagram && !whatsapp) {
+    waStatus('error','<b>Falta un contacto.</b><span>Agrega Instagram o tu WhatsApp.</span>');
+    return;
+  }
+  if (!instagramOk(instagram)) {
+    waStatus('error','<b>Instagram inválido.</b><span>Usa @usuario o el enlace del perfil.</span>');
+    return;
+  }
+  if (whatsapp && (whatsapp.length < 8 || whatsapp.length > 15)) {
+    waStatus('error','<b>WhatsApp inválido.</b><span>Incluye código de país.</span>');
+    return;
+  }
+
+  button.disabled = true;
+  button.innerHTML = 'Guardando…';
+  waStatus('loading','<span>Preparando el contacto.</span>');
+
+  const {data,error} = await db.rpc('link_world_submit_public_contact',{
+    p_business_name: business,
+    p_contact_name: name || null,
+    p_instagram: instagram || null,
+    p_whatsapp: whatsappRaw || null,
+    p_source_url: window.location.pathname + window.location.search + '#whatsapp'
+  });
+
+  button.disabled = false;
+  button.innerHTML = 'Continuar <span>→</span>';
+
+  if (error) {
+    waStatus('error','<b>No pudimos registrar el contacto.</b><span>'+String(error.message||'Intenta nuevamente.').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</span>');
+    return;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const code = row?.verification_code || '';
+  const message = [
+    'Hola LINK, quiero conversar sobre mi negocio.',
+    '',
+    'Negocio: ' + business,
+    name ? 'Nombre: ' + name : null,
+    instagram ? 'Instagram: ' + instagram : null,
+    whatsappRaw ? 'WhatsApp: ' + whatsappRaw : null,
+    code ? 'Referencia: ' + code : null
+  ].filter(Boolean).join('\n');
+
+  waStatus('success','<b>Listo.</b><span>Abriendo WhatsApp.</span>');
+  try { await navigator.clipboard.writeText(message); } catch {}
+  setTimeout(() => {
+    closeWaGate();
+    window.open(LINK_WHATSAPP,'_blank','noopener,noreferrer');
+  },180);
+});
+
 document.querySelector('#le-contact-form')?.addEventListener('submit', async event => {
   event.preventDefault();
   const business = document.querySelector('#le-contact-business')?.value.trim() || '';

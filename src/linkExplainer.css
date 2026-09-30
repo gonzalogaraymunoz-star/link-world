@@ -1594,3 +1594,216 @@ body.le-detail-open{overflow:hidden}
     min-height:0;
   }
 }
+
+
+/* LINK Cupones · compact commercial explanation */
+.le-model-intro--compact{
+  grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);
+  align-items:stretch;
+}
+.le-model-intro--compact h2{
+  max-width:760px;
+}
+.le-model-intro--compact>div:first-child>p{
+  max-width:720px;
+}
+.le-model-rule--compact{
+  min-height:0;
+  padding:24px 26px;
+}
+.le-model-rule--compact strong{
+  max-width:420px;
+  font-size:28px;
+  line-height:1.02;
+}
+.le-model-rule--compact small{
+  max-width:420px;
+}
+.le-model-board--compact{
+  grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr);
+  min-height:0;
+}
+.le-model-controls--compact{
+  padding:28px 30px;
+}
+.le-model-commission-row{
+  margin-top:18px;
+  display:grid;
+  gap:7px;
+}
+.le-model-commission-row>span{
+  font-size:10px;
+  font-weight:760;
+}
+.le-model-commission-row>div{
+  height:54px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 14px;
+  border:1px solid #d8d2c4;
+  border-radius:14px;
+  background:var(--le-paper);
+}
+.le-model-commission-row input{
+  width:100%;
+  border:0;
+  outline:0;
+  background:transparent;
+  font-size:20px;
+  font-weight:850;
+}
+.le-model-commission-row b{
+  font-size:12px;
+  color:var(--le-muted);
+}
+.le-model-minimum--compact{
+  min-height:44px;
+  margin-top:12px;
+  padding:8px 12px;
+}
+.le-model-helper--compact{
+  margin-top:12px;
+  line-height:1.45;
+}
+.le-model-simple-results{
+  padding:28px 32px;
+  display:grid;
+  align-content:center;
+  gap:0;
+}
+.le-model-simple-results>div{
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  border-bottom:1px solid #e3ded2;
+}
+.le-model-simple-results>div span{
+  color:var(--le-muted);
+  font-size:11px;
+}
+.le-model-simple-results>div strong{
+  font-size:22px;
+  letter-spacing:-.035em;
+}
+.le-model-simple-results>div.sale{
+  margin-bottom:8px;
+  border-bottom:1px solid #aaa396;
+}
+.le-model-simple-results>div.total{
+  margin-top:8px;
+  min-height:66px;
+  border:0;
+}
+.le-model-simple-results>div.total span{
+  color:var(--le-ink);
+  font-weight:800;
+}
+.le-model-simple-results>div.total strong{
+  font-size:32px;
+}
+.le-model-simple-results>p{
+  margin:2px 0 0;
+  color:var(--le-muted);
+  font-size:9px;
+}
+.le-model-footnote--compact{
+  max-width:none;
+  margin:14px 4px 0;
+  font-size:10px;
+}
+
+/* WhatsApp always gated by a short contact form */
+body.le-wa-open{overflow:hidden}
+.le-wa-layer{
+  position:fixed;
+  inset:0;
+  z-index:1200;
+  display:none;
+}
+.le-wa-layer.open{display:block}
+.le-wa-backdrop{
+  position:absolute;
+  inset:0;
+  width:100%;
+  border:0;
+  background:rgba(18,18,16,.38);
+  backdrop-filter:blur(8px);
+  cursor:pointer;
+}
+.le-wa-sheet{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(560px,calc(100vw - 32px));
+  transform:translate(-50%,-50%);
+  padding:28px;
+  border:1px solid #d8d2c5;
+  border-radius:24px;
+  background:#fffef9;
+  box-shadow:0 24px 80px rgba(0,0,0,.18);
+}
+.le-wa-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:34px;
+  height:34px;
+  border:1px solid #ded8cc;
+  border-radius:50%;
+  background:#f7f4ec;
+  font-size:20px;
+  cursor:pointer;
+}
+.le-wa-sheet h3{
+  margin:9px 44px 8px 0;
+  font-size:32px;
+  line-height:1;
+  letter-spacing:-.05em;
+}
+.le-wa-sheet>p{
+  margin:0 0 20px;
+  color:var(--le-muted);
+  font-size:12px;
+}
+.le-wa-form{
+  display:grid;
+  gap:12px;
+}
+.le-wa-form label{
+  display:grid;
+  gap:6px;
+}
+.le-wa-form label>span{
+  font-size:9px;
+  font-weight:800;
+}
+.le-wa-form input{
+  width:100%;
+  height:48px;
+  padding:0 13px;
+  border:1px solid #d8d2c4;
+  border-radius:13px;
+  background:#fffdf8;
+  color:var(--le-ink);
+  outline:0;
+}
+.le-wa-split{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media(max-width:760px){
+  .le-model-intro--compact,
+  .le-model-board--compact{grid-template-columns:1fr}
+  .le-model-rule--compact strong{font-size:24px}
+  .le-model-simple-results{padding:22px}
+}
+@media(max-width:520px){
+  .le-wa-sheet{padding:24px 18px 18px}
+  .le-wa-split{grid-template-columns:1fr}
+  .le-model-simple-results>div strong{font-size:19px}
+  .le-model-simple-results>div.total strong{font-size:27px}
+}
