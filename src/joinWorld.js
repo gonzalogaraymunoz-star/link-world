@@ -56,11 +56,21 @@ const smokeCurrent = document.querySelector('.lw-smoke-current');
 const smokeNext = document.querySelector('.lw-smoke-next');
 const smokeLine = document.querySelector('.lw-smoke-line');
 const smokeHaze = document.querySelector('.lw-smoke-haze');
-const smokeSupport = document.querySelector('.lw-join-support');
 
 if (smokeCurrent && smokeNext && smokeLine) {
   let smokeIndex = 0;
   let smokeAnimating = false;
+  let smokeTimer = null;
+
+  // Ritmo: cada frase queda realmente disponible para lectura antes de la transición.
+  const HOLD_MS = 5200;
+  const FIRST_HOLD_MS = 5600;
+  const TRANSITION_MS = 1250;
+
+  const scheduleNext = (delay = HOLD_MS) => {
+    window.clearTimeout(smokeTimer);
+    smokeTimer = window.setTimeout(rotateSmokePhrase, delay);
+  };
 
   const rotateSmokePhrase = () => {
     if (smokeAnimating) return;
@@ -71,13 +81,12 @@ if (smokeCurrent && smokeNext && smokeLine) {
     smokeNext.classList.remove('lw-smoke-in');
     smokeCurrent.classList.remove('lw-smoke-out');
     smokeHaze?.classList.remove('active');
-    smokeSupport?.classList.remove('lw-support-sweep');
 
     requestAnimationFrame(() => {
+      // Sale primero la frase actual; la siguiente entra una fracción después.
       smokeCurrent.classList.add('lw-smoke-out');
       smokeNext.classList.add('lw-smoke-in');
       smokeHaze?.classList.add('active');
-      smokeSupport?.classList.add('lw-support-sweep');
     });
 
     window.setTimeout(() => {
@@ -88,10 +97,10 @@ if (smokeCurrent && smokeNext && smokeLine) {
       smokeNext.classList.remove('lw-smoke-in');
       smokeNext.textContent = '';
       smokeHaze?.classList.remove('active');
-      smokeSupport?.classList.remove('lw-support-sweep');
       smokeAnimating = false;
-    }, 980);
+      scheduleNext(HOLD_MS);
+    }, TRANSITION_MS);
   };
 
-  window.setInterval(rotateSmokePhrase, 3600);
+  scheduleNext(FIRST_HOLD_MS);
 }
