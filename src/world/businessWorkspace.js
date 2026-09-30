@@ -198,23 +198,40 @@ function injectGameState(root){
 
 
 
+function stageDisplayName(stage){
+  return ({marketing:'Marketing',ventas:'Ventas',cierre:'Cierre',onboarding:'Onboarding',entrega:'Entrega',postventa:'Postventa'})[stage]||String(stage||'Etapa');
+}
+function handoffActionLabel(h){
+  const receiver=stageDisplayName(h?.to_stage_key);
+  return h?.status==='blocked' ? receiver+': revisar bloqueo' : receiver+': revisar handoff';
+}
 function agentHandoffMarkup(){
   const rows=Array.isArray(state.agentHandoffs)?state.agentHandoffs:[];
   if(!rows.length)return '';
-  return '<div class="bw-agent-handoffs">'+rows.map(h=>{
+  const ordered=[...rows].sort((a,b)=>{
+    const order={marketing:1,ventas:2,cierre:3,onboarding:4,entrega:5,postventa:6};
+    return (order[a.from_stage_key]||99)-(order[b.from_stage_key]||99);
+  });
+  return '<div class="bw-agent-handoffs">'+ordered.map(h=>{
     const payload=h.payload&&typeof h.payload==='object'?h.payload:{};
     const criteria=Array.isArray(h.acceptance_criteria)?h.acceptance_criteria:[];
     const labels={proposed:'Propuesto',ready:'Listo',accepted:'Aceptado',blocked:'Bloqueado',rejected:'Rechazado',consumed:'Consumido'};
     const cls='status-'+safe(h.status||'proposed');
     const candidate=payload.candidate_conversations!=null?'<span><b>'+safe(payload.candidate_conversations)+'</b> conversaciones candidatas</span>':'';
     const unread=payload.unread_conversations!=null?'<span><b>'+safe(payload.unread_conversations)+'</b> sin leer</span>':'';
+    const facts=[
+      payload.sales_leads!=null?'<span><b>'+safe(payload.sales_leads)+'</b> leads</span>':'',
+      payload.verified_outcomes!=null?'<span><b>'+safe(payload.verified_outcomes)+'</b> cierres verificados</span>':'',
+      payload.verified_customers!=null?'<span><b>'+safe(payload.verified_customers)+'</b> clientes confirmados</span>':'',
+      payload.past_calendar_events!=null?'<span><b>'+safe(payload.past_calendar_events)+'</b> eventos pasados</span>':''
+    ].join('');
     return '<article class="bw-agent-handoff '+cls+'" data-handoff-id="'+safe(h.id)+'">'+
-      '<div class="bw-agent-handoff-route"><span>'+safe(h.from_stage_key)+'</span><i>→</i><span>'+safe(h.to_stage_key)+'</span><em>'+safe(labels[h.status]||h.status)+'</em></div>'+
-      '<h3>Handoff '+safe(String(h.from_stage_key||'').replace(/^./,x=>x.toUpperCase()))+' → '+safe(String(h.to_stage_key||'').replace(/^./,x=>x.toUpperCase()))+'</h3>'+
+      '<div class="bw-agent-handoff-route"><span>'+safe(stageDisplayName(h.from_stage_key))+'</span><i>→</i><span>'+safe(stageDisplayName(h.to_stage_key))+'</span><em>'+safe(labels[h.status]||h.status)+'</em></div>'+
+      '<h3>'+safe(stageDisplayName(h.from_stage_key))+' → '+safe(stageDisplayName(h.to_stage_key))+'</h3>'+
       '<p>'+safe(h.summary||'')+'</p>'+
-      '<div class="bw-agent-handoff-meta">'+candidate+unread+(h.blocker?'<span><b>Bloqueo</b> '+safe(String(h.blocker).replaceAll('_',' '))+'</span>':'')+'</div>'+
-      (criteria.length?'<details><summary>Criterios para aceptar</summary><ol>'+criteria.map(x=>'<li>'+safe(x)+'</li>').join('')+'</ol></details>':'')+
-      '<div class="bw-agent-handoff-actions"><button type="button" class="bw-agent-handoff-run" data-handoff="'+safe(h.id)+'" data-agent="'+safe(h.to_agent_slug)+'">Ventas: tomar handoff</button><span>'+safe(h.signal_type||'señal')+'</span></div>'+
+      '<div class="bw-agent-handoff-meta">'+candidate+unread+facts+(h.blocker?'<span><b>Bloqueo</b> '+safe(String(h.blocker).replaceAll('_',' '))+'</span>':'')+'</div>'+
+      (criteria.length?'<details><summary>Qué falta para avanzar</summary><ol>'+criteria.map(x=>'<li>'+safe(x)+'</li>').join('')+'</ol></details>':'')+
+      '<div class="bw-agent-handoff-actions"><button type="button" class="bw-agent-handoff-run" data-handoff="'+safe(h.id)+'" data-agent="'+safe(h.to_agent_slug)+'">'+safe(handoffActionLabel(h))+'</button><span>'+safe(h.signal_type||'señal')+'</span></div>'+
       '<div class="bw-agent-result" data-handoff-result="'+safe(h.id)+'"></div>'+
     '</article>';
   }).join('')+'</div>';
@@ -229,20 +246,26 @@ function agentJourneyMarkup(){
     const assigned=row.assigned_agent_slug===row.director_slug;
     const evidenceOk=Number(row.evidence_validated||0)>0;
     const observed=Number(row.observation_count||0)>0;
-    const stateClass=!alive?'offline':!assigned?'blocked':evidenceOk&&observed?'learning':'active';
-    const stateLabel=!alive?'Sin runtime':!assigned?'Sin asignar':evidenceOk&&observed?'Aprendiendo':'Observando';
-    const incoming=(state.agentHandoffs||[]).find(h=>h.to_stage_key===row.stage_key&&['proposed','ready','accepted'].includes(h.status));
-    const actionLabel=incoming&&row.stage_key==='ventas'?'Revisar handoff':'Ejecutar lectura';
+    const incoming=(state.agentHandoffs||[]).find(h=>h.to_stage_key===row.stage_key&&['proposed','ready','accepted','blocked'].includes(h.status));
+    const incomingBlocked=incoming?.status==='blocked';
+    const stateClass=!alive?'offline':!assigned?'blocked':incomingBlocked?'blocked':evidenceOk&&observed?'learning':'active';
+    const stateLabel=!alive?'Sin runtime':!assigned?'Sin asignar':incomingBlocked?'Bloqueado':evidenceOk&&observed?'Aprendiendo':'Observando';
+    const actionLabel=incoming?handoffActionLabel(incoming):'Ejecutar lectura';
     return '<article class="bw-agent-stage '+stateClass+'" data-agent-stage="'+safe(row.stage_key)+'">'+
       '<div class="bw-agent-stage-head"><span class="bw-agent-step">'+safe(row.stage_number)+'</span><div><small>'+safe(row.customer_state_in||'')+' → '+safe(row.customer_state_out||'')+'</small><h3>'+safe(row.stage_name)+'</h3></div><em>'+safe(stateLabel)+'</em></div>'+
       '<p>'+safe(row.mission_title||'Sin misión activa')+'</p>'+
       '<div class="bw-agent-stage-meta"><span><b>'+safe(row.director_name||row.director_slug)+'</b> '+safe(String(row.autonomy_mode||'shadow').toUpperCase())+'</span><span><b>'+safe(row.evidence_validated||0)+'/'+safe(row.evidence_requested||0)+'</b> evidencia</span><span><b>'+safe(row.observation_count||0)+'/'+safe(row.parameter_count||0)+'</b> KPI observados</span></div>'+
-      '<div class="bw-agent-stage-actions"><button type="button" class="bw-agent-run" data-agent="'+safe(row.director_slug)+'" data-stage="'+safe(row.stage_key)+'">'+safe(actionLabel)+'</button><span>'+safe(row.mission_status||'sin misión')+'</span></div>'+
+      '<div class="bw-agent-stage-actions">'+
+        (incoming
+          ? '<button type="button" class="bw-agent-handoff-run" data-handoff="'+safe(incoming.id)+'" data-agent="'+safe(incoming.to_agent_slug)+'">'+safe(actionLabel)+'</button>'
+          : '<button type="button" class="bw-agent-run" data-agent="'+safe(row.director_slug)+'" data-stage="'+safe(row.stage_key)+'">'+safe(actionLabel)+'</button>')+
+        '<span>'+safe(row.mission_status||'sin misión')+'</span></div>'+
       '<div class="bw-agent-result" data-agent-result="'+safe(row.director_slug)+'"></div>'+
     '</article>';
   }).join('');
+  const blocked=(state.agentHandoffs||[]).filter(h=>h.status==='blocked').length;
   return '<section class="bw-agent-journey" id="bw-agent-journey">'+
-    '<div class="bw-section-head"><div><span class="bw-kicker">CONTROL CENTRAL / LINK AGENTS</span><h2>Journey operativo</h2><p>Marketing → Ventas → Cierre → Onboarding → Entrega → Postventa. Un Director solo entrega la etapa siguiente con evidencia y criterios explícitos de aceptación.</p></div><span class="bw-agent-live">'+rows.filter(x=>x.director_runtime==='vercel').length+' / '+rows.length+' runtimes vivos</span></div>'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">CONTROL CENTRAL / LINK AGENTS</span><h2>Journey operativo</h2><p>Marketing → Ventas → Cierre → Onboarding → Entrega → Postventa. Cada Director recibe solo lo que la etapa anterior puede demostrar.</p></div><span class="bw-agent-live">'+rows.filter(x=>x.director_runtime==='vercel').length+' / '+rows.length+' runtimes vivos · '+blocked+' bloqueos reales</span></div>'+
     '<div class="bw-agent-flow">'+cards+'</div>'+
     agentHandoffMarkup()+
   '</section>';
@@ -253,7 +276,7 @@ async function runStageDirector(button){
   const resultEl=document.querySelector('[data-agent-result="'+slug+'"]');
   button.disabled=true;
   button.textContent='Leyendo Caracol…';
-  if(resultEl){resultEl.textContent='Consultando señales, misión, permisos, evidencia y parámetros reales…';resultEl.classList.add('visible');}
+  if(resultEl){resultEl.textContent='Consultando señales, misión, evidencia, parámetros y traspasos reales…';resultEl.classList.add('visible');}
   try{
     const {data:{session}}=await db.auth.getSession();
     if(!session?.access_token)throw new Error('Necesitas una sesión LINK activa.');
@@ -263,7 +286,7 @@ async function runStageDirector(button){
       body:JSON.stringify({
         action:'observe',
         businessGlobalId:state.business.global_id,
-        prompt:'Revisa Caracol en tu etapa '+stage+'. Identifica el hecho principal, la restricción actual, las fuentes faltantes, la evidencia pendiente y el siguiente movimiento mínimo verificable. No ejecutes mutaciones externas y no inventes métricas.'
+        prompt:'Revisa Caracol en tu etapa '+stage+'. Distingue hechos comprobados, vacíos de medición y bloqueos. Indica la evidencia pendiente y el siguiente movimiento mínimo verificable. No ejecutes mutaciones externas y no inventes métricas.'
       })
     });
     const data=await response.json().catch(()=>({}));
@@ -279,10 +302,11 @@ async function runStageDirector(button){
 async function runStageHandoff(button){
   const slug=button.dataset.agent,handoffId=button.dataset.handoff;
   const handoff=(state.agentHandoffs||[]).find(x=>String(x.id)===String(handoffId));
-  const resultEl=document.querySelector('[data-handoff-result="'+handoffId+'"]');
+  const resultEl=document.querySelector('[data-handoff-result="'+handoffId+'"]')||document.querySelector('[data-agent-result="'+slug+'"]');
+  const receiver=stageDisplayName(handoff?.to_stage_key);
   button.disabled=true;
-  button.textContent='Ventas analizando…';
-  if(resultEl){resultEl.textContent='Revisando señal recibida, conversaciones candidatas y criterios de entrada…';resultEl.classList.add('visible');}
+  button.textContent=receiver+' analizando…';
+  if(resultEl){resultEl.textContent='Revisando lo que entregó '+stageDisplayName(handoff?.from_stage_key)+', el bloqueo y la evidencia necesaria para avanzar…';resultEl.classList.add('visible');}
   try{
     const {data:{session}}=await db.auth.getSession();
     if(!session?.access_token)throw new Error('Necesitas una sesión LINK activa.');
@@ -292,7 +316,7 @@ async function runStageHandoff(button){
       body:JSON.stringify({
         action:'handoff',
         businessGlobalId:state.business.global_id,
-        prompt:'Toma el handoff '+handoffId+' de Marketing a Ventas. '+(handoff?.summary||'')+' Revisa las conversaciones reales disponibles en LINKRRSS y separa: intención comercial verificable, conversación no comercial y casos ambiguos. No crees leads ni aceptes el handoff todavía; indica qué evidencia concreta permitiría aceptarlo.'
+        prompt:'Revisa el handoff '+handoffId+' de '+stageDisplayName(handoff?.from_stage_key)+' a '+stageDisplayName(handoff?.to_stage_key)+'. Estado: '+(handoff?.status||'')+'. Bloqueo: '+(handoff?.blocker||'ninguno')+'. '+(handoff?.summary||'')+' Evalúa únicamente evidencia real. Explica qué dato permitiría desbloquearlo y cuál sería el siguiente paso. No crees clientes, ventas ni métricas sin evidencia.'
       })
     });
     const data=await response.json().catch(()=>({}));
@@ -302,7 +326,7 @@ async function runStageHandoff(button){
     if(resultEl)resultEl.textContent='Error: '+(error.message||error);
   }finally{
     button.disabled=false;
-    button.textContent='Ventas: tomar handoff';
+    button.textContent=handoffActionLabel(handoff);
   }
 }
 function bindAgentJourney(root){
