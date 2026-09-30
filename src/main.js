@@ -25,7 +25,7 @@ $('#app').innerHTML=[
 "<div class='lw-app'>",
 "<header class='lw-app-header'>",
 "<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
-"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='journal'>Bitácora</button><button data-view='director'>Director IA</button></nav>",
+"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='journal'>Bitácora</button><button data-view='director'>Director IA</button><a class='lw-link-explain' href='/que-es-link/'>LINK</a></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Modo abierto</span>",
 "<div class='header-actions' id='lw-hidden-triggers'><a class='lw-btn-secondary' href='https://linkcontrolgeneral.vercel.app/' target='_blank' rel='noopener noreferrer'>CONTROL CENTRAL ↗</a></div></header>",
 "<main class='lw-main'>",
