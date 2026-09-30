@@ -39,9 +39,14 @@ Cada negocio declara:
 - Se crea una ruta Mercado Pago compartida solo como infraestructura; producción permanece deshabilitada.
 
 ### LINK Cupones
-- El comercio/partner realiza la venta.
-- LINK recibe comisión atribuible a la venta.
-- Se conserva el rango conocido 5–10% únicamente como contexto; la regla queda `contractual` y sin porcentaje ejecutable hasta existir acuerdo.
+- El comercio/partner realiza la venta y mantiene su operación tributaria.
+- El modelo comercial parte del precio neto del producto y usa como referencia operativa: `precio_venta = neto + IVA comercio 19%`.
+- La comisión LINK se calcula sobre el **precio de venta con IVA incluido** y parte en **25% mínimo**.
+- La liquidación se realiza **mensualmente** sobre las ventas atribuidas a LINK durante el periodo.
+- Sobre la comisión LINK se agrega un **fee de 15% de la propia comisión**, asociado al costo/retención de la boleta de honorarios según el acuerdo comercial. Este fee **no es IVA** y **no es 15% de la venta total**.
+- Fórmula comercial: `comision_link = precio_venta × porcentaje_link`; `fee_boleta = comision_link × 15%`; `cierre_link = comision_link + fee_boleta`.
+- Los perfiles de responsabilidad pueden elevar la comisión sobre el mínimo de 25%; el 25% no se reparte entre cliente y LINK.
+- La política tributaria formal de LINK Cupones sigue separada del modelo comercial y debe verificarse antes de habilitar cobro productivo automatizado.
 - No se conecta automáticamente a la cuenta Mercado Pago central.
 
 ### Caracol
