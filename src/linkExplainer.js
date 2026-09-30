@@ -205,7 +205,7 @@ app.innerHTML = [
 "    </section>",
 "    <section class='le-cta le-section'>",
 "      <div><span class='le-eyebrow'>LINK WORLD</span><h2>Explora cómo vive la red.</h2><p>LINK World muestra los negocios, relaciones y aprendizajes que ya fueron incorporados al sistema.</p></div>",
-"      <div class='le-cta-actions'><a class='le-primary' href='/'>Explorar LINK World <span>→</span></a><a class='le-secondary' href='#que-es'>Volver arriba</a></div>",
+"      <div class='le-cta-actions'><a class='le-primary' href='/'>Entrar a LINK World <span>→</span></a><a class='le-secondary' href='#que-es'>Volver arriba</a></div>",
 "    </section>",
 "  </main>",
 "  <footer class='le-footer'><a class='le-brand' href='/'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a><p>Negocios independientes. Conexiones útiles. Más posibilidades.</p></footer>",
