@@ -31,7 +31,7 @@ app.innerHTML = [
 "  <header class='le-header'>",
 "    <a class='le-brand' href='/' aria-label='Volver a LINK World'><img src='/link-world-mark.svg' alt=''><span><strong>LINK.</strong> World</span></a>",
 "    <nav class='le-nav' aria-label='Contenido de LINK'>",
-"      <a href='#que-es'>Qué es</a><a href='#como-funciona'>Cómo funciona</a><a href='#asociativos'>Negocios asociativos</a><a href='#ejemplos'>Ejemplos</a>",
+"      <a href='#que-es'>Qué es</a><a href='#modelo-link-cupones'>Modelo</a><a href='#como-funciona'>Cómo funciona</a><a href='#asociativos'>Asociativos</a><a href='#ejemplos'>Ejemplos</a>",
 "    </nav>",
 "    <a class='le-back' href='/'>Entrar a LINK World <span>→</span></a>",
 "  </header>",
@@ -41,7 +41,7 @@ app.innerHTML = [
 "        <span class='le-eyebrow'>LINK · PARA NEGOCIOS</span>",
 "        <h1>Tu negocio<br>no está solo.</h1>",
 "        <p class='le-lead'><strong>LINK conecta negocios, personas, herramientas y oportunidades</strong> para que cada negocio pueda hacer más, sin perder su identidad.</p>",
-"        <div class='le-hero-actions'><a class='le-primary' href='#como-funciona'>Conoce cómo funciona <span>→</span></a><a class='le-secondary' href='#asociativos'>Ver ejemplos asociativos</a></div>",
+"        <div class='le-hero-actions'><a class='le-primary' href='#modelo-link-cupones'>Ver modelo LINK Cupones <span>→</span></a><a class='le-secondary' href='#como-funciona'>Cómo funciona LINK</a></div>",
 "        <p class='le-note'>No es una fórmula única. LINK activa sólo las conexiones que tienen sentido para cada negocio.</p>",
 "      </div>",
 "      <div class='le-network-wrap' aria-label='Red de posibilidades alrededor de un negocio'>",
@@ -55,6 +55,54 @@ app.innerHTML = [
 "        <div class='le-network-center'>" + icon('business') + "<strong>Tu negocio</strong><small>en el centro</small></div>",
 "        <div class='le-network-caption' id='le-network-caption'><b>Clientes</b><span>LINK puede conectar tu negocio con nuevas ocasiones de compra, reserva o recomendación.</span></div>",
 "      </div>",
+"    </section>",
+"    <section class='le-coupon-model le-section' id='modelo-link-cupones'>",
+"      <div class='le-model-intro'>",
+"        <div>",
+"          <span class='le-eyebrow'>UN EJEMPLO CONCRETO · LINK CUPONES</span>",
+"          <h2>Así una conexión se convierte en negocio.</h2>",
+"          <p><strong>LINK Cupones no vende publicidad.</strong> Un negocio ofrece un beneficio útil para atraer una venta, otro punto LINK puede acercarlo al cliente y LINK cobra sólo cuando esa venta es atribuible a la conexión.</p>",
+"        </div>",
+"        <div class='le-model-rule'>",
+"          <span>Regla simple</span>",
+"          <strong>Cliente gana + negocio vende + LINK participa del resultado.</strong>",
+"          <small>Los porcentajes se acuerdan por producto. No se aplica una bolsa universal ni se duplican descuento y comisión.</small>",
+"        </div>",
+"      </div>",
+"      <div class='le-model-board'>",
+"        <div class='le-model-controls'>",
+"          <span class='le-model-label'>Simula una venta</span>",
+"          <label for='le-model-price'>Precio base del producto</label>",
+"          <div class='le-price-input'><span>$</span><input id='le-model-price' type='number' min='1000' step='1000' value='100000' inputmode='numeric' aria-label='Precio base del producto en pesos chilenos'></div>",
+"          <span class='le-model-label le-model-label-spaced'>Participación LINK</span>",
+"          <div class='le-model-options' role='group' aria-label='Porcentaje de comisión de LINK'>",
+"            <button class='active' data-model-commission='5'>5% <small>Distribución</small></button>",
+"            <button data-model-commission='7.5'>7,5% <small>Distribución + adquisición</small></button>",
+"            <button data-model-commission='10'>10% <small>Adquisición + conversión</small></button>",
+"          </div>",
+"          <p class='le-model-helper'>Para hacer visible la mecánica usamos un <strong>beneficio típico de 15% para el cliente</strong>. El porcentaje real se define según el convenio y la economía del producto.</p>",
+"        </div>",
+"        <div class='le-model-results' aria-live='polite'>",
+"          <article class='client'><span>CLIENTE</span><strong id='le-client-benefit'>15%</strong><small id='le-client-benefit-money'>—</small><p>Beneficio sobre el precio base.</p></article>",
+"          <span class='le-model-plus'>+</span>",
+"          <article class='link'><span>LINK</span><strong id='le-link-percent'>5%</strong><small id='le-link-money'>—</small><p>Comisión sólo cuando la venta es atribuible.</p></article>",
+"          <span class='le-model-plus'>=</span>",
+"          <article class='acquisition'><span>COSTO DE ADQUISICIÓN</span><strong id='le-total-percent'>20%</strong><small id='le-total-money'>—</small><p>Beneficio cliente + participación LINK.</p></article>",
+"          <div class='le-model-summary'>",
+"            <div><span>Cliente paga</span><strong id='le-client-pays'>—</strong></div>",
+"            <div><span>Negocio recibe</span><strong id='le-business-receives'>—</strong></div>",
+"            <div><span>LINK recibe</span><strong id='le-link-receives'>—</strong></div>",
+"          </div>",
+"        </div>",
+"      </div>",
+"      <div class='le-model-scale'>",
+"        <div><b>5%</b><span>Sólo distribución</span></div><i>→</i>",
+"        <div><b>7,5%</b><span>Distribución + adquisición</span></div><i>→</i>",
+"        <div><b>10%</b><span>Adquisición + conversión</span></div><i>→</i>",
+"        <div><b>10–15%</b><span>Campaña gestionada</span></div><i>→</i>",
+"        <div><b>15–20%</b><span>Venta completa</span></div>",
+"      </div>",
+"      <p class='le-model-footnote'>A mayor responsabilidad de LINK, cambia la participación y debe cambiar también la economía del producto. La referencia de 15% al cliente + 5–10% a LINK es un ejemplo frecuente para explicar el mecanismo, no una obligación para todos los negocios.</p>",
 "    </section>",
 "    <section class='le-equation-wrap le-section'>",
 "      <div class='le-equation-copy'><span class='le-number'>1</span><div><span class='le-eyebrow'>UNA IDEA SIMPLE</span><h2>¿Qué es LINK?</h2><p>Una red donde negocios independientes pueden conectarse, colaborar y compartir capacidades. Cada uno mantiene su propia esencia; LINK hace visibles las relaciones que pueden generar valor.</p></div></div>",
@@ -212,6 +260,38 @@ document.querySelectorAll('[data-step]').forEach((button) => {
     document.querySelector('#le-process-explain').innerHTML = '<b>' + copy[0] + '</b><p>' + copy[1] + '</p>';
   });
 });
+
+const modelState = { price: 100000, clientBenefit: 15, commission: 5 };
+const clp = new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0});
+function renderCouponBusinessModel() {
+  const price = Math.max(1000, Number(modelState.price) || 100000);
+  const clientMoney = price * modelState.clientBenefit / 100;
+  const linkMoney = price * modelState.commission / 100;
+  const totalMoney = clientMoney + linkMoney;
+  const clientPays = price - clientMoney;
+  const businessReceives = price - totalMoney;
+  document.querySelector('#le-client-benefit').textContent = modelState.clientBenefit.toLocaleString('es-CL') + '%';
+  document.querySelector('#le-client-benefit-money').textContent = clp.format(clientMoney);
+  document.querySelector('#le-link-percent').textContent = modelState.commission.toLocaleString('es-CL') + '%';
+  document.querySelector('#le-link-money').textContent = clp.format(linkMoney);
+  document.querySelector('#le-total-percent').textContent = (modelState.clientBenefit + modelState.commission).toLocaleString('es-CL') + '%';
+  document.querySelector('#le-total-money').textContent = clp.format(totalMoney);
+  document.querySelector('#le-client-pays').textContent = clp.format(clientPays);
+  document.querySelector('#le-business-receives').textContent = clp.format(businessReceives);
+  document.querySelector('#le-link-receives').textContent = clp.format(linkMoney);
+}
+document.querySelector('#le-model-price')?.addEventListener('input', (event) => {
+  modelState.price = event.currentTarget.value;
+  renderCouponBusinessModel();
+});
+document.querySelectorAll('[data-model-commission]').forEach((button) => {
+  button.addEventListener('click', () => {
+    modelState.commission = Number(button.dataset.modelCommission);
+    document.querySelectorAll('[data-model-commission]').forEach((b) => b.classList.toggle('active', b === button));
+    renderCouponBusinessModel();
+  });
+});
+renderCouponBusinessModel();
 
 const couponExamples = {
   hotel: ['Hotel + Restaurante', 'El hotel ofrece a su huésped un beneficio en un restaurante cercano. El restaurante recibe una visita que probablemente no habría captado por sí solo.'],
