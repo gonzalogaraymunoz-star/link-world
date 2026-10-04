@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
-version: 2.5.0
+version: 2.8.0
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -320,6 +320,36 @@ Contrato de límites:
 - no trata un resultado semántico como verdad;
 - no inventa contratos intermedios cuando existen contradicciones: consulta Hipocampo;
 - no se detiene en diagnóstico si existe un siguiente movimiento interno permitido y reversible.
+
+## 5.3 LINK GENESIS · ingeniería genética transversal
+
+LINK GENESIS es la capa que absorbe, mapea, versiona y vuelve clonable la ingeniería de LINK.
+
+Persistencia canónica:
+- `link_genesis_sources`;
+- `link_genesis_absorption_runs`;
+- `link_genesis_components`;
+- `link_genesis_relations`;
+- `link_genesis_blueprints`;
+- `link_genesis_business_packs`;
+- `link_genesis_instances`.
+
+Contratos:
+- `linkdot_core_v1` = ADN transversal del LINKDOT;
+- `link_genesis_absorber_v1` = absorción de ingeniería;
+- `link_genesis_absorb_packet_v1(jsonb)` = entrada normalizada de componentes/relaciones;
+- `link_genesis_build_business_pack_v1` = contexto aislado por negocio;
+- `link_genesis_clone_linkdot_v1` = clonación lógica de configuración.
+
+Regla de clonación:
+**CORE + BUSINESS PACK + BINDINGS + PERMISOS = INSTANCIA LINKDOT.**
+
+GENESIS clona constitución, contratos, capacidades, rutas y configuración. Nunca debe copiar reservas, pagos, clientes, conversaciones, ventas u otros registros operacionales para fabricar un clon.
+
+GENESIS usa el sistema nervioso existente y no lo reemplaza:
+**Cortex encuentra → Hipocampo recuerda y contextualiza → Tálamo prepara contexto → Director decide y dirige → LINKDOT ejecuta → Cerebelo compara resultado → Hipocampo consolida.**
+
+Las fuentes registradas conservan propiedad de su verdad. Un drift detectado genera evidencia/alerta; no autoriza una reescritura automática.
 
 ## 6. Director IA
 
