@@ -196,6 +196,19 @@ Funciones:
 
 Cortex indexa fuentes, componentes, blueprints, Business Packs e instancias GENESIS.
 
+## 10.1 Pulso y gateway
+
+GENESIS conserva una superficie operativa mínima:
+
+- Edge Function autenticada `link-genesis` (`verify_jwt=true`);
+- acciones: `status`, `absorb`, `build_business_pack`, `clone`, `refresh_local`;
+- cron `link-genesis-local-inventory-daily`;
+- función `link_genesis_refresh_local_inventory_v1()`.
+
+El cron reobserva diariamente la ingeniería que Supabase puede conocer directamente: esquema público, funciones, Skills, Workspaces, negocios y fuentes de ingestión.
+
+GitHub y Vercel conservan su verdad externa. Sus cambios entran por el contrato de absorción; GENESIS no intenta convertir Supabase en un espejo completo de esas plataformas.
+
 ## 11. Seguridad y autoridad
 
 - miembros LINK: lectura;
