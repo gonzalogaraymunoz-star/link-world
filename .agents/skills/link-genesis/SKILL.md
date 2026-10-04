@@ -1,176 +1,176 @@
 ---
 name: link-genesis
-description: Ingeniería genética transversal de LINK: absorbe la arquitectura real, construye su mapa vivo, genera Business Packs y crea instancias LINKDOT aisladas por negocio.
-version: 1.1.0
+description: Sistema de desarrollo de organismos LINK. Absorbe el ADN de ingeniería vigente, construye el cuerpo, innerva la periferia, hereda regulación y memoria, provoca el primer ciclo respiratorio y certifica cada instancia sin copiar datos operacionales.
+version: 2.0.0
 ---
 
-# LINK GENESIS
+# LINK GENESIS · desarrollo del organismo
 
 Invocación humana: **@LINK GENESIS**.
 
-Proyecto Supabase canónico: **LINK CONTROL CENTRAL**
+Proyecto canónico: **LINK CONTROL CENTRAL**
 `project_id: zgbnjlrxzvzpigmwidsp`.
 
-## 1. Misión
+## 1. Identidad
 
-LINK GENESIS absorbe la ingeniería real de LINK y la convierte en un ADN transversal, versionado, trazable y clonable.
+GENESIS ya no es un clonador de LINKDOTs.
 
-No es otro cerebro ni otra base de datos. Es la capa que conoce **cómo está construido LINK** y prepara la configuración necesaria para que un LINKDOT pueda nacer, aprender un negocio y operar dentro del sistema nervioso existente.
+Es el **sistema de desarrollo** de LINK: toma el ADN canónico del organismo vigente y desarrolla una nueva instancia hasta que tenga cuerpo, vías nerviosas, regulación, memoria, selección conductual, respiración y límites de autonomía correctamente conectados.
 
-Su ciclo es:
+No crea un cerebro paralelo. No copia la verdad operacional.
 
-**DESCUBRIR → ABSORBER → NORMALIZAR → RELACIONAR → DETECTAR DRIFT → EMPAQUETAR → CLONAR → VERIFICAR → APRENDER.**
+Fuente viva de la constitución nerviosa:
+`memory_namespaces / system / link-nervous-system`.
 
-## 2. Regla de origen
+La versión nerviosa **no se hardcodea**: GENESIS lee la versión canónica vigente antes de desarrollar o certificar.
 
-Antes de absorber o clonar:
+## 2. Ciclo de desarrollo
 
-1. leer las fuentes vivas;
-2. conservar procedencia;
-3. distinguir estructura, configuración, conocimiento y dato operacional;
-4. no inventar bindings;
-5. no copiar transacciones ni PII para “entrenar” un clon;
-6. señalar contradicciones y drift en vez de corregirlos silenciosamente.
+**ADN → CIGOTO → MAPA CORPORAL → INNERVACIÓN → REGULACIÓN → PRIMERA RESPIRACIÓN → CERTIFICACIÓN → READY → ACTIVACIÓN EXPLÍCITA**
 
-Supabase, GitHub, Vercel, Drive y los sistemas fuente conservan propiedad sobre su verdad.
+Estados persistentes:
+- `zygote`
+- `mapped`
+- `innervated`
+- `regulated`
+- `breathing`
+- `certified`
+- `ready`
+- `active`
+- `attention`
 
-## 3. Qué absorbe
+Una instancia no se activa por haber sido creada.
 
-GENESIS puede registrar y relacionar:
+## 3. Sistema nervioso heredado
 
-- repositorios y versiones;
-- aplicaciones y despliegues;
-- esquema Supabase, tablas, vistas y funciones;
-- Edge Functions;
-- Skills, contratos y reglas;
-- Workspaces, LINKDOTs y LINKSUBDOTs;
-- integraciones y canales;
-- documentos de arquitectura;
-- fuentes de conocimiento;
-- blueprints;
-- componentes de negocio que sean necesarios para construir contexto.
+GENESIS debe respetar la secuencia canónica vigente:
 
-No absorbe para duplicar: absorbe para **entender, direccionar y reconstruir la configuración**.
+**señal periférica → Par LINK aferente → Tálamo → Homeostasis → Hipotálamo → Hipocampo/Cortex si hace falta → Director genera opciones → Núcleos Basales seleccionan una conducta → Par LINK eferente → SubDOT/artefacto ejecuta → evidencia → Cerebelo → respiración/recuperación → feedback**
 
-## 4. Sistema nervioso
+Órganos/circuitos requeridos:
+- Tálamo;
+- Homeostasis;
+- Hipotálamo;
+- Sistema Autónomo;
+- Hipocampo;
+- Cortex;
+- Director;
+- Núcleos Basales;
+- Cerebelo;
+- Sistema Nervioso Periférico;
+- Pares LINK;
+- vía aferente;
+- vía eferente;
+- Event Bus;
+- Command Bus;
+- matriz de gobierno;
+- Respiración LINK.
 
-GENESIS usa el organismo existente:
+GENESIS hereda estos órganos **por referencia a sus contratos canónicos**. No los duplica por negocio.
 
-**Cortex encuentra → Hipocampo recuerda y contextualiza → Tálamo prepara el contexto → Director decide y dirige → LINKDOT ejecuta → Cerebelo compara resultado esperado/real → Hipocampo consolida.**
+## 4. Regulación transversal
 
-GENESIS no reemplaza ninguna de estas capas.
+Perfil base: `link-regulation:global-v1`.
 
-Su papel es mantener el ADN de ingeniería que esas capas utilizan.
+Tonos:
+- `balanced`;
+- `sympathetic`;
+- `parasympathetic`.
 
-## 5. LINKDOT CORE
+Clases de control:
+- `reflex`;
+- `autonomous`;
+- `voluntary`;
+- `human`.
 
-Blueprint canónico: `linkdot_core_v1`.
+Principio constitucional:
+**la regulación puede agregar seguridad, prioridad o inhibición; nunca puede quitar una aprobación ya exigida.**
 
-Un LINKDOT CORE debe poder:
+Siempre preservan aprobación humana:
+- acciones externas sensibles;
+- finanzas;
+- irreversibles;
+- CANON;
+- permisos no otorgados;
+- ambigüedad material de negocio.
 
-- conversar por distintos canales;
-- normalizar mensajes;
-- resolver identidad e intención;
-- identificar negocio y alcance;
-- pedir el mínimo contexto suficiente;
-- usar Cortex/Hipocampo/Tálamo;
-- entregar decisiones al Director cuando corresponda;
-- utilizar herramientas permitidas;
-- dejar trazabilidad y evidencia;
-- verificar resultado;
-- aprender del resultado sin autoalterar CANON.
+## 5. Pares LINK y doble vía
 
-## 6. Contrato de conversación
+El artefacto puede informar directamente al centro por la vía aferente.
 
-Todo canal converge en un sobre común:
+La vía motora normal exige:
+**Director/opciones → Núcleos Basales → conducta seleccionada → Par LINK eferente → SubDOT → artefacto**.
 
-- actor;
-- channel;
-- intent;
-- message;
-- occurred_at;
-- business_global_id cuando exista;
-- context;
-- evidence;
-- confidence;
-- correlation_id.
+Un Par LINK nunca concede permisos.
 
-WhatsApp, Instagram, email, voz, formulario, ChatGPT, CRM u otro LINKDOT son transportes distintos de una misma conversación.
+La salida motora directa al artefacto está prohibida salvo reflejo explícitamente preautorizado, reversible y acotado.
 
-**Conversación ≠ ejecución.**
+## 6. Respiración
 
-## 7. Business Pack
+Contrato vigente: `link_architecture:breathing_system_v1`.
 
-El negocio no se incrusta dentro del prompt base.
+GENESIS provoca un único **primer aliento** después de regular una nueva instancia:
+- inhala señales/deltas;
+- intercambia estado con Tálamo/Homeostasis/Hipotálamo;
+- exhala estado de selección/comandos;
+- recupera con evidencia y Cerebelo.
 
-Cada negocio recibe un Business Pack con:
+La respiración no decide ni otorga autoridad.
 
+El primer aliento es idempotente: reconciliar GENESIS no crea respiraciones inaugurales duplicadas.
+
+## 7. Business Pack v2
+
+Cada negocio recibe contexto aislado:
 - identidad;
-- estado de verificación;
-- canales;
 - productos;
-- políticas;
-- herramientas;
-- rutas de conocimiento;
 - fuentes;
-- frescura;
-- límites y permisos.
-
-El paquete se construye desde la verdad vigente y se puede regenerar.
+- canales;
+- herramientas;
+- mapa corporal;
+- Workspaces;
+- SubDOTs;
+- artefactos;
+- Pares LINK existentes;
+- perfil regulatorio heredado;
+- estado autonómico;
+- versión nerviosa vigente;
+- límites de autonomía.
 
 Nunca mezclar Business Packs entre negocios.
 
-## 8. Clonación
+## 8. Organismo CORE v2
 
-Clonar un LINKDOT significa heredar:
+Blueprint canónico:
+`link_organism_core_v2`.
 
-- constitución;
-- contratos;
-- capacidades;
-- rutas;
-- permisos;
-- configuración;
-- comportamiento transversal.
+Fórmula:
 
-No significa copiar:
+**ADN CANÓNICO + BUSINESS PACK + MAPA CORPORAL + INNERVACIÓN + REGULACIÓN + PERMISOS + RESPIRACIÓN + CERTIFICACIÓN = ORGANISMO LINK READY**
 
-- clientes;
-- pasajeros;
-- reservas;
-- pagos;
-- mensajes;
-- ventas;
-- archivos privados;
-- registros operacionales.
+Se conserva `linkdot_core_v1` solo como antecedente histórico; está supersedido.
 
-Regla:
+## 9. Certificación
 
-**CORE + BUSINESS PACK + BINDINGS + PERMISOS = INSTANCIA LINKDOT.**
+La certificación v2 es estructural y no ejecuta acciones externas.
 
-Las mejoras del CORE se heredan; los datos siguen perteneciendo a su fuente.
+Comprueba:
+- misma versión nerviosa que el organismo canónico;
+- 17 bindings nerviosos base;
+- contratos resolubles;
+- Business Pack v2;
+- estado regulatorio;
+- primer aliento;
+- cobertura Par LINK para artefactos existentes;
+- límites humanos intactos.
 
-## 9. Absorción de ingeniería
+Si hay artefactos sin Par LINK, la instancia no pasa.
 
-Contrato máquina-a-máquina principal:
+Si un negocio todavía no tiene artefactos periféricos, queda `partial/attention`; GENESIS no inventa terminales para aprobarlo.
 
-`link_genesis_absorb_packet_v1(jsonb)`.
+## 10. Persistencia
 
-Un paquete puede declarar:
-
-- `source_key`;
-- `business_global_id`;
-- `mode`;
-- `components[]`;
-- `relations[]`.
-
-Cada componente conserva tipo, ubicación, versión, propietario de verdad, política de clonación, sensibilidad, capacidades, dependencias e interfaces.
-
-Cada absorción deja un run verificable.
-
-## 10. Persistencia canónica
-
-Tablas GENESIS:
-
+Núcleo previo:
 - `link_genesis_sources`
 - `link_genesis_absorption_runs`
 - `link_genesis_components`
@@ -179,70 +179,69 @@ Tablas GENESIS:
 - `link_genesis_business_packs`
 - `link_genesis_instances`
 
-Vistas:
+Desarrollo nervioso v2:
+- `link_genesis_nervous_bindings`
+- `link_genesis_certifications`
+- `link_genesis_development_events`
+- `link_genesis_nervous_readiness_v`
 
-- `link_genesis_engineering_map_v`
-- `link_genesis_business_readiness_v`
+RPC canónicos:
+- `link_genesis_current_nervous_contract_v2()`
+- `link_genesis_build_business_pack_v2(...)`
+- `link_genesis_innervate_business_v2(...)`
+- `link_genesis_certify_nervous_instance_v2(...)`
+- `link_genesis_develop_business_v2(...)`
+- `link_genesis_reconcile_nervous_system_v2()`
 
-Funciones:
+Los RPC v1 de absorción siguen disponibles para ingeniería/fuentes y compatibilidad.
 
-- `link_genesis_begin_absorption_v1`
-- `link_genesis_upsert_component_v1`
-- `link_genesis_record_relation_v1`
-- `link_genesis_complete_absorption_v1`
-- `link_genesis_build_business_pack_v1`
-- `link_genesis_clone_linkdot_v1`
-- `link_genesis_absorb_packet_v1`
+## 11. Evolución y drift
 
-Cortex indexa fuentes, componentes, blueprints, Business Packs e instancias GENESIS.
+GENESIS distingue:
+- drift de ingeniería;
+- drift de versión nerviosa;
+- drift regulatorio;
+- periferia incompleta;
+- contrato faltante;
+- Binding huérfano.
 
-## 10.1 Pulso y gateway
+Nunca corrige una contradicción por intuición.
 
-GENESIS conserva una superficie operativa mínima:
+Cuando el Sistema Nervioso cambia, GENESIS:
+1. lee la nueva versión canónica;
+2. actualiza el blueprint;
+3. vuelve a mapear/innervar;
+4. conserva el primer aliento histórico;
+5. recertifica;
+6. deja evidencia de la transición.
 
-- Edge Function autenticada `link-genesis` (`verify_jwt=true`);
-- acciones: `status`, `absorb`, `build_business_pack`, `clone`, `refresh_local`;
-- cron `link-genesis-local-inventory-daily`;
-- función `link_genesis_refresh_local_inventory_v1()`.
+## 12. Sistema endocrino
 
-El cron reobserva diariamente la ingeniería que Supabase puede conocer directamente: esquema público, funciones, Skills, Workspaces, negocios y fuentes de ingestión.
+La capa endocrina/hormonal está registrada como **conceptual_not_runtime** según la auditoría nerviosa.
 
-GitHub y Vercel conservan su verdad externa. Sus cambios entran por el contrato de absorción; GENESIS no intenta convertir Supabase en un espejo completo de esas plataformas.
+GENESIS la conserva como extensión futura, pero:
+- no la activa;
+- no la clona como runtime;
+- no inventa hormonas/ejes;
+- no la usa para certificar.
 
-## 11. Seguridad y autoridad
+Solo podrá entrar al ADN cuando exista un contrato canónico verificado en el Sistema Nervioso.
 
-- miembros LINK: lectura;
-- owner: escritura;
-- RLS habilitado;
-- permisos Data API explícitos;
-- secretos: solo referencias, nunca copia cruda;
-- acción interna reversible: puede ser bounded-auto si el contrato lo permite;
-- acción externa: aprobación humana;
-- acción financiera: aprobación humana;
-- irreversible: aprobación humana;
-- escritura/reemplazo de CANON: aprobación humana.
+## 13. Seguridad
 
-## 12. Evolución
+- RLS explícito;
+- miembros leen;
+- owner escribe;
+- RPC anónimos revocados;
+- gateway con JWT;
+- secretos solo por referencia;
+- ninguna capa nerviosa puede concederse permisos a sí misma;
+- certificación no ejecuta acciones externas.
 
-Una observación no altera el ADN.
+## 14. Criterio de éxito
 
-Cambio de ingeniería:
+GENESIS está bien cuando un nuevo negocio puede pasar de identidad a organismo LINK verificable sin reconstruir el sistema y sin copiar su base operacional.
 
-**evidencia → comparación → propuesta → aprobación cuando aplique → nueva versión → verificación.**
+El objetivo no es crear más agentes.
 
-GENESIS debe detectar drift entre fuentes, no resolverlo por intuición.
-
-## 13. Criterio de éxito
-
-Un nuevo negocio debería poder incorporarse sin reconstruir LINK:
-
-1. registrar identidad;
-2. conectar fuentes;
-3. absorber ingeniería/contexto;
-4. generar Business Pack;
-5. crear instancia LINKDOT;
-6. probar conversación;
-7. verificar permisos y respuestas;
-8. activar solo cuando la evidencia confirme que el clon está listo.
-
-El resultado esperado es **un LINKDOT transversal que aprende el negocio sin perder la ingeniería común de LINK**.
+El objetivo es **hacer crecer LINK por desarrollo orgánico, con el mismo sistema nervioso constitucional y una periferia propia por negocio**.
