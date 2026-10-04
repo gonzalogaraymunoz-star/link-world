@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra para leer, interpretar, conectar, priorizar y evolucionar el ecosistema LINK WORLD sobre Supabase LINK CONTROL CENTRAL.
-version: 2.4.0
+version: 2.5.0
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -61,8 +61,41 @@ Leer cierres y aperturas diarias, actividad, bloqueos y prioridades desde `link_
 ### Director IA
 Auditar `link_world_ai_interventions`, detectar fallos de respuesta y alimentar aprendizaje persistente.
 
-### Corteza
-Usar `link_rules`, `link_patterns`, `link_examples`, `link_learnings` y el registro de Skills. Una capacidad solo se atribuye si existe evidencia registrada.
+### Cortex
+LINK Cortex es la **capa de indexación y búsqueda recuperable** del conocimiento del ecosistema.
+
+- Sincroniza automáticamente `deep_memories`, `intelligence_records`, relaciones, reglas, patterns, learnings, Skills e informes diarios hacia `link_cortex_documents`.
+- Busca por texto y, cuando existe embedding, por significado mediante `link_cortex_keyword_search` y `link_cortex_hybrid_search`.
+- Cortex **encuentra candidatos**; no decide cuál recuerdo es válido, vigente o suficiente.
+- Una coincidencia de Cortex no equivale por sí sola a verdad, capacidad registrada ni decisión vigente.
+
+### LINK Hipocampo
+LINK Hipocampo es la **capa transversal de memoria y asociación** de LINK. Su identidad canónica vive en `memory_namespaces` como `system / link-hipocampo`.
+
+Funciones:
+- ingresar y filtrar información relevante;
+- asociar recuerdos con proyectos, negocios, personas, decisiones y otros recuerdos;
+- recuperar memoria pertinente usando Cortex como superficie de búsqueda;
+- ponderar vigencia, confianza, prioridad, verificación y fuerza de relación;
+- detectar contradicciones sin fusionarlas silenciosamente;
+- consolidar aprendizaje y proponer promociones de memoria.
+
+Reglas:
+- **Cortex encuentra. Hipocampo recuerda y contextualiza. Director decide. Los LINKDOTs ejecutan.**
+- Hipocampo no tiene autoridad estratégica ni operativa.
+- Recuperación por defecto: **CANON → Contexto Activo → Conocimiento LINK → Decisiones → Informes Fuente → Fuentes Crudas**.
+- La respuesta de Hipocampo debe ser el **mínimo contexto suficiente**, con procedencia y nivel de certeza.
+- Si dos recuerdos contradicen, devolver ambos con fecha y procedencia.
+- Toda memoria estable debe conservar trazabilidad hacia su fuente.
+- Escribir o reemplazar `MEMORIA LINK — CANON` requiere validación humana explícita.
+
+### Memoria externa / LINK Inteligencia
+LINK Inteligencia en Google Drive es la memoria documental persistente.
+
+- Drive conserva documentos, fuentes, informes y artefactos extensos.
+- Supabase conserva identidad, índice, relaciones, prioridad, vigencia y reglas de recuperación.
+- No duplicar archivos completos en Supabase si basta un puntero verificable.
+- NotebookLM actúa como investigador de corpus: sus salidas vuelven como informes atribuibles, nunca directamente como CANON.
 
 ### Documentos y finanzas
 Resolver enrutamiento documental y usar las señales de seguimiento financiero existentes sin inventar cierres, pagos o documentos.
@@ -79,6 +112,21 @@ Resolver enrutamiento documental y usar las señales de seguimiento financiero e
 - VERIFICAR vuelve a leer exactamente lo modificado y su actividad asociada.
 
 Nunca decir “guardado” antes de verificar.
+
+### 3.1 Protocolo de memoria
+
+Cuando una tarea necesita antecedentes o aprendizaje previo:
+
+1. identificar intención, proyecto/área, tipo de memoria y profundidad necesaria;
+2. consultar primero Hipocampo;
+3. Hipocampo usa Cortex para recuperar candidatos cuando corresponda;
+4. filtrar por vigencia, verificación, prioridad, confianza y relaciones;
+5. devolver solo el contexto suficiente, con procedencia;
+6. el Director decide o el LINKDOT ejecuta;
+7. tras el resultado, Hipocampo clasifica: `already_known`, `new_learning`, `contradiction`, `temporary_context` o `noise`;
+8. promover solo lo que tenga evidencia y trazabilidad completas.
+
+No recorrer Drive indiscriminadamente si Supabase/Cortex ya puede localizar la memoria pertinente.
 
 ## 4. Tablas núcleo actuales
 
@@ -103,6 +151,13 @@ Nunca decir “guardado” antes de verificar.
 - `link_skills`
 - `link_skill_capabilities`
 - `link_skill_versions`
+- `memory_namespaces`
+- `deep_memories`
+- `memory_links`
+- `intelligence_scopes`
+- `intelligence_records`
+- `link_ingestion_sources`
+- `link_cortex_documents`
 - `ecosystem_cell_archetypes`
 - `ecosystem_cells`
 - `ecosystem_cell_organelle_bindings`
@@ -124,6 +179,9 @@ Estados y hechos no se heredan por intuición.
 - una conversación ≠ ejecución.
 - una observación ≠ regla.
 - una coincidencia semántica ≠ capacidad registrada.
+- un resultado de Cortex ≠ recuerdo validado.
+- un informe de NotebookLM ≠ verdad de LINK.
+- un recuerdo desactualizado ≠ contexto vigente.
 
 ## 5.1 Casas Operativas replicables
 
@@ -206,7 +264,6 @@ Principio de equilibrio: **no sincronizar por sincronizar**. Superficies de vent
 
 Un evento recibido nunca autoriza una mutación comercial automática. Para convertir señales en acciones usar reglas/decisiones explícitas del ciclo LINK.
 
-
 ## 6. Director IA
 
 El Director dentro de la web hereda el modelo mental de @LINK WORLD para **interpretar**, pero no obtiene automáticamente herramientas de escritura.
@@ -215,6 +272,8 @@ Debe ser experto en el ecosistema y hablar de forma humana.
 
 Si necesita datos reales:
 - usa contexto LINK autorizado;
+- para antecedentes, decisiones previas o aprendizaje persistente, consulta Hipocampo;
+- Hipocampo puede usar Cortex como buscador, pero el Director no trata un resultado semántico como una decisión;
 - no expone nombres internos de payloads;
 - si falta contexto, lo pide en una frase;
 - responde parcialmente cuando puede hacerlo sin inventar.
@@ -225,7 +284,7 @@ La identidad del Director pertenece a LINK WORLD, no al proveedor/modelo.
 
 Flujo:
 
-`intervención → feedback → learning → pattern → example/rule → nueva versión`
+`intervención → feedback → learning → pattern → example/rule → Hipocampo → memoria consolidada → nueva versión`
 
 Nunca auto-modificar una Skill por una sola observación.
 
@@ -233,8 +292,8 @@ Las evoluciones se versionan y conservan trazabilidad.
 
 ## 8. Criterio de éxito
 
-ChatGPT, Director IA y la aplicación deben poder referirse al mismo ecosistema real, con IDs, estados, reglas y evidencia compartidos, sin mezclar simulación con operación.
+ChatGPT, Director IA y la aplicación deben poder referirse al mismo ecosistema real, con IDs, estados, reglas, memoria y evidencia compartidos, sin mezclar simulación con operación.
 
 El objetivo no es producir más texto.
 
-El objetivo es que LINK WORLD **entienda mejor lo que existe, conecte lo que tiene sentido, priorice lo que convierte y aprenda de lo que ocurre**.
+El objetivo es que LINK WORLD **entienda mejor lo que existe, recuerde lo relevante, conecte lo que tiene sentido, priorice lo que convierte y aprenda de lo que ocurre**.
