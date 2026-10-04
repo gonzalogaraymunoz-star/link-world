@@ -4,7 +4,7 @@
 La experiencia principal ya no carga misiones, células ni relaciones de demostración.
 
 [Aplicación](https://link-world-delta.vercel.app/) ·
-[Habilidad LINK WORLD](.agents/skills/link-world/SKILL.md) ·
+[Habilidad LINK WORLD](.agents/skills/link-world/SKILL.md) ·\n[LINK GENESIS](.agents/skills/link-genesis/SKILL.md) ·
 [Protocolo ChatGPT ↔ app](docs/LINK_WORLD_BRIDGE_PROTOCOL.md) ·
 [Protocolo de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
 
@@ -68,7 +68,7 @@ No se requiere instalar Node en el equipo antiguo para abrir la web.
 
 ## Documentación
 
-- [LINK WORLD / habilidad principal](.agents/skills/link-world/SKILL.md)
+- [LINK WORLD / habilidad principal](.agents/skills/link-world/SKILL.md)\n- [LINK GENESIS / ADN transversal](.agents/skills/link-genesis/SKILL.md)\n- [Arquitectura LINK GENESIS](docs/LINK_GENESIS_ARCHITECTURE.md)
 - [Protocolo del puente](docs/LINK_WORLD_BRIDGE_PROTOCOL.md)
 - [Director IA](docs/LINK_DIRECTOR_MANUAL.md)
 - [Protocolo abierto de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
