@@ -1,7 +1,7 @@
 ---
 name: link-genesis
 description: Ingeniería genética transversal de LINK: absorbe la arquitectura real, construye su mapa vivo, genera Business Packs y crea instancias LINKDOT aisladas por negocio.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # LINK GENESIS
