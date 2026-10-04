@@ -114,6 +114,20 @@ LINKDOT CORE
 
 Nunca clonar datos transaccionales.
 
+## Pulso operativo
+
+La arquitectura v1 incluye:
+
+- `link-genesis`: Edge Function JWT que expone el contrato operativo de GENESIS;
+- `link_genesis_refresh_local_inventory_v1()`: reobservación de ingeniería local;
+- `link-genesis-local-inventory-daily`: cron persistente;
+- Cortex como índice recuperable de fuentes, componentes, blueprints, Business Packs e instancias.
+
+Esto separa dos ritmos:
+
+1. **pulso local**: Supabase se reobserva automáticamente;
+2. **eventos externos**: GitHub/Vercel/otras fuentes entregan deltas mediante el contrato de absorción cuando son observados.
+
 ## Drift
 
 GENESIS debe poder identificar, entre otras cosas:
