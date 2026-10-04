@@ -276,6 +276,51 @@ Principio de equilibrio: **no sincronizar por sincronizar**. Superficies de vent
 
 Un evento recibido nunca autoriza una mutación comercial automática. Para convertir señales en acciones usar reglas/decisiones explícitas del ciclo LINK.
 
+## 5.2 LINK Director · orquestación transversal
+
+LINK Director dirige los contratos, conversaciones internas, misiones, asignaciones, evidencia, bloqueos y handoffs del ecosistema.
+
+Persistencia canónica:
+- `link_director_contracts_v` para contratos y reglas vigentes;
+- `link_director_conversations_v` para conversaciones internas resumidas;
+- `memory_namespaces.scope_key = link-director` para memoria operativa;
+- `MSN-LINK-DIRECTOR-ORCHESTRATION-V1` como misión persistente de dirección;
+- `link_director:orchestration_contract_v1` como contrato máquina-a-máquina.
+
+Regla de sistema:
+**Cortex encuentra → Hipocampo recuerda y contextualiza → Director decide y dirige → LINKDOTs ejecutan → Hipocampo consolida.**
+
+Autonomía interna:
+- `mission.create`: bounded-auto;
+- `agent.assign`: bounded-auto;
+- `evidence.request`: bounded-auto;
+- `stage.escalate`: bounded-auto.
+
+Estas acciones solo pueden autoejecutarse si el registro de acción declara `scope=internal` y usa el ejecutor interno autorizado.
+
+Requieren aprobación humana:
+- acciones externas;
+- acciones financieras;
+- operaciones irreversibles;
+- escritura o reemplazo de CANON;
+- `stage.verify` y otros cierres sensibles.
+
+Ciclo del Director:
+**observar → leer contratos → recuperar memoria → interpretar → crear/reusar misión → asignar → pedir evidencia → escalar → verificar progreso → aprender → reobservar**.
+
+Contrato de conversaciones:
+- una conversación aporta contexto y evidencia;
+- una conversación no equivale a ejecución;
+- priorizar conversaciones recientes, bloqueadas, sin responsable, con cambio de decisión o con handoff necesario;
+- convertir conversación en misión solo cuando haya una necesidad operacional identificable.
+
+Contrato de límites:
+- Director coordina y desbloquea;
+- no absorbe el trabajo propio de los Directores de etapa;
+- no trata un resultado semántico como verdad;
+- no inventa contratos intermedios cuando existen contradicciones: consulta Hipocampo;
+- no se detiene en diagnóstico si existe un siguiente movimiento interno permitido y reversible.
+
 ## 6. Director IA
 
 El Director dentro de la web hereda el modelo mental de @LINK WORLD para **interpretar**, pero no obtiene automáticamente herramientas de escritura.
