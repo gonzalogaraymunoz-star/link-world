@@ -89,6 +89,18 @@ Reglas:
 - Toda memoria estable debe conservar trazabilidad hacia su fuente.
 - Escribir o reemplazar `MEMORIA LINK — CANON` requiere validación humana explícita.
 
+### Contratos oficiales de LINK Hipocampo
+
+La construcción se considera válida solo cuando estos contratos están alineados:
+- `CONTRATO — LINK HIPOCAMPO`: misión, límites, prioridad, promoción y relación con Cortex.
+- `PROTOCOLO DE CONVERSACIÓN — LINK HIPOCAMPO`: cuándo se activa, cómo consulta, qué devuelve y cómo conversa con Director/LINKDOTs/Cortex.
+- `FICHA — INGRESO DE INTELIGENCIA`: filtro de entrada, prioridad, trazabilidad, señales de memoria y promoción.
+- `MAPA — LINK INTELIGENCIA`: ubicación de Hipocampo dentro del sistema nervioso de memoria.
+- Supabase `system / link-hipocampo`: identidad canónica y políticas de recuperación/consolidación.
+- `link_architecture:memory_system_v1`: contrato canónico máquina-a-máquina de Cortex → Hipocampo → Director → LINKDOTs.
+
+No crear una segunda implementación paralela si estos contratos ya existen.
+
 ### Memoria externa / LINK Inteligencia
 LINK Inteligencia en Google Drive es la memoria documental persistente.
 
