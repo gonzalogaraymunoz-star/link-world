@@ -616,9 +616,9 @@ function financePanelMarkup(){
   return '<section class="bw-products-section bw-finance-section" id="bw-fin-real">'+
     '<div class="bw-section-head"><div><span class="bw-kicker">FIN / EVIDENCIA REAL</span><h2>Mesa financiera</h2><p>Solo aparecen relaciones y movimientos enlazados a evidencia persistente. Facturar no equivale a cobrar: el neto real solo cambia cuando el pago también está verificado.</p></div><span class="bw-open-mode">'+safe(String(summary.evidenced_movements||0))+' respaldos · '+safe(String(summary.verified_cash_movements||0))+' caja verificada</span></div>'+
     '<div class="bw-finance-metrics bw-fin-real-metrics">'+
-      '<div><small>Ingresos</small><strong>'+money(summary.income_gross||0,'CLP')+'</strong></div>'+
+      '<div><small>Facturado</small><strong>'+money(summary.income_gross||0,'CLP')+'</strong></div>'+
+      '<div><small>Cobrado verificado</small><strong>'+money(summary.income_collected||0,'CLP')+'</strong></div>'+
       '<div><small>Impuestos / retenciones</small><strong>'+money(summary.taxes||0,'CLP')+'</strong></div>'+
-      '<div><small>Egresos / transferencias</small><strong>'+money(summary.outflows||0,'CLP')+'</strong></div>'+
       '<div class="bw-fin-net"><small>Neto real</small><strong>'+money(summary.net_real||0,'CLP')+'</strong></div>'+
     '</div>'+
     (roleHtml?'<div class="bw-fin-real-block"><div class="bw-fin-real-title"><span>RELACIONES FINANCIERAS</span><small>Quién factura · quién cobra · quién presta · colaboradores · transferencias</small></div><div class="bw-fin-role-grid">'+roleHtml+'</div></div>':'')+
