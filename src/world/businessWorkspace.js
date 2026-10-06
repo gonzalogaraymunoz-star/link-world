@@ -606,7 +606,7 @@ function financePanelMarkup(){
     const isIncome=m.direction==='income';
     const amount=isIncome?Number(m.gross_amount||0):Number(m.net_basis_amount||m.amount||0);
     const tax=Number(m.tax_amount||0);
-    const tag=isIncome?'Ingreso':humanizeToken(m.direction||'Egreso');
+    const tag=isIncome?(m.payment_verified?'Cobro verificado':'Facturado · cobro no verificado'):humanizeToken(m.direction||'Egreso');
     return '<article class="bw-fin-real-row">'+
       '<div><small>'+safe(date)+' · '+safe(tag)+'</small><strong>'+safe(m.concept||m.transaction_type||'Movimiento')+'</strong><span>'+safe(m.external_reference||'Sin referencia externa')+'</span></div>'+
       '<div class="bw-fin-real-amount"><b>'+money(amount,m.currency||'CLP')+'</b>'+(tax>0?'<small>Impuestos / retención '+money(tax,m.currency||'CLP')+'</small>':'<small>'+safe(humanizeToken(m.status||'registrado'))+'</small>')+(m.evidence_url?'<a href="'+safe(m.evidence_url)+'" target="_blank" rel="noopener noreferrer">Comprobante ↗</a>':'')+'</div>'+
@@ -614,7 +614,7 @@ function financePanelMarkup(){
   }).join('');
   const hasEvidence=Number(summary.evidenced_movements||0)>0||roles.length>0;
   return '<section class="bw-products-section bw-finance-section" id="bw-fin-real">'+
-    '<div class="bw-section-head"><div><span class="bw-kicker">FIN / EVIDENCIA REAL</span><h2>Mesa financiera</h2><p>Solo aparecen relaciones y movimientos enlazados a evidencia persistente. Propuestas, supuestos y montos sin comprobante quedan fuera de esta mesa.</p></div><span class="bw-open-mode">'+safe(String(summary.evidenced_movements||0))+' movimientos comprobados</span></div>'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">FIN / EVIDENCIA REAL</span><h2>Mesa financiera</h2><p>Solo aparecen relaciones y movimientos enlazados a evidencia persistente. Facturar no equivale a cobrar: el neto real solo cambia cuando el pago también está verificado.</p></div><span class="bw-open-mode">'+safe(String(summary.evidenced_movements||0))+' respaldos · '+safe(String(summary.verified_cash_movements||0))+' caja verificada</span></div>'+
     '<div class="bw-finance-metrics bw-fin-real-metrics">'+
       '<div><small>Ingresos</small><strong>'+money(summary.income_gross||0,'CLP')+'</strong></div>'+
       '<div><small>Impuestos / retenciones</small><strong>'+money(summary.taxes||0,'CLP')+'</strong></div>'+
