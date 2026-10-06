@@ -27,6 +27,28 @@ import './world/observatory.css';
 import './linkTheme.css';
 
 const $=s=>document.querySelector(s);
+const LINK_WORLD_THEME_KEY='link-world-theme';
+const LINK_WORLD_THEMES=new Set(['day','night','gray']);
+
+function applyLinkWorldTheme(theme='day'){
+  const next=LINK_WORLD_THEMES.has(theme)?theme:'day';
+  document.documentElement.dataset.theme=next;
+  try{localStorage.setItem(LINK_WORLD_THEME_KEY,next);}catch{}
+  document.querySelectorAll('[data-theme-btn]').forEach(button=>{
+    const active=button.dataset.themeBtn===next;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',active?'true':'false');
+  });
+}
+
+function mountThemeSwitcher(){
+  let stored='day';
+  try{stored=localStorage.getItem(LINK_WORLD_THEME_KEY)||'day';}catch{}
+  applyLinkWorldTheme(LINK_WORLD_THEMES.has(stored)?stored:'day');
+  document.querySelectorAll('[data-theme-btn]').forEach(button=>{
+    button.addEventListener('click',()=>applyLinkWorldTheme(button.dataset.themeBtn));
+  });
+}
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const state={map:false,connected:true,businesses:[],requests:[],relations:[]};
 $('#app').innerHTML=[
@@ -35,6 +57,11 @@ $('#app').innerHTML=[
 "<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
 "<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='models'>Modelos</button><button data-view='vault'>Vault</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='crons'>CRON</button><button data-view='journal'>Bitácora</button><button data-view='observatory'>Observatorio</button><button data-view='director'>Director IA</button><a class='lw-link-explain' href='/que-es-link/'>LINK</a></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Sesión LINK</span>",
+"<div class='lw-theme-switcher' role='group' aria-label='Apariencia'>",
+"<button type='button' data-theme-btn='day' aria-pressed='false'>Día</button>",
+"<button type='button' data-theme-btn='night' aria-pressed='false'>Noche</button>",
+"<button type='button' data-theme-btn='gray' aria-pressed='false'>Gris</button>",
+"</div>",
 "<div class='header-actions' id='lw-hidden-triggers'><a class='lw-btn-secondary' href='https://linkcontrolgeneral.vercel.app/' target='_blank' rel='noopener noreferrer'>CONTROL CENTRAL ↗</a></div></header>",
 "<main class='lw-main'>",
 "<section id='lw-businesses' class='lw-home'>",
@@ -54,6 +81,8 @@ $('#app').innerHTML=[
 "<section id='lw-crons' class='cron-station hidden' aria-label='CRON de LINK WORLD'></section><section id='lw-journal' class='cron-journal hidden' aria-label='Bitácora de evolución de LINK WORLD'></section><section id='lw-observatory' class='observatory hidden' aria-label='OBS Observatorio de Aprendizaje'></section>",
 "</main></div>"
 ].join('');
+
+mountThemeSwitcher();
 
 const vault=mountProspectVault();
 const modelFoundry=mountModelFoundry();
