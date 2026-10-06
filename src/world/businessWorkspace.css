@@ -361,3 +361,34 @@
   .bw-agent-handoff-actions{align-items:flex-start;flex-direction:column}
   .bw-agent-handoff-actions button{width:100%}
 }
+
+
+/* FIN transversal · only evidence-backed financial truth */
+.bw-fin-real-metrics .bw-fin-net{background:#eef5e9;border-color:#cbdcc5}
+.bw-fin-real-block{margin-top:14px;padding-top:14px;border-top:1px solid #e3e9df}
+.bw-fin-real-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:9px}
+.bw-fin-real-title>span{font-size:9px;font-weight:800;letter-spacing:.08em;color:#5f735f}
+.bw-fin-real-title>small{font-size:8px;color:#879587;text-align:right}
+.bw-fin-role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bw-fin-role{display:grid;gap:5px;padding:11px;border:1px solid #dfe7db;background:#fafbf8;border-radius:11px}
+.bw-fin-role>small{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:#879387}
+.bw-fin-role>strong{font-size:11px;color:#36523b}
+.bw-fin-role>a{font-size:8px;color:#517352;text-decoration:underline;width:max-content}
+.bw-fin-real-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid #dde6d9;background:#fafbf8;border-radius:12px;padding:12px}
+.bw-fin-real-row>div:first-child{display:grid;gap:4px}
+.bw-fin-real-row small,.bw-fin-real-row span{font-size:9px;color:#7c8d7c}
+.bw-fin-real-row strong{font-size:12px;color:#36523b}
+.bw-fin-real-amount{display:grid;gap:4px;justify-items:end;text-align:right}
+.bw-fin-real-amount>b{font:600 16px 'Space Grotesk',system-ui,sans-serif;color:#38593e}
+.bw-fin-real-amount>a{font-size:9px;color:#517352;text-decoration:underline}
+.bw-fin-clean-note{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#f4f6f1;color:#708070;font-size:9px}
+@media(max-width:760px){
+ .bw-fin-role-grid{grid-template-columns:1fr 1fr}
+ .bw-fin-real-title{align-items:flex-start;flex-direction:column}
+ .bw-fin-real-title>small{text-align:left}
+ .bw-fin-real-row{grid-template-columns:1fr}
+ .bw-fin-real-amount{justify-items:start;text-align:left}
+}
+@media(max-width:520px){
+ .bw-fin-role-grid{grid-template-columns:1fr}
+}
