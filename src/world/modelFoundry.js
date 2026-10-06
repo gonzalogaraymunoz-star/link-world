@@ -22,7 +22,7 @@ const moveLabel={
   decision_director_nacer_negocio:'Decidir nacimiento',sistematizar_y_delegar:'Sistematizar y delegar',replicar:'Replicar',revisar:'Revisar'
 };
 
-function esc(v=''){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
+function esc(v=''){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function money(v){
   const n=Number(v||0);if(!Number.isFinite(n)||n<=0)return '';
   return new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n);
@@ -262,7 +262,7 @@ function stageCard(m,key,business){
     <div class="mf-stage-actions">
       ${businessId?'<button type="button" data-open-business="'+esc(businessId)+'">Negocio</button>':''}
       ${key==='marketing'?'<button type="button" data-find-prospect="'+m.id+'">Buscar negocio</button>':''}
-      <button type="button" data-godmode="${m.id}" data-stage-key="${key}">ChatGPT</button>
+      <button type="button" data-godmode="${m.id}" data-stage-key="${key}">Modo Dios</button>
     </div>
   </article>`;
 }
