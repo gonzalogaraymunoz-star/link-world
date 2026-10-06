@@ -10,6 +10,7 @@ import {mountCronJournal} from './world/cronJournal.js';
 import {mountCronStation} from './world/cronStation.js';
 import {mountProspectVault} from './world/prospectVault.js';
 import {mountModelFoundry} from './world/modelFoundry.js';
+import {mountObservatory} from './world/observatory.js';
 import './style.css';
 import './world/bridge.css';
 import './ai/chat.css';
@@ -22,6 +23,7 @@ import './world/cronJournal.css';
 import './world/cronStation.css';
 import './world/prospectVault.css';
 import './world/modelFoundry.css';
+import './world/observatory.css';
 import './linkTheme.css';
 
 const $=s=>document.querySelector(s);
@@ -31,7 +33,7 @@ $('#app').innerHTML=[
 "<div class='lw-app'>",
 "<header class='lw-app-header'>",
 "<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
-"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='models'>Modelos</button><button data-view='vault'>Vault</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='crons'>CRON</button><button data-view='journal'>Bitácora</button><button data-view='director'>Director IA</button><a class='lw-link-explain' href='/que-es-link/'>LINK</a></nav>",
+"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='models'>Modelos</button><button data-view='vault'>Vault</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='crons'>CRON</button><button data-view='journal'>Bitácora</button><button data-view='observatory'>Observatorio</button><button data-view='director'>Director IA</button><a class='lw-link-explain' href='/que-es-link/'>LINK</a></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Sesión LINK</span>",
 "<div class='header-actions' id='lw-hidden-triggers'><a class='lw-btn-secondary' href='https://linkcontrolgeneral.vercel.app/' target='_blank' rel='noopener noreferrer'>CONTROL CENTRAL ↗</a></div></header>",
 "<main class='lw-main'>",
@@ -49,7 +51,7 @@ $('#app').innerHTML=[
 "<div class='workspace lw-map-workspace'><div id='cesiumContainer' aria-label='Mapa de Google'></div><div id='lw-place-card' class='lw-place-card hidden' role='status'></div><div class='notice'>Google Maps no muestra imágenes en vivo. Un resultado externo no es un negocio registrado en LINK.</div></div>",
 "<div class='lw-map-foot'><span id='imagery-status'>Google Maps · se abre al entrar en Territorio</span><span id='places-status'>Google Places · bajo demanda</span><span id='city-label'>SAN PEDRO DE ATACAMA · CHILE</span></div></section>",
 "<section id='lw-models' class='model-foundry hidden' aria-label='Modelos LINK WORLD'></section><section id='lw-vault' class='prospect-vault hidden' aria-label='Prospect Vault LINK WORLD'></section><section id='lw-micelio' class='micelio-beta hidden' aria-label='Micelio LINK WORLD beta'></section>",
-"<section id='lw-crons' class='cron-station hidden' aria-label='CRON de LINK WORLD'></section><section id='lw-journal' class='cron-journal hidden' aria-label='Bitácora de evolución de LINK WORLD'></section>",
+"<section id='lw-crons' class='cron-station hidden' aria-label='CRON de LINK WORLD'></section><section id='lw-journal' class='cron-journal hidden' aria-label='Bitácora de evolución de LINK WORLD'></section><section id='lw-observatory' class='observatory hidden' aria-label='OBS Observatorio de Aprendizaje'></section>",
 "</main></div>"
 ].join('');
 
@@ -58,6 +60,7 @@ const modelFoundry=mountModelFoundry();
 const micelio=mountMicelioBeta();
 const journal=mountCronJournal();
 const cronStation=mountCronStation();
+const observatory=mountObservatory();
 
 let territoryPortraitBypass=false;
 let territoryOrientationOwned=false;
@@ -176,21 +179,24 @@ function setView(next){
   const micelioView=next==='micelio';
   const journalView=next==='journal';
   const cronsView=next==='crons';
+  const observatoryView=next==='observatory';
   const wasTerritory=!$('#lw-territory').classList.contains('hidden');
   if(territory&&!wasTerritory)territoryPortraitBypass=false;
   document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
-  $('#lw-businesses').classList.toggle('hidden',territory||modelsView||vaultView||micelioView||journalView||cronsView);
+  $('#lw-businesses').classList.toggle('hidden',territory||modelsView||vaultView||micelioView||journalView||cronsView||observatoryView);
   $('#lw-models').classList.toggle('hidden',!modelsView);
   $('#lw-vault').classList.toggle('hidden',!vaultView);
   $('#lw-territory').classList.toggle('hidden',!territory);
   $('#lw-micelio').classList.toggle('hidden',!micelioView);
   $('#lw-journal').classList.toggle('hidden',!journalView);
   $('#lw-crons').classList.toggle('hidden',!cronsView);
+  $('#lw-observatory').classList.toggle('hidden',!observatoryView);
   if(modelsView)modelFoundry.open();else modelFoundry.close();
   if(vaultView)vault.open();else vault.close();
   if(micelioView)micelio.open();else micelio.close();
   if(journalView)journal.open();else journal.close();
   if(cronsView)cronStation.open();else cronStation.close();
+  if(observatoryView)observatory.open();else observatory.close();
   syncTerritoryOrientation();
   if(!territory&&wasTerritory)releaseTerritoryOrientation();
   if(territory&&!state.map){
@@ -283,4 +289,5 @@ if(initialParams.get('space')==='micelio'){
 }
 
 if(initialParams.get('space')==='crons')setView('crons');
+if(initialParams.get('space')==='observatory')setView('observatory');
 loadOpenWorld();
