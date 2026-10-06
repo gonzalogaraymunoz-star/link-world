@@ -11,7 +11,8 @@ export default defineConfig({
         queEsLink: resolve(process.cwd(), 'que-es-link/index.html'),
         serParte: resolve(process.cwd(), 'ser-parte/index.html'),
         ingreso: resolve(process.cwd(), 'ingreso/index.html'),
-        conectarNegocio: resolve(process.cwd(), 'conectar-negocio/index.html')
+        conectarNegocio: resolve(process.cwd(), 'conectar-negocio/index.html'),
+        fin: resolve(process.cwd(), 'fin/index.html')
       }
     }
   }

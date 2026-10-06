@@ -614,7 +614,7 @@ function financePanelMarkup(){
   }).join('');
   const hasEvidence=Number(summary.evidenced_movements||0)>0||roles.length>0;
   return '<section class="bw-products-section bw-finance-section" id="bw-fin-real">'+
-    '<div class="bw-section-head"><div><span class="bw-kicker">FIN / EVIDENCIA REAL</span><h2>Mesa financiera</h2><p>Solo aparecen relaciones y movimientos enlazados a evidencia persistente. Facturar no equivale a cobrar: el neto real solo cambia cuando el pago también está verificado.</p></div><span class="bw-open-mode">'+safe(String(summary.evidenced_movements||0))+' respaldos · '+safe(String(summary.verified_cash_movements||0))+' caja verificada</span></div>'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">FIN / EVIDENCIA REAL</span><h2>Mesa financiera</h2><p>Solo aparecen relaciones y movimientos enlazados a evidencia persistente. Facturar no equivale a cobrar: el neto real solo cambia cuando el pago también está verificado.</p></div><div class="bw-fin-head-actions"><span class="bw-open-mode">'+safe(String(summary.evidenced_movements||0))+' respaldos · '+safe(String(summary.verified_cash_movements||0))+' caja verificada</span><a class="bw-fin-open" href="/fin/?business='+encodeURIComponent(state.business.id)+'">Abrir LINK FIN →</a></div></div>'+
     '<div class="bw-finance-metrics bw-fin-real-metrics">'+
       '<div><small>Facturado</small><strong>'+money(summary.income_gross||0,'CLP')+'</strong></div>'+
       '<div><small>Cobrado verificado</small><strong>'+money(summary.income_collected||0,'CLP')+'</strong></div>'+
