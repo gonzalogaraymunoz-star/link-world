@@ -18,6 +18,7 @@ const human=v=>String(v||'').replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCas
 
 const sections=[
   ['home','Inicio','⌂'],
+  ['evolution','Evolución','↗'],
   ['movements','Movimientos','≋'],
   ['billing','Facturación','▤'],
   ['collections','Cobros','↘'],
@@ -34,7 +35,7 @@ const sections=[
 const state={
   session:null,canRead:false,
   businesses:[],business:null,
-  summary:null,movements:[],roles:[],documents:[],providers:[],taxProfiles:[],
+  summary:null,movements:[],roles:[],documents:[],providers:[],taxProfiles:[],lifecycle:null,lifecycleGaps:[],
   section:'home',period:'all',query:'',selectedMovement:null,loading:false
 };
 
@@ -84,13 +85,15 @@ async function loadFinance(){
   if(!state.business||!state.canRead)return;
   state.loading=true;render();
   const id=state.business.id;
-  const [s,m,r,d,p,t]=await Promise.all([
+  const [s,m,r,d,p,t,l,g]=await Promise.all([
     db.from('link_fin_real_summary_v').select('*').eq('business_id',id).maybeSingle(),
     db.from('link_fin_real_movements_v').select('*').eq('business_id',id).order('occurred_at',{ascending:false}),
     db.from('link_fin_real_roles_v').select('*').eq('business_id',id).order('role_type'),
     db.from('link_world_documents').select('id,transaction_id,document_type,drive_url,file_name,issue_date,amount,currency,tax_identifier,metadata').eq('business_id',id).order('issue_date',{ascending:false}),
     db.from('link_payment_provider_accounts').select('id,provider,environment,status,webhook_status,external_merchant_id,verified_at,last_webhook_at,last_error,metadata').eq('business_id',id).order('provider'),
-    db.from('link_tax_profiles').select('id,profile_key,country_code,tax_treatment,tax_code,tax_rate,document_type,price_includes_tax,status,notes,approved_at').eq('business_id',id).order('valid_from',{ascending:false})
+    db.from('link_tax_profiles').select('id,profile_key,country_code,tax_treatment,tax_code,tax_rate,document_type,price_includes_tax,status,notes,approved_at').eq('business_id',id).order('valid_from',{ascending:false}),
+    db.from('link_fin_business_lifecycle_v').select('*').eq('business_id',id).maybeSingle(),
+    db.from('link_fin_business_lifecycle_gaps_v').select('*').eq('business_id',id).order('stage_order')
   ]);
   state.summary=s.error?null:s.data;
   state.movements=m.error?[]:(m.data||[]);
@@ -98,6 +101,8 @@ async function loadFinance(){
   state.documents=d.error?[]:(d.data||[]);
   state.providers=p.error?[]:(p.data||[]);
   state.taxProfiles=t.error?[]:(t.data||[]);
+  state.lifecycle=l.error?null:l.data;
+  state.lifecycleGaps=g.error?[]:(g.data||[]);
   state.selectedMovement=state.movements.find(x=>x.id===state.selectedMovement?.id)||null;
   state.loading=false;
   render();
@@ -191,6 +196,35 @@ function renderHome(){
     '</div>'+
     '<section class="fin-panel"><div class="panel-head"><div><span>ÚLTIMOS MOVIMIENTOS</span><h2>Actividad respaldada</h2></div></div>'+movementTable(recent)+'</section>';
 }
+function renderEvolution(){
+  const life=state.lifecycle||{};
+  const timeline=Array.isArray(life.timeline)?life.timeline:[];
+  const gaps=Array.isArray(state.lifecycleGaps)?state.lifecycleGaps:[];
+  const certifiedKeys=new Set(timeline.map(x=>x.stage_key));
+  const next=gaps.find(x=>!x.certified&&x.stage_order>Number(life.current_stage_order||0))||gaps.find(x=>!x.certified);
+  const stages=gaps.map(stage=>{
+    const event=timeline.find(x=>x.stage_key===stage.stage_key);
+    const certified=certifiedKeys.has(stage.stage_key);
+    return '<article class="fin-life-stage '+(certified?'done':'pending')+'">'+
+      '<div class="fin-life-dot">'+(certified?'✓':safe(String(stage.stage_order/10)))+'</div>'+
+      '<div><small>'+safe(stage.label)+'</small><strong>'+safe(stage.definition)+'</strong>'+
+      '<span>'+(certified?('Certificado · '+safe(day(event?.event_at))):safe(stage.certification_rule))+'</span>'+
+      (event?.evidence_note?'<em>'+safe(event.evidence_note)+'</em>':'')+
+      '</div>'+
+    '</article>';
+  }).join('');
+  return shellStart('Evolución económica','FIN certifica hechos económicos del negocio desde su ingreso a LINK hasta recurrencia, estabilidad y reproducción.')+
+    '<div class="fin-evolution-hero">'+
+      '<article><span>ETAPA CERTIFICADA</span><strong>'+safe(life.current_stage_label||'Sin etapa económica certificada')+'</strong><small>'+safe(life.current_stage_at?day(life.current_stage_at):'Aún sin hito suficiente')+'</small></article>'+
+      '<article><span>HITOS VERIFICADOS</span><strong>'+safe(String(life.verified_milestones||0))+'</strong><small>Solo hechos respaldados</small></article>'+
+      '<article><span>SIGUIENTE GATE</span><strong>'+safe(next?.label||'—')+'</strong><small>'+safe(next?.certification_rule||'No hay un siguiente gate pendiente')+'</small></article>'+
+    '</div>'+
+    '<section class="fin-panel"><div class="panel-head"><div><span>LÍNEA DE VIDA FIN</span><h2>Nacimiento → negocio → transformación</h2></div></div>'+
+      '<div class="fin-life-timeline">'+stages+'</div>'+
+    '</section>'+
+    '<section class="fin-panel fin-principle"><span>REGLA DE CERTIFICACIÓN</span><h2>FIN certifica lo que ocurrió.</h2><p>Una idea, propuesta o intención no avanza la etapa económica. “Negocio comprobado” exige venta, prestación o entrega, documento y dinero real. Rentabilidad usa ingresos y egresos verificados. Mitosis y meiosis solo nacen desde modelos con trazabilidad de origen.</p></section>';
+}
+
 function renderMovements(kind='all',title='Movimientos',subtitle='Todos los movimientos financieros respaldados por evidencia.'){
   const rows=filteredMovements(kind);
   return shellStart(title,subtitle)+summaryCards()+'<div class="fin-work-grid"><section class="fin-panel table-panel">'+movementTable(rows)+'</section>'+movementDetail()+'</div>';
@@ -240,6 +274,7 @@ function renderActivity(){
 }
 function content(){
   if(state.section==='home')return renderHome();
+  if(state.section==='evolution')return renderEvolution();
   if(state.section==='movements')return renderMovements();
   if(state.section==='billing')return renderMovements('billing','Facturación','Boletas y facturas respaldadas, separadas de la caja.');
   if(state.section==='collections')return renderMovements('collections','Cobros','Solo dinero cuyo pago está verificado.');
