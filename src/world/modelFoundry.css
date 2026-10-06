@@ -125,3 +125,134 @@ html[data-theme="gray"]{
   .mf-head h1{font-size:42px}
   .mf-board{grid-auto-columns:minmax(84vw,1fr)}
 }
+
+
+/* =========================================================
+   CONCHA ETERNA · MODEL WORKSPACE
+   ========================================================= */
+
+.mf-god-mode{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 13px;border:1px solid var(--mf-line);border-radius:999px;
+  background:var(--mf-panel);color:var(--mf-text-2);
+  font-size:10px;font-weight:750;letter-spacing:.08em;white-space:nowrap;
+}
+.mf-god-mode i{
+  width:7px;height:7px;border-radius:50%;background:var(--mf-accent);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--mf-accent) 14%, transparent);
+}
+.mf-workspace{
+  margin:0 0 42px;padding:22px;
+  border:1px solid var(--mf-line-strong);border-radius:24px;
+  background:var(--mf-panel);box-shadow:var(--mf-shadow);
+}
+.mf-workspace-head{
+  display:flex;justify-content:space-between;gap:24px;align-items:flex-start;
+  padding-bottom:18px;border-bottom:1px solid var(--mf-line);
+}
+.mf-workspace-head h2{
+  margin:5px 0 7px;color:var(--mf-text);font-size:clamp(26px,3.2vw,42px);letter-spacing:-.035em;
+}
+.mf-workspace-head p{
+  max-width:780px;margin:0;color:var(--mf-text-2);font-size:14px;line-height:1.55;
+}
+.mf-close{
+  width:38px;height:38px;border-radius:999px;border:1px solid var(--mf-line);
+  background:var(--mf-panel-soft);color:var(--mf-text);font-size:22px;cursor:pointer;
+}
+.mf-shell-summary{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+  padding:16px 0 22px;
+}
+.mf-shell-summary>div{
+  min-height:112px;padding:14px;border:1px solid var(--mf-line);border-radius:16px;
+  background:var(--mf-bg-soft);
+}
+.mf-shell-summary span,.mf-six-title>span,.mf-stage-block>span,.mf-stage-artifacts>span,.mf-stage-prospects>span{
+  display:block;color:var(--mf-text-3);font-size:9px;font-weight:750;letter-spacing:.12em;
+}
+.mf-shell-summary strong{
+  display:block;margin:7px 0 8px;color:var(--mf-text);font-size:16px;line-height:1.25;
+}
+.mf-shell-summary small{display:block;color:var(--mf-text-3);font-size:10px;line-height:1.4}
+.mf-shell-summary button{
+  border:0;background:transparent;color:var(--mf-text);padding:0;font:inherit;font-size:11px;font-weight:700;cursor:pointer;
+}
+.mf-six-title{padding:2px 0 13px}
+.mf-six-title h3{margin:5px 0 0;color:var(--mf-text);font-size:18px;letter-spacing:-.02em}
+.mf-six-stages{
+  display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:9px;
+  overflow-x:auto;padding:2px 1px 12px;scroll-snap-type:x proximity;
+}
+.mf-stage-card{
+  min-height:430px;padding:14px;border:1px solid var(--mf-line);border-radius:17px;
+  background:var(--mf-bg-soft);scroll-snap-align:start;
+  display:flex;flex-direction:column;
+}
+.mf-stage-card.status-active{box-shadow:inset 0 3px 0 var(--mf-accent)}
+.mf-stage-card.status-validated{box-shadow:inset 0 3px 0 var(--mf-text)}
+.mf-stage-card.status-blocked{box-shadow:inset 0 3px 0 #a34c3c}
+.mf-stage-card-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.mf-stage-card-head>b{
+  width:29px;height:29px;display:grid;place-items:center;border-radius:999px;
+  background:var(--mf-text);color:var(--mf-bg);font-size:11px;
+}
+.mf-stage-card-head div{min-width:0}
+.mf-stage-card-head span{display:block;color:var(--mf-text);font-size:13px;font-weight:800}
+.mf-stage-card-head small{display:block;color:var(--mf-text-3);font-size:9px;margin-top:1px}
+.mf-stage-objective{
+  min-height:78px;margin:0 0 13px;color:var(--mf-text-2);font-size:11px;line-height:1.45;
+}
+.mf-stage-block{padding:9px 0;border-top:1px solid var(--mf-line)}
+.mf-stage-block p{margin:4px 0 0;color:var(--mf-text-2);font-size:10px;line-height:1.42}
+.mf-stage-prospects{
+  display:grid;gap:4px;padding:9px 0;border-top:1px solid var(--mf-line);
+}
+.mf-stage-prospects small{
+  display:block;padding:6px 7px;border-radius:8px;background:var(--mf-panel);
+  color:var(--mf-text-2);font-size:9px;
+}
+.mf-stage-artifacts{
+  margin-top:auto;padding:10px 0 0;border-top:1px solid var(--mf-line);
+}
+.mf-stage-artifacts>div{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-top:7px;padding:7px 8px;border-radius:9px;background:var(--mf-panel);
+}
+.mf-stage-artifacts b{
+  min-width:0;color:var(--mf-text);font-size:9px;line-height:1.3;font-weight:700;
+}
+.mf-stage-artifacts button{
+  flex:0 0 auto;border:0;background:transparent;color:var(--mf-text);
+  padding:0;font-size:9px;font-weight:800;cursor:pointer;
+}
+.mf-stage-artifacts small{color:var(--mf-text-3);font-size:9px}
+.mf-no-artifact{border:1px dashed var(--mf-line-strong)}
+.mf-stage-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:10px}
+.mf-stage-actions button{
+  min-height:30px;padding:6px;border:1px solid var(--mf-line);border-radius:9px;
+  background:var(--mf-panel);color:var(--mf-text);font-size:9px;font-weight:700;cursor:pointer;
+}
+.mf-stage-actions button:hover{background:var(--mf-accent);color:var(--mf-accent-text);border-color:var(--mf-accent)}
+.mf-workspace-foot{
+  display:flex;justify-content:flex-end;gap:9px;padding-top:15px;border-top:1px solid var(--mf-line);
+}
+.mf-workspace-foot button{
+  border:1px solid var(--mf-line-strong);border-radius:999px;padding:11px 16px;
+  font:inherit;font-size:11px;font-weight:750;cursor:pointer;
+}
+.mf-find{background:var(--mf-panel-soft);color:var(--mf-text)}
+.mf-god{background:var(--mf-text);color:var(--mf-bg);border-color:var(--mf-text)!important}
+.mf-god:hover,.mf-find:hover{background:var(--mf-accent);color:var(--mf-accent-text);border-color:var(--mf-accent)!important}
+
+@media(max-width:1180px){
+  .mf-shell-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mf-six-stages{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(240px,30vw)}
+}
+@media(max-width:720px){
+  .mf-shell-summary{grid-template-columns:1fr 1fr}
+  .mf-workspace{padding:15px;border-radius:18px}
+  .mf-six-stages{grid-auto-columns:minmax(82vw,1fr)}
+  .mf-workspace-foot{flex-direction:column}
+  .mf-workspace-foot button{width:100%}
+}
