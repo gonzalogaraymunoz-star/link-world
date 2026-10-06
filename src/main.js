@@ -3,7 +3,6 @@
 import {flyGoogle,startGoogleWorld,setLinkBusinesses,flyToLinkBusiness} from './googleMaps.js';
 import {createClient} from '@supabase/supabase-js';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './world/connection.js';
-import {mountDirector} from './ai/directorChat.js';
 import {mountBusinessWorkspace} from './world/businessWorkspace.js';
 import {mountMicelioBeta} from './world/micelioBeta.js';
 import {mountCronJournal} from './world/cronJournal.js';
@@ -13,7 +12,6 @@ import {mountModelFoundry} from './world/modelFoundry.js';
 import {mountObservatory} from './world/observatory.js';
 import './style.css';
 import './world/bridge.css';
-import './ai/chat.css';
 import './world/businessWorkspace.css';
 import './simple.css';
 import './brand.css';
@@ -50,12 +48,12 @@ function mountThemeSwitcher(){
   });
 }
 const publicDb=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const state={map:false,connected:true,businesses:[],requests:[],relations:[]};
+const state={map:false,connected:true,businesses:[],requests:[],relations:[],modelContext:null};
 $('#app').innerHTML=[
 "<div class='lw-app'>",
 "<header class='lw-app-header'>",
 "<a href='/' class='lw-app-brand'><span class='lw-brand-symbol' aria-hidden='true'><img src='/link-world-mark.svg' alt=''></span><span><strong>LINK WORLD</strong><small>El mundo de tus negocios</small></span></a>",
-"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='models'>Modelos</button><button data-view='vault'>Vault</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='crons'>CRON</button><button data-view='journal'>Bitácora</button><button data-view='observatory'>Observatorio</button><button data-view='director'>Director IA</button><a class='lw-link-explain' href='/que-es-link/'>LINK</a></nav>",
+"<nav class='lw-app-nav' aria-label='Espacios de trabajo'><button class='active' data-view='businesses'>Negocios</button><button data-view='models'>Modelos</button><button data-view='vault'>Vault</button><button data-view='territory'>Territorio</button><button data-view='micelio'>Micelio <sup class='lw-nav-beta'>BETA</sup></button><button data-view='crons'>CRON</button><button data-view='journal'>Bitácora</button><button data-view='observatory'>Observatorio</button><a class='lw-link-explain' href='/que-es-link/'>LINK</a></nav>",
 "<span class='lw-app-state' id='lw-app-state'>Sesión LINK</span>",
 "<div class='lw-theme-switcher' role='group' aria-label='Apariencia'>",
 "<button type='button' data-theme-btn='day' aria-pressed='false'>Día</button>",
@@ -69,7 +67,7 @@ $('#app').innerHTML=[
 "<div class='lw-overview'><div><strong id='lw-business-count'>—</strong><span>Negocios</span></div><div><strong id='lw-request-count'>—</strong><span>Solicitudes</span></div><div><strong id='lw-relation-count'>—</strong><span>Relaciones</span></div></div>",
 "<section class='lw-owned-section'><div class='lw-section-head'><div><span class='lw-kicker'>FUENTE DE VERDAD / LINK</span><h2>Tus negocios</h2></div><button id='lw-sync' class='lw-btn-secondary'>↻ Sincronizar</button></div>",
 "<p class='lw-data-state' id='lw-data-state' role='status'>Cargando negocios de LINK WORLD…</p><div id='lw-real-businesses' class='lw-business-grid'></div></section>",
-"<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Panel de negocios</strong><small>Entrar a los negocios de LINK WORLD ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='director'><span>03</span><strong>Conversar con Director</strong><small>Trabajar sobre LINK WORLD ↗</small></button></section>",
+"<section class='lw-next-actions'><button id='lw-open-bridge'><span>01</span><strong>Panel de negocios</strong><small>Entrar a los negocios de LINK WORLD ↗</small></button><button data-view='territory'><span>02</span><strong>Explorar territorio</strong><small>Google Maps bajo demanda ↗</small></button><button data-view='models'><span>03</span><strong>Desarrollar modelos</strong><small>Entrar a la Concha Eterna ↗</small></button></section>",
 "<p class='lw-boundary'>Google Maps permite observar negocios externos. Solo los datos propios que registremos con autorización forman parte de LINK.</p>",
 "</section>",
 "<section id='lw-territory' class='lw-territory hidden'>",
@@ -195,13 +193,6 @@ async function loadOpenWorld(){
   renderBusinessList();
 }
 function setView(next){
-  if(next==='director'){
-    micelio.close();
-    journal.close();
-    document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='director'));
-    $('#ai-toggle')?.click();
-    return;
-  }
   const territory=next==='territory';
   const modelsView=next==='models';
   const vaultView=next==='vault';
@@ -263,11 +254,6 @@ function renderBusinessList(){
   }
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
-document.addEventListener('linkworld:director-state',event=>{
-  const open=Boolean(event.detail?.open);
-  const fallback=!$('#lw-crons').classList.contains('hidden')?'crons':(!$('#lw-journal').classList.contains('hidden')?'journal':(!$('#lw-micelio').classList.contains('hidden')?'micelio':(!$('#lw-vault').classList.contains('hidden')?'vault':(!$('#lw-models').classList.contains('hidden')?'models':($('#lw-territory').classList.contains('hidden')?'businesses':'territory')))));
-  document.querySelectorAll('.lw-app-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===(open?'director':fallback)));
-});
 document.querySelectorAll('[data-location]').forEach(b=>b.addEventListener('click',()=>flyGoogle(b.dataset.location)));
 $('#lw-landscape-mode').addEventListener('click',requestTerritoryLandscape);
 $('#lw-portrait-bypass').addEventListener('click',()=>{territoryPortraitBypass=true;syncTerritoryOrientation();});
@@ -285,7 +271,172 @@ screen.orientation?.addEventListener?.('change',()=>setTimeout(syncTerritoryOrie
 document.addEventListener('fullscreenchange',()=>setTimeout(syncTerritoryOrientation,60));
 $('#lw-open-bridge').addEventListener('click',()=>{$('#lw-real-businesses')?.scrollIntoView({behavior:'smooth',block:'center'});});
 $('#lw-sync').addEventListener('click',loadOpenWorld);
-$('#lw-new-business').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt:'Quiero crear un nuevo negocio en LINK WORLD. Antes de registrarlo, pídeme nombre y si es físico o virtual. Si es físico, pídeme la dirección exacta y vincúlalo con Google Maps mediante Place ID; no cierres la ficha sin resolver su estado territorial.'}})));
+$('#lw-new-business').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('linkworld:godmode-prompt',{detail:{sourceType:'system',title:'Crear nuevo negocio en LINK WORLD',prompt:'Quiero crear un nuevo negocio en LINK WORLD desde Modo Dios. Antes de registrarlo, revisa si ya existe como hobby, modelo, prospecto o negocio. Pídeme solo la información realmente faltante. Si es físico, necesitamos dirección o Place ID. Después deja persistentes negocio, modelo, artefactos y relaciones necesarias, y verifica el resultado.',context:{entry:'home_new_business'}}})));
+function showGodModeToast(message,kind='ok'){
+  let el=document.querySelector('#lw-godmode-toast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='lw-godmode-toast';
+    el.className='lw-godmode-toast';
+    document.body.append(el);
+  }
+  el.textContent=message;
+  el.dataset.kind=kind;
+  el.classList.add('visible');
+  clearTimeout(showGodModeToast.timer);
+  showGodModeToast.timer=setTimeout(()=>el.classList.remove('visible'),3600);
+}
+
+async function queueGodModePrompt(detail={}){
+  const prompt=String(detail.prompt||'').trim();
+  if(!prompt)return;
+  let persisted=false,rowId=null,copied=false;
+  try{
+    const {data:{session}}=await publicDb.auth.getSession();
+    if(session){
+      const member=await publicDb.rpc('link_world_is_member');
+      if(!member.error&&member.data===true){
+        const payload={
+          source_type:detail.sourceType||'system',
+          source_id:detail.sourceId||null,
+          model_id:detail.modelId||null,
+          business_id:detail.businessId||null,
+          stage_key:detail.stageKey||null,
+          title:detail.title||'Pendiente LINK WORLD',
+          prompt,
+          context:detail.context||{},
+          priority:detail.priority||'normal',
+          status:'queued',
+          metadata:{bridge:'chatgpt_external_god_mode'}
+        };
+        const write=await publicDb.from('link_world_chatgpt_outbox').insert(payload).select('id').single();
+        if(!write.error){persisted=true;rowId=write.data?.id||null;}
+      }
+    }
+  }catch{}
+  try{
+    await navigator.clipboard.writeText(prompt);
+    copied=true;
+    if(rowId)await publicDb.from('link_world_chatgpt_outbox').update({status:'copied',copied_at:new Date().toISOString()}).eq('id',rowId);
+  }catch{}
+  showGodModeToast(
+    persisted&&copied?'Guardado para ChatGPT y copiado al portapapeles.':
+    persisted?'Guardado en la bandeja de ChatGPT.':
+    copied?'Prompt copiado. La sesión no permitió persistirlo.':
+    'No se pudo persistir ni copiar el prompt.',
+    persisted||copied?'ok':'error'
+  );
+}
+
+async function addPlaceToModel(place,button){
+  const ctx=state.modelContext;
+  if(!ctx?.modelId)return;
+  if(button){button.disabled=true;button.textContent='Guardando…';}
+  try{
+    const adapterPath='model-validation/'+ctx.modelKey+'/google/'+String(place.placeId||place.name).replace(/\s+/g,'-').toLowerCase();
+    let prospect=null;
+    const existing=await publicDb.from('link_world_prospect_vault')
+      .select('id,business_name,reference_code').eq('adapter_path',adapterPath).maybeSingle();
+    if(!existing.error&&existing.data){
+      prospect=existing.data;
+    }else{
+      const insert=await publicDb.from('link_world_prospect_vault').insert({
+        business_name:place.name||'Negocio Google',
+        sector:'prospecto_modelo',
+        business_summary:place.address||'Negocio encontrado en Google Places.',
+        primary_goal:'Validar el modelo '+ctx.modelName+' en un negocio real.',
+        adaptive_answer:{
+          model_id:ctx.modelId,model_key:ctx.modelKey,model_name:ctx.modelName,
+          pain:ctx.pain,solution:ctx.solution,google_place_id:place.placeId||null,
+          address:place.address||null,google_maps_uri:place.uri||null
+        },
+        reference_items:[{
+          type:'google_place',
+          value:place.placeId||place.name||'',
+          name:place.name||'',
+          address:place.address||'',
+          uri:place.uri||''
+        }],
+        answers:{source:'territory',model_key:ctx.modelKey},
+        adapter_path:adapterPath,
+        action_method:{
+          title:'Validación comercial del modelo',
+          steps:['Confirmar dolor','Contactar negocio','Presentar solución','Registrar respuesta','Convertir respuesta en evidencia']
+        },
+        dna_summary:{
+          goal:'Validar '+ctx.modelName,
+          needs:[ctx.pain],
+          capabilities:[ctx.solution],
+          friction:['Modelo aún requiere evidencia fuera de su origen']
+        }
+      }).select('id,business_name,reference_code').single();
+      if(insert.error)throw insert.error;
+      prospect=insert.data;
+    }
+    const link=await publicDb.from('link_world_model_prospects').upsert({
+      model_id:ctx.modelId,
+      prospect_id:prospect.id,
+      stage_key:ctx.stageKey||'marketing',
+      status:'candidate',
+      evidence_state:'unverified',
+      strategy:'Validar dolor y encaje del modelo antes de presentar una oferta.',
+      metadata:{google_place_id:place.placeId||null,address:place.address||null}
+    },{onConflict:'model_id,prospect_id'}).select('id').single();
+    if(link.error)throw link.error;
+
+    await publicDb.from('link_world_model_stage_state').update({
+      status:'active',
+      next_action:'Contactar '+(place.name||'el prospecto')+' y validar si el dolor existe antes de ofrecer la solución.',
+      metadata:{last_prospect_id:prospect.id,last_google_place_id:place.placeId||null}
+    }).eq('model_id',ctx.modelId).eq('stage_key',ctx.stageKey||'marketing');
+
+    document.dispatchEvent(new CustomEvent('linkworld:godmode-prompt',{detail:{
+      sourceType:'prospect',
+      sourceId:prospect.id,
+      modelId:ctx.modelId,
+      stageKey:ctx.stageKey||'marketing',
+      title:'Validar '+ctx.modelName+' con '+(place.name||'prospecto'),
+      prompt:[
+        'Trabajemos este prospecto real capturado desde Territorio de LINK WORLD.',
+        'MODELO: '+ctx.modelName,
+        'DOLOR QUE RESUELVE: '+ctx.pain,
+        'SOLUCIÓN: '+ctx.solution,
+        'PROSPECTO: '+(place.name||''),
+        'DIRECCIÓN: '+(place.address||''),
+        'GOOGLE PLACE ID: '+(place.placeId||''),
+        '',
+        'MISIÓN: investiga solo lo necesario para decidir si este negocio es un buen candidato para validar el modelo. Diseña una aproximación concreta, qué evidencia debemos conseguir y el siguiente paso. No inventes contacto, necesidad ni intención. Si confirmamos evidencia, déjala persistente en LINK WORLD.'
+      ].join('\n'),
+      context:{prospect_id:prospect.id,google_place_id:place.placeId||null}
+    }}));
+    if(button){button.textContent='✓ En Vault · prompt listo';}
+    showGodModeToast('Negocio guardado como prospecto del modelo. Trabajo preparado para ChatGPT.');
+  }catch(error){
+    if(button){button.disabled=false;button.textContent='Agregar para validar este modelo';}
+    showGodModeToast('No se pudo guardar el prospecto: '+(error?.message||String(error)),'error');
+  }
+}
+
+document.addEventListener('linkworld:toast',event=>{
+  showGodModeToast(event.detail?.message||'',event.detail?.kind||'ok');
+});
+document.addEventListener('linkworld:godmode-prompt',event=>queueGodModePrompt(event.detail||{}));
+document.addEventListener('linkworld:director-prompt',event=>queueGodModePrompt({
+  sourceType:'system',
+  title:'Acción heredada de LINK WORLD',
+  prompt:event.detail?.prompt||'',
+  context:{legacy_event:'linkworld:director-prompt'}
+}));
+document.addEventListener('linkworld:set-view',event=>{
+  const view=String(event.detail?.view||'');
+  if(view)setView(view);
+});
+document.addEventListener('linkworld:model-territory',event=>{
+  state.modelContext={...(event.detail||{})};
+  setView('territory');
+  showGodModeToast('Territorio está validando: '+(state.modelContext.modelName||'modelo')+'. Selecciona un negocio real.');
+});
+
 document.addEventListener('linkworld:open-territory-business',event=>{
   const id=String(event.detail?.id||'');
   if(!id)return;
@@ -295,13 +446,25 @@ document.addEventListener('linkworld:open-territory-business',event=>{
 });
 document.addEventListener('linkworld:place-selected',event=>{
   const d=event.detail||{},el=$('#lw-place-card');
-  el.replaceChildren(make('strong','',d.name||'Lugar de Google'),make('small','',d.address||''),make('small','',d.placeId?('Place ID · '+d.placeId):''));
+  el.replaceChildren(
+    make('strong','',d.name||'Lugar de Google'),
+    make('small','',d.address||''),
+    make('small','',d.placeId?('Place ID · '+d.placeId):'')
+  );
   if(d.uri&&/^https:\/\/(?:www\.)?google\.[^/]+\/maps/.test(d.uri)){
     const a=make('a','','Abrir en Google Maps ↗');a.href=d.uri;a.target='_blank';a.rel='noopener noreferrer';el.append(a);
   }
+  if(state.modelContext?.modelId){
+    el.append(
+      make('small','lw-place-model-context','Validando modelo · '+(state.modelContext.modelName||''))
+    );
+    const add=make('button','lw-place-model-add','Agregar para validar este modelo');
+    add.type='button';
+    add.addEventListener('click',()=>addPlaceToModel(d,add));
+    el.append(add);
+  }
   el.classList.remove('hidden');
 });
-mountDirector(()=>({strategy:'',cell:'',mission:'',demoSnapshot:''}));
 mountBusinessWorkspace();
 
 const initialParams=new URLSearchParams(window.location.search);
