@@ -70,3 +70,25 @@ a{color:inherit}
 @media(max-width:640px){
  .fin-shell{display:block}.fin-sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;height:64px;z-index:20;display:block;padding:6px;background:#eeeadf;border-top:1px solid #d8dccf;border-right:0}.fin-brand,.fin-business-picker,.sidebar-bottom{display:none}.fin-sidebar nav{display:flex;overflow:auto;gap:2px}.fin-sidebar nav button{min-width:58px;padding:5px}.fin-sidebar nav button:nth-child(n+7){display:none}.fin-sidebar nav button b{width:24px;height:24px}.fin-main{padding-bottom:70px}.fin-toolbar{padding:8px 12px;height:auto;align-items:stretch;flex-direction:column}.periods{overflow:auto}.fin-content{padding:14px}.fin-page-head{flex-direction:column}.fin-kpis{grid-template-columns:1fr 1fr}.role-grid,.doc-grid,.tax-grid,.connection-grid{grid-template-columns:1fr}.fin-reconcile{grid-template-columns:1fr}.fin-reconcile i{transform:rotate(90deg);justify-self:center}.timeline article{grid-template-columns:70px 10px 1fr}.timeline article>b{grid-column:3}
 }
+
+
+/* LINK FIN · economic lifecycle */
+.fin-evolution-hero{display:grid;grid-template-columns:1.1fr .55fr 1.35fr;gap:9px;margin-bottom:12px}
+.fin-evolution-hero article{border:1px solid #dce3d8;background:#f8faf5;border-radius:13px;padding:15px;display:grid;gap:5px}
+.fin-evolution-hero span,.fin-principle>span{font-size:8px;font-weight:800;letter-spacing:.1em;color:#728073}
+.fin-evolution-hero strong{font-size:18px;line-height:1.15;color:#31573a}
+.fin-evolution-hero small{font-size:8px;line-height:1.45;color:#879286}
+.fin-life-timeline{display:grid;gap:7px}
+.fin-life-stage{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;padding:10px;border:1px solid #e0e5dc;border-radius:11px;background:#f8f9f5}
+.fin-life-stage.done{background:#eef5e9;border-color:#cdddc7}
+.fin-life-dot{width:28px;height:28px;border-radius:999px;display:grid;place-items:center;background:#e7ebe3;color:#778476;font-size:9px;font-weight:800}
+.fin-life-stage.done .fin-life-dot{background:#3f6747;color:#fff}
+.fin-life-stage>div:last-child{display:grid;gap:4px}
+.fin-life-stage small{font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#617163}
+.fin-life-stage strong{font-size:10px;line-height:1.4;color:#36543b}
+.fin-life-stage span{font-size:8px;line-height:1.45;color:#849082}
+.fin-life-stage em{font-size:8px;line-height:1.45;color:#667867;font-style:normal}
+.fin-principle{margin-top:12px}
+.fin-principle h2{font-size:18px;margin:5px 0 7px}
+.fin-principle p{max-width:880px}
+@media(max-width:860px){.fin-evolution-hero{grid-template-columns:1fr}}
