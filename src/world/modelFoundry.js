@@ -3,7 +3,8 @@ import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './connection.js';
 import './modelFoundry.css';
 
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const root=document.querySelector('#lw-models');
+let root=null;
+function getRoot(){if(!root)root=document.querySelector('#lw-models');return root;}
 
 const stageOrder=['hobby','candidate','evidenced','repeatable','productizable','business_candidate','business','replicable'];
 const stageLabel={
@@ -38,6 +39,8 @@ function confidence(v){return Math.round(Number(v||0)*100)+'%';}
 function readinessClass(score){const n=Number(score||0);return n>=90?'ready':n>=70?'strong':n>=45?'building':'early';}
 
 async function load(){
+  root=getRoot();
+  if(!root)return;
   root.innerHTML='<div class="mf-loading">Leyendo modelos, evidencia y negocios…</div>';
   const {data:{session}}=await db.auth.getSession();
   if(!session){root.innerHTML='<div class="mf-empty">Modelos es un espacio privado de LINK. Entra con tu sesión para ver la cartera.</div>';return;}
