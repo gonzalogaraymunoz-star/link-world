@@ -392,3 +392,8 @@
 @media(max-width:520px){
  .bw-fin-role-grid{grid-template-columns:1fr}
 }
+
+.bw-fin-head-actions{display:grid;justify-items:end;gap:7px}
+.bw-fin-open{display:inline-flex;align-items:center;justify-content:center;border-radius:9px;padding:8px 10px;background:#375f3f;color:#fff;text-decoration:none;font-size:9px;font-weight:800}
+.bw-fin-open:hover{filter:brightness(.96)}
+@media(max-width:760px){.bw-fin-head-actions{justify-items:start}}
