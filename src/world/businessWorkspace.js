@@ -208,7 +208,7 @@ function injectGameState(root){
 
 
 function stageDisplayName(stage){
-  return ({marketing:'Marketing',ventas:'Ventas',cierre:'Cierre',onboarding:'Onboarding',entrega:'Entrega',postventa:'Postventa'})[stage]||String(stage||'Etapa');
+  return ({marketing:'MAR',ventas:'Ventas',cierre:'Cierre',onboarding:'Boarding',entrega:'Opera',postventa:'Postventa'})[stage]||String(stage||'Etapa');
 }
 function handoffActionLabel(h){
   const receiver=stageDisplayName(h?.to_stage_key);
@@ -251,33 +251,38 @@ function agentJourneyMarkup(){
   const rows=Array.isArray(state.agentJourney)?state.agentJourney:[];
   if(!rows.length)return '';
   const cards=rows.map(row=>{
-    const alive=row.director_runtime==='vercel';
-    const assigned=row.assigned_agent_slug===row.director_slug;
-    const evidenceOk=Number(row.evidence_validated||0)>0;
-    const observed=Number(row.observation_count||0)>0;
-    const incoming=(state.agentHandoffs||[]).find(h=>h.to_stage_key===row.stage_key&&['proposed','ready','accepted','blocked'].includes(h.status));
-    const incomingBlocked=incoming?.status==='blocked';
-    const stateClass=!alive?'offline':!assigned?'blocked':incomingBlocked?'blocked':evidenceOk&&observed?'learning':'active';
-    const stateLabel=!alive?'Sin runtime':!assigned?'Sin asignar':incomingBlocked?'Bloqueado':evidenceOk&&observed?'Aprendiendo':'Observando';
-    const actionLabel=incoming?handoffActionLabel(incoming):'Ejecutar lectura';
-    return '<article class="bw-agent-stage '+stateClass+'" data-agent-stage="'+safe(row.stage_key)+'">'+
-      '<div class="bw-agent-stage-head"><span class="bw-agent-step">'+safe(row.stage_number)+'</span><div><small>'+safe(row.customer_state_in||'')+' → '+safe(row.customer_state_out||'')+'</small><h3>'+safe(row.stage_name)+'</h3></div><em>'+safe(stateLabel)+'</em></div>'+
-      '<p>'+safe(row.mission_title||'Sin misión activa')+'</p>'+
-      '<div class="bw-agent-stage-meta"><span><b>'+safe(row.director_name||row.director_slug)+'</b> '+safe(String(row.autonomy_mode||'shadow').toUpperCase())+'</span><span><b>'+safe(row.evidence_validated||0)+'/'+safe(row.evidence_requested||0)+'</b> evidencia</span><span><b>'+safe(row.observation_count||0)+'/'+safe(row.parameter_count||0)+'</b> KPI observados</span></div>'+
-      '<div class="bw-agent-stage-actions">'+
-        (incoming
-          ? '<button type="button" class="bw-agent-handoff-run" data-handoff="'+safe(incoming.id)+'" data-agent="'+safe(incoming.to_agent_slug)+'">'+safe(actionLabel)+'</button>'
-          : '<button type="button" class="bw-agent-run" data-agent="'+safe(row.director_slug)+'" data-stage="'+safe(row.stage_key)+'">'+safe(actionLabel)+'</button>')+
-        '<span>'+safe(row.mission_status||'sin misión')+'</span></div>'+
-      '<div class="bw-agent-result" data-agent-result="'+safe(row.director_slug)+'"></div>'+
+    const evidenceValidated=Number(row.evidence_validated||0);
+    const evidenceRequested=Number(row.evidence_requested||0);
+    const proven=evidenceValidated>0;
+    const statusClass=proven?'learning':(row.mission_status==='blocked'?'blocked':'active');
+    const facilitator=stageDisplayName(row.stage_key);
+    const mission=row.mission_title||'Sin misión activa';
+    const evidenceText=evidenceRequested
+      ? evidenceValidated+' / '+evidenceRequested+' evidencia comprobada'
+      : 'Sin evidencia registrada para esta etapa';
+    return '<article class="bw-agent-stage '+statusClass+'" data-agent-stage="'+safe(row.stage_key)+'">'+
+      '<div class="bw-agent-stage-head"><span class="bw-agent-step">'+safe(row.stage_number)+'</span><div><small>LINKDOT FACILITADOR</small><h3>'+safe(facilitator)+'</h3></div><em>'+(proven?'Comprobado':'Por comprobar')+'</em></div>'+
+      '<p><b>Misión de la etapa:</b> '+safe(mission)+'</p>'+
+      '<div class="bw-agent-stage-meta"><span><b>'+safe(row.director_name||row.director_slug)+'</b> facilita</span><span><b>'+safe(evidenceText)+'</b></span></div>'+
+      '<div class="bw-agent-stage-actions"><button type="button" class="bw-stage-chatgpt" data-stage="'+safe(row.stage_key)+'" data-mission="'+safe(mission)+'">Trabajar en ChatGPT</button><span>'+safe(row.mission_status||'sin misión')+'</span></div>'+
     '</article>';
   }).join('');
-  const blocked=(state.agentHandoffs||[]).filter(h=>h.status==='blocked').length;
+  const proven=rows.filter(row=>Number(row.evidence_validated||0)>0).length;
   return '<section class="bw-agent-journey" id="bw-agent-journey">'+
-    '<div class="bw-section-head"><div><span class="bw-kicker">CONTROL CENTRAL / LINK AGENTS</span><h2>Journey operativo</h2><p>Marketing → Ventas → Cierre → Onboarding → Entrega → Postventa. Cada Director recibe solo lo que la etapa anterior puede demostrar.</p></div><span class="bw-agent-live">'+rows.filter(x=>x.director_runtime==='vercel').length+' / '+rows.length+' runtimes vivos · '+blocked+' bloqueos reales</span></div>'+
+    '<div class="bw-section-head"><div><span class="bw-kicker">CONCHA · FACILITADORES</span><h2>Qué necesita la célula para funcionar mejor</h2><p>MAR → Ventas → Cierre → Boarding → Opera → Postventa. Los LINKDOT no son el objetivo: facilitan la misión del negocio y sólo avanzan con evidencia.</p></div><span class="bw-agent-live">'+proven+' / '+rows.length+' etapas con evidencia</span></div>'+
     '<div class="bw-agent-flow">'+cards+'</div>'+
-    agentHandoffMarkup()+
+    '<details class="bw-technical-handoffs"><summary>Ver handoffs y señales técnicas</summary>'+agentHandoffMarkup()+'</details>'+
   '</section>';
+}
+
+function bindMissionFirstJourney(root){
+  root.querySelectorAll('.bw-stage-chatgpt').forEach(button=>button.addEventListener('click',()=>{
+    const stage=button.dataset.stage;
+    const mission=button.dataset.mission||'';
+    const prompt='Trabajemos la etapa '+stageDisplayName(stage)+' de '+state.business.name+' desde la misión real del negocio. Misión de la etapa: '+mission+'. Revisa primero la evidencia y los artefactos conectados. Dime qué está comprobado, qué falta para que esta etapa ayude al crecimiento de la célula, cuál es la siguiente acción mínima y quién debe hacerla: ChatGPT, humano o ambos. Ejecuta desde ChatGPT todo lo interno, reversible y disponible. No uses handoffs o estados técnicos como objetivo final.';
+    close();
+    document.dispatchEvent(new CustomEvent('linkworld:director-prompt',{detail:{prompt}}));
+  }));
 }
 
 async function runStageDirector(button){
@@ -339,8 +344,7 @@ async function runStageHandoff(button){
   }
 }
 function bindAgentJourney(root){
-  root.querySelectorAll('.bw-agent-run').forEach(button=>button.addEventListener('click',()=>runStageDirector(button)));
-  root.querySelectorAll('.bw-agent-handoff-run').forEach(button=>button.addEventListener('click',()=>runStageHandoff(button)));
+  bindMissionFirstJourney(root);
 }
 
 const crmStageNames={new:'Nuevo',qualified:'Calificado',contacted:'Contactado',proposal:'Propuesta',won:'Ganado',lost:'Perdido'};
