@@ -36,6 +36,7 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileLedgerOpen, setMobileLedgerOpen] = useState(false);
+  const [ledgerCollapsed, setLedgerCollapsed] = useState(false);
 
   // Estado de conexión y autenticación
   const [supabaseConnected, setSupabaseConnected] = useState(false);
@@ -229,6 +230,8 @@ export default function App() {
         onNavigate={handleNavigate}
         mobileOpen={mobileLedgerOpen}
         onCloseMobile={() => setMobileLedgerOpen(false)}
+        desktopCollapsed={ledgerCollapsed}
+        onToggleDesktop={() => setLedgerCollapsed(value => !value)}
       />
 
       {/* Espacio Central: Canvas + Utilidades */}
