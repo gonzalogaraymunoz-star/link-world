@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Layers } from 'lucide-react';
 import { Business, AttentionItem } from '../services/linkContext.ts';
 import { filterBusinesses } from '../services/dataState.ts';
@@ -13,6 +13,7 @@ interface WorldCanvasProps {
   showAll?: boolean;
 }
 export const WorldCanvas: React.FC<WorldCanvasProps> = ({businesses, attentionItems = [], onSelectBusiness, onNavigate, searchFilter, showAll}) => {
+  const [showAllSignals, setShowAllSignals] = useState(false);
   const visible = filterBusinesses(businesses, searchFilter);
   const imageFor = (business: Business) => business.slug.includes('caracol') ? ASSETS.caracolLodge : business.slug.includes('lama') ? ASSETS.lamaDesert : business.slug.includes('hotel-experience') ? ASSETS.hotelVilla : ASSETS.linkCube;
   return <div className="flex flex-col xl:flex-row gap-8 p-4 sm:p-6 max-w-[1600px] mx-auto">
@@ -25,6 +26,7 @@ export const WorldCanvas: React.FC<WorldCanvasProps> = ({businesses, attentionIt
           <button onClick={() => onNavigate('businesses')} className="px-3 py-2" style={{background: 'var(--surface)'}}>Células · {businesses.length}</button>
           <button onClick={() => onNavigate('operations')} className="px-3 py-2" style={{background: 'var(--surface)'}}>Operaciones →</button>
           <button onClick={() => onNavigate('models')} className="px-3 py-2" style={{background: 'var(--surface)'}}>Modelos →</button>
+          <a href="https://link-world-game.pages.dev/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-2 rounded-md" style={{background: 'var(--surface)', color: 'var(--ink)'}}>Territorio físico ↗</a>
         </div>
       </section>
       <section className="space-y-4">
@@ -50,9 +52,9 @@ export const WorldCanvas: React.FC<WorldCanvasProps> = ({businesses, attentionIt
       </section>
     </div>
     <aside className="w-full xl:w-[300px] shrink-0 space-y-4">
-      <div className="flex justify-between border-b pb-3" style={{borderColor: 'var(--border-subtle)'}}><h2 className="text-sm font-bold font-display">SEÑALES POR REVISAR</h2><span className="text-xs font-mono">{attentionItems.length}</span></div>
-      <p className="text-xs leading-relaxed" style={{color: 'var(--ink-muted)'}}>Señales registradas en las fichas. Confirma su vigencia en Director.</p>
-      {attentionItems.slice(0,6).map(item => <button key={`${item.businessSlug}-${item.id}`} onClick={() => { const related = businesses.find(b => b.slug === item.businessSlug); related ? onSelectBusiness(related) : onNavigate('director'); }} className="w-full text-left p-4 space-y-2" style={{background: 'var(--surface-low)',borderLeft: '2px solid var(--link-fluor)'}}>
+      <div className="flex justify-between items-center border-b pb-3 gap-3" style={{borderColor: 'var(--border-subtle)'}}><h2 className="text-sm font-bold font-display">SEÑALES POR REVISAR</h2><div className="flex items-center gap-2"><span className="text-xs font-mono">{attentionItems.length}</span>{attentionItems.length > 3 && <button type="button" aria-expanded={showAllSignals} onClick={() => setShowAllSignals(v => !v)} className="text-[11px] underline underline-offset-2">{showAllSignals ? 'Mostrar menos' : 'Ver más'}</button>}</div></div>
+      <p className="text-xs leading-relaxed" style={{color: 'var(--ink-muted)'}}>Señales observadas en las fichas, no hechos certificados. Verifica contexto y evidencias en Director.</p>
+      {attentionItems.slice(0,showAllSignals ? 6 : 3).map(item => <button key={`${item.businessSlug}-${item.id}`} onClick={() => { const related = businesses.find(b => b.slug === item.businessSlug); related ? onSelectBusiness(related) : onNavigate('director'); }} className="w-full text-left p-4 space-y-2" style={{background: 'var(--surface-low)',borderLeft: '2px solid var(--link-fluor)'}}>
         <span className="text-[10px] font-mono uppercase" style={{color: 'var(--ink-muted)'}}>{item.businessName} · {item.dimension}</span><h3 className="text-sm font-bold">{item.title}</h3><p className="text-xs leading-relaxed" style={{color: 'var(--ink-muted)'}}>{item.reason}</p><span className="text-[11px]">Abrir contexto →</span>
       </button>)}
       {!attentionItems.length && <div className="p-5 text-xs flex items-center gap-2" style={{background:'var(--surface-low)',color:'var(--ink-muted)'}}><Layers size={14}/>Sin señales en las fichas disponibles.</div>}
