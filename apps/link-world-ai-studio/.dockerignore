@@ -1,0 +1,15 @@
+.git
+.github
+node_modules
+.DS_Store
+.env*
+!.env.example
+upstream-link-world/
+*.zip
+*.log
+coverage/
+dist/
+README.md
+LINK_SYSTEM_CORE.md
+LINK_MAPA_MAESTRO.md
+metadata.json
