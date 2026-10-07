@@ -35,7 +35,7 @@ export default function App() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [mobileLedgerOpen, setMobileLedgerOpen] = useState(false);
+  const [mobileLedgerOpen, setMobileLedgerOpen] = useState(false);\n  const [ledgerCollapsed, setLedgerCollapsed] = useState(false);
 
   // Estado de conexión y autenticación
   const [supabaseConnected, setSupabaseConnected] = useState(false);
@@ -228,7 +228,7 @@ export default function App() {
         selectedBusiness={selectedBusiness}
         onNavigate={handleNavigate}
         mobileOpen={mobileLedgerOpen}
-        onCloseMobile={() => setMobileLedgerOpen(false)}
+        onCloseMobile={() => setMobileLedgerOpen(false)}\n        desktopCollapsed={ledgerCollapsed}\n        onToggleDesktop={() => setLedgerCollapsed(value => !value)}
       />
 
       {/* Espacio Central: Canvas + Utilidades */}
