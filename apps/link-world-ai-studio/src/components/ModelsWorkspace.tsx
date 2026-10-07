@@ -14,6 +14,7 @@ export const ModelsWorkspace: React.FC<ModelsWorkspaceProps> = ({
   onNavigate,
   onOpenAuth,
 }) => {
+  const loadVersion = React.useRef(0);
   const [modelsResult, setModelsResult] = useState<DataFetchResult<any[]>>({
     data: null,
     status: 'loading',
@@ -31,13 +32,15 @@ export const ModelsWorkspace: React.FC<ModelsWorkspaceProps> = ({
   };
 
   async function loadModels() {
+    const version = ++loadVersion.current;
     setModelsResult({ data: null, status: 'loading' });
     const res = await linkContext.getModels();
-    setModelsResult(res);
+    if (version === loadVersion.current) setModelsResult(res);
   }
 
   useEffect(() => {
-    loadModels();
+    void loadModels();
+    return () => { loadVersion.current += 1; };
   }, []);
 
   return (
@@ -81,14 +84,13 @@ export const ModelsWorkspace: React.FC<ModelsWorkspaceProps> = ({
       </section>
 
       {/* Cartera de Modelos */}
-      {modelsResult.status === 'unauthorized' ? (
+      {modelsResult.status === 'loading' ? <EmptyState type="loading" title="Cargando modelos" /> : modelsResult.status === 'unauthorized' ? (
         <EmptyState
           type="unauthorized"
-          title="Cartera de Modelos Protegida por RLS"
-          description="La vista link_world_model_portfolio_v requiere sesión activa con membresía autorizada de LINK WORLD para consultar fórmulas de costo, readiness y patentes de modelos."
+          title="Ingresa para consultar modelos"
+          description="Ingresa con tu cuenta de miembro LINK para consultar la cartera y sus evidencias."
           actionLabel="Iniciar Sesión de Miembro LINK"
           onAction={onOpenAuth}
-          technicalDetails="Error Supabase: permission denied for view link_world_model_portfolio_v"
         />
       ) : modelsResult.status === 'empty' ? (
         <EmptyState
@@ -127,7 +129,7 @@ export const ModelsWorkspace: React.FC<ModelsWorkspaceProps> = ({
                     className="text-[10px] font-mono px-2 py-0.5 rounded-xs"
                     style={{ background: 'var(--surface)', color: 'var(--ink-muted)' }}
                   >
-                    {maturityLabels[m.maturity_stage || ''] || m.maturity_stage || 'Activo'}
+                    {maturityLabels[m.maturity_stage || ''] || m.maturity_stage || 'Sin etapa registrada'}
                   </span>
                 </div>
 

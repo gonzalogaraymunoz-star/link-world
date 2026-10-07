@@ -3,7 +3,11 @@ import {readableValue} from './presentation.js';
 const arrayify=value=>{
   if(value==null||value==='')return [];
   if(Array.isArray(value))return value.filter(item=>item!=null&&item!=='');
-  if(typeof value==='object')return Object.values(value).filter(item=>item!=null&&item!=='');
+  if(typeof value==='object'){
+    // A structured event is one record; splitting its values loses labels and evidence.
+    if(['fact','ref','code','note','title','real_movement','test_amount_clp'].some(key=>Object.hasOwn(value,key)))return [value];
+    return Object.values(value).filter(item=>item!=null&&item!=='');
+  }
   return [value];
 };
 

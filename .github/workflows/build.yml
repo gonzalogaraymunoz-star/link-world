@@ -1,21 +1,31 @@
 name: LINK WORLD build
 on:
   push:
-    branches: [main]
+    branches: [main, feature/cloud-run-ai-studio-2026-10-06]
   pull_request:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ['.', 'apps/link-world-ai-studio']
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Use Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-      - name: Install dependencies
+          node-version: '24.19.0'
+      - name: Install locked AI Studio dependencies
+        if: matrix.directory == 'apps/link-world-ai-studio'
+        run: npm ci --no-audit --no-fund
+      - name: Install legacy app dependencies
+        if: matrix.directory == '.'
         run: npm install --no-audit --no-fund
-      - name: Test isolated demo engine
+      - name: Test
         run: npm test
       - name: Build deployable app
         run: npm run build

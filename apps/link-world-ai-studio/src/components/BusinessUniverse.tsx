@@ -20,16 +20,21 @@ export const BusinessUniverse: React.FC<BusinessUniverseProps> = ({
   const [clients, setClients] = useState<ClientCounterpart[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [queryError, setQueryError] = useState('');
 
   useEffect(() => {
     let active = true;
     async function load() {
       setLoading(true);
+      setQueryError('');
+      setClients([]);
+      setProducts([]);
       const [cRes, pRes] = await Promise.all([
         linkContext.getClients(business.id),
         linkContext.getProducts(business.id),
       ]);
       if (active) {
+        setQueryError(cRes.errorMessage || pRes.errorMessage || '');
         setClients(cRes.data || []);
         setProducts(pRes.data || []);
         setLoading(false);
@@ -142,7 +147,7 @@ export const BusinessUniverse: React.FC<BusinessUniverseProps> = ({
               QUIÉN VENDE / FACTURA
             </span>
             <strong className="block mt-1 font-medium" style={{ color: 'var(--ink)' }}>
-              {owned?.sales_apparatus?.channel || 'Directo / Propio'}
+              {owned?.sales_apparatus?.channel || 'Sin rol registrado'}
             </strong>
           </div>
 
@@ -151,7 +156,7 @@ export const BusinessUniverse: React.FC<BusinessUniverseProps> = ({
               QUIÉN OPERA
             </span>
             <strong className="block mt-1 font-medium" style={{ color: 'var(--ink)' }}>
-              {owned?.hotel_experience_bridge?.role || 'Equipo y Red Operativa LINK'}
+              {owned?.hotel_experience_bridge?.role || 'Sin operador registrado'}
             </strong>
           </div>
 
@@ -160,7 +165,7 @@ export const BusinessUniverse: React.FC<BusinessUniverseProps> = ({
               CONTRAPARTES CONECTADAS
             </span>
             <strong className="block mt-1 font-medium" style={{ color: 'var(--ink)' }}>
-              {clients.length} registradas en Supabase
+              {loading ? 'Consultando…' : queryError ? 'Consulta no disponible' : `${clients.length} registradas`}
             </strong>
           </div>
 
@@ -169,7 +174,7 @@ export const BusinessUniverse: React.FC<BusinessUniverseProps> = ({
               PRODUCTOS REGISTRADOS
             </span>
             <strong className="block mt-1 font-medium" style={{ color: 'var(--ink)' }}>
-              {products.length} ofertas estructuradas
+              {loading ? 'Consultando…' : queryError ? 'Consulta no disponible' : `${products.length} ofertas estructuradas`}
             </strong>
           </div>
         </div>
@@ -362,7 +367,7 @@ export const BusinessUniverse: React.FC<BusinessUniverseProps> = ({
                   className="text-[10px] font-mono px-2 py-0.5 rounded-xs self-start sm:self-auto"
                   style={{ background: 'var(--surface)', color: 'var(--ink-muted)' }}
                 >
-                  VERIFICADO
+                  {ev.state || 'REGISTRADA'}
                 </span>
               </div>
             ))}

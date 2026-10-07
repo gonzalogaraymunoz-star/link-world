@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme=night], [data-theme=night] *));
 
 :root {
   /* Architectural Ledger: Exact Palette from Mockup */
@@ -81,3 +82,9 @@ code, kbd, pre, .font-mono {
 .contour-map-bg {
   background-image: radial-gradient(circle at 50% 50%, rgba(200, 180, 150, 0.08) 0%, transparent 70%);
 }
+
+button:not(:disabled), select { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+main > div.space-y-8 { padding: 24px; }
+@media (max-width: 640px) { main > div.space-y-8 { padding: 16px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

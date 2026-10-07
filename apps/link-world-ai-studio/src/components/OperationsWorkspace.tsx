@@ -89,7 +89,7 @@ export const OperationsWorkspace: React.FC<OperationsWorkspaceProps> = ({
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
           <h2 className="text-xs font-mono uppercase tracking-wider font-bold" style={{ color: 'var(--ink)' }}>
-            Núcleos Operacionales Verificados ({operationalCells.length})
+            Núcleos con arquitectura registrada ({operationalCells.length})
           </h2>
           <span className="text-[11px] font-mono" style={{ color: 'var(--ink-faint)' }}>
             Datos reales de arquitectura de célula
@@ -124,7 +124,7 @@ export const OperationsWorkspace: React.FC<OperationsWorkspaceProps> = ({
                       className="text-[10px] font-mono px-2 py-0.5 rounded-xs font-medium"
                       style={{ background: 'var(--surface)', color: 'var(--ink-muted)' }}
                     >
-                      {stabilization?.state || 'conectado'}
+                      {stabilization?.state || 'Estado no certificado'}
                     </span>
                   </div>
 
@@ -164,7 +164,7 @@ export const OperationsWorkspace: React.FC<OperationsWorkspaceProps> = ({
           <EmptyState
             type="empty"
             title="Sin operaciones conectadas para este filtro"
-            description="La fuente canónica no registra actualmente eventos operacionales pendientes para la célula seleccionada."
+            description="No hay arquitectura operativa registrada en las fichas disponibles para este filtro."
           />
         )}
       </section>

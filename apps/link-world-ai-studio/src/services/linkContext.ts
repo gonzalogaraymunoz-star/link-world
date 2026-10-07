@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.ts';
+import { errorStatus, consolidateSummary } from './dataState.ts';
 
 export interface Business {
   id: string;
@@ -97,7 +98,7 @@ export const linkContext = {
 
       if (error) {
         if (error.code === '42501' || error.message?.includes('permission')) {
-          return { data: null, status: 'unauthorized', errorMessage: error.message };
+          return { data: null, status: errorStatus(error), errorMessage: error.message };
         }
         return { data: null, status: 'error', errorMessage: error.message };
       }
@@ -121,7 +122,7 @@ export const linkContext = {
       const { data, error } = await query;
       if (error) {
         if (error.code === '42501' || error.message?.includes('permission')) {
-          return { data: null, status: 'unauthorized', errorMessage: error.message };
+          return { data: null, status: errorStatus(error), errorMessage: error.message };
         }
         return { data: null, status: 'error', errorMessage: error.message };
       }
@@ -145,7 +146,7 @@ export const linkContext = {
       const { data, error } = await query;
       if (error) {
         if (error.code === '42501' || error.message?.includes('permission')) {
-          return { data: null, status: 'unauthorized', errorMessage: error.message };
+          return { data: null, status: errorStatus(error), errorMessage: error.message };
         }
         return { data: null, status: 'error', errorMessage: error.message };
       }
@@ -166,27 +167,34 @@ export const linkContext = {
     movements: DataFetchResult<any[]>;
     lifecycle: DataFetchResult<any>;
   }> {
-    const summaryRes = await (async () => {
+    const { data: membership, error: membershipError } = await supabase.rpc('link_world_is_member');
+    if (membershipError || !membership) {
+      const denied = { data: null, status: membershipError ? errorStatus(membershipError) : 'unauthorized' as const, errorMessage: membershipError?.message };
+      return { summary: denied, movements: denied, lifecycle: denied };
+    }
+
+    const summaryPromise = (async () => {
       try {
         let q = supabase.from('link_fin_real_summary_v').select('*');
         if (businessId) q = q.eq('business_id', businessId);
         const { data, error } = businessId ? await q.maybeSingle() : await q;
         if (error) {
-          return { data: null, status: 'unauthorized' as const, errorMessage: error.message };
+          return { data: null, status: errorStatus(error), errorMessage: error.message };
         }
-        return { data, status: data ? ('ready' as const) : ('empty' as const) };
+        const result = consolidateSummary(data);
+        return { data: result, status: result ? ('ready' as const) : ('empty' as const) };
       } catch (err: any) {
         return { data: null, status: 'error' as const, errorMessage: err.message };
       }
     })();
 
-    const movementsRes = await (async () => {
+    const movementsPromise = (async () => {
       try {
         let q = supabase.from('link_fin_real_movements_v').select('*').order('occurred_at', { ascending: false });
         if (businessId) q = q.eq('business_id', businessId);
         const { data, error } = await q.limit(50);
         if (error) {
-          return { data: null, status: 'unauthorized' as const, errorMessage: error.message };
+          return { data: null, status: errorStatus(error), errorMessage: error.message };
         }
         return { data: data || [], status: (data && data.length > 0) ? ('ready' as const) : ('empty' as const) };
       } catch (err: any) {
@@ -194,20 +202,21 @@ export const linkContext = {
       }
     })();
 
-    const lifecycleRes = await (async () => {
+    const lifecyclePromise = (async () => {
       try {
         let q = supabase.from('link_fin_business_lifecycle_v').select('*');
         if (businessId) q = q.eq('business_id', businessId);
         const { data, error } = businessId ? await q.maybeSingle() : await q;
         if (error) {
-          return { data: null, status: 'unauthorized' as const, errorMessage: error.message };
+          return { data: null, status: errorStatus(error), errorMessage: error.message };
         }
-        return { data, status: data ? ('ready' as const) : ('empty' as const) };
+        return { data, status: data && (!Array.isArray(data) || data.length) ? ('ready' as const) : ('empty' as const) };
       } catch (err: any) {
         return { data: null, status: 'error' as const, errorMessage: err.message };
       }
     })();
 
+    const [summaryRes, movementsRes, lifecycleRes] = await Promise.all([summaryPromise, movementsPromise, lifecyclePromise]);
     return {
       summary: summaryRes,
       movements: movementsRes,
@@ -218,12 +227,15 @@ export const linkContext = {
   // Model Foundry / Cartera de Modelos
   async getModels(): Promise<DataFetchResult<any[]>> {
     try {
+      const { data: member, error: memberError } = await supabase.rpc('link_world_is_member');
+      if (memberError) return { data: null, status: errorStatus(memberError), errorMessage: memberError.message };
+      if (!member) return { data: null, status: 'unauthorized' };
       const { data, error } = await supabase
         .from('link_world_model_portfolio_v')
         .select('*');
       
       if (error) {
-        return { data: null, status: 'unauthorized', errorMessage: error.message };
+        return { data: null, status: errorStatus(error), errorMessage: error.message };
       }
       return { data: data || [], status: data?.length ? 'ready' : 'empty' };
     } catch (err: any) {

@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { VerticalLedger } from './components/VerticalLedger.tsx';
 import { TopUtilityBar } from './components/TopUtilityBar.tsx';
 import { WorldCanvas } from './components/WorldCanvas.tsx';
-import { BusinessUniverse } from './components/BusinessUniverse.tsx';
-import { ConchaWorkspace } from './components/ConchaWorkspace.tsx';
-import { FinWorkspace } from './components/FinWorkspace.tsx';
-import { OperationsWorkspace } from './components/OperationsWorkspace.tsx';
-import { DirectorWorkspace } from './components/DirectorWorkspace.tsx';
-import { ModelsWorkspace } from './components/ModelsWorkspace.tsx';
+const BusinessUniverse = React.lazy(() => import('./components/BusinessUniverse.tsx').then(module => ({ default: module.BusinessUniverse })));
+const ConchaWorkspace = React.lazy(() => import('./components/ConchaWorkspace.tsx').then(module => ({ default: module.ConchaWorkspace })));
+const FinWorkspace = React.lazy(() => import('./components/FinWorkspace.tsx').then(module => ({ default: module.FinWorkspace })));
+const OperationsWorkspace = React.lazy(() => import('./components/OperationsWorkspace.tsx').then(module => ({ default: module.OperationsWorkspace })));
+const DirectorWorkspace = React.lazy(() => import('./components/DirectorWorkspace.tsx').then(module => ({ default: module.DirectorWorkspace })));
+const ModelsWorkspace = React.lazy(() => import('./components/ModelsWorkspace.tsx').then(module => ({ default: module.ModelsWorkspace })));
 import { EmptyState } from './components/EmptyState.tsx';
 import { Business, linkContext, AttentionItem } from './services/linkContext.ts';
 import { supabase } from './lib/supabase.ts';
@@ -21,6 +21,9 @@ export default function App() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [attentionItems, setAttentionItems] = useState<AttentionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [loadError, setLoadError] = useState('');
+  const authModalRef = useRef<HTMLDivElement>(null);
 
   // Tema canónico: DAY MODE por defecto
   const [theme, setTheme] = useState<'day' | 'night' | 'gray'>(() => {
@@ -54,37 +57,70 @@ export default function App() {
     } catch {}
   }, [theme]);
 
-  // Boot: Inicializar conexión viva y datos canónicos
+  // Auth callbacks stay synchronous: Supabase calls are made by the loading effect.
   useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'TOKEN_REFRESHED'].includes(event)) {
+        setBusinesses([]);
+        setAttentionItems([]);
+        setLoading(true);
+        if (event === 'SIGNED_OUT') { setSelectedBusiness(null); setCurrentDimension('world'); setDimensionPath(['LINK']); }
+        setIsMember(false);
+        setUserEmail(undefined);
+        setRefreshToken(value => value + 1);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setLoadError('');
     async function boot() {
-      setLoading(true);
       try {
-        const ping = await linkContext.pingConnection();
+        const [ping, bizRes] = await Promise.all([linkContext.pingConnection(), linkContext.getBusinesses()]);
+        if (!active) return;
         setSupabaseConnected(ping.ok);
         setIsMember(ping.isMember);
         setUserEmail(ping.email);
-
-        const bizRes = await linkContext.getBusinesses();
-        if (bizRes.data) {
-          setBusinesses(bizRes.data);
-          const derived = linkContext.deriveRealAttention(bizRes.data);
-          setAttentionItems(derived);
-        }
-      } catch (err) {
-        console.warn('Error en boot de LINK WORLD:', err);
-      } finally {
-        setLoading(false);
-      }
+        setBusinesses(bizRes.data || []);
+        setAttentionItems(linkContext.deriveRealAttention(bizRes.data || []));
+        setSelectedBusiness(previous => previous ? bizRes.data?.find(b => b.id === previous.id) || null : null);
+        if (bizRes.status === 'error' || bizRes.status === 'unauthorized') setLoadError(bizRes.errorMessage || 'No fue posible cargar las células.');
+      } catch {
+        if (active) { setSupabaseConnected(false); setLoadError('No fue posible conectar. Intenta actualizar.'); }
+      } finally { if (active) setLoading(false); }
     }
-    boot();
-  }, []);
+    void boot();
+    return () => { active = false; };
+  }, [refreshToken]);
+
+  useEffect(() => {
+    if (!authModalOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    authModalRef.current?.querySelector<HTMLInputElement>('input')?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setAuthModalOpen(false); setAuthPassword(''); }
+      if (event.key === 'Tab') {
+        const elements = authModalRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input');
+        if (!elements?.length) return;
+        const first = elements[0], last = elements[elements.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('keydown', onKey); previous?.focus(); };
+  }, [authModalOpen]);
 
   // Manejo de navegación dimensional
   const handleNavigate = (dim: string, biz: Business | null = null) => {
     setCurrentDimension(dim);
-    if (biz) {
-      setSelectedBusiness(biz);
-    }
+    setMobileLedgerOpen(false);
+    setSearchQuery('');
+    if (biz) setSelectedBusiness(biz);
+    else if (dim === 'fin' || dim === 'operations') setSelectedBusiness(null);
 
     if (dim === 'world') {
       setDimensionPath(['LINK']);
@@ -99,10 +135,10 @@ export default function App() {
       const activeBiz = biz || selectedBusiness;
       setDimensionPath(['LINK', 'Células', activeBiz?.name || '', 'Concha']);
     } else if (dim === 'fin') {
-      const activeBiz = biz || selectedBusiness;
+      const activeBiz = biz;
       setDimensionPath(activeBiz ? ['LINK', 'Células', activeBiz.name, 'FIN'] : ['LINK', 'FIN']);
     } else if (dim === 'operations') {
-      const activeBiz = biz || selectedBusiness;
+      const activeBiz = biz;
       setDimensionPath(activeBiz ? ['LINK', 'Células', activeBiz.name, 'Operaciones'] : ['LINK', 'Operaciones']);
     } else if (dim === 'director') {
       setDimensionPath(['LINK', 'Director']);
@@ -126,15 +162,16 @@ export default function App() {
         administracion: 'Administración',
         conexiones: 'Conexiones',
       };
-      setDimensionPath(['LINK', titles[dim] || dim]);
+      const activeBiz = biz || selectedBusiness;
+      setDimensionPath(activeBiz ? ['LINK', 'Células', activeBiz.name, titles[dim] || dim] : ['LINK', titles[dim] || dim]);
     }
   };
 
   const handleBack = () => {
-    if (['concha', 'fin', 'operations', 'evolution'].includes(currentDimension) && selectedBusiness) {
+    if (currentDimension !== 'business' && currentDimension !== 'world' && selectedBusiness) {
       handleNavigate('business', selectedBusiness);
     } else if (currentDimension === 'business') {
-      handleNavigate('world', null);
+      handleNavigate('businesses', null);
     } else {
       handleNavigate('world', null);
     }
@@ -158,8 +195,11 @@ export default function App() {
       if (error) throw error;
 
       const ping = await linkContext.pingConnection();
-      setIsMember(ping.isMember);
-      setUserEmail(data.user.email);
+      if (!ping.isMember) {
+        setAuthError('Tu sesión está activa, pero esta cuenta no tiene membresía autorizada de LINK.');
+        setAuthPassword('');
+        return;
+      }
       setAuthModalOpen(false);
       setAuthEmail('');
       setAuthPassword('');
@@ -171,7 +211,11 @@ export default function App() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) { setLoadError('No se pudo cerrar la sesión. Vuelve a intentarlo.'); return; }
+    setBusinesses([]);
+    setAttentionItems([]);
+    handleNavigate('world');
     setIsMember(false);
     setUserEmail(undefined);
   };
@@ -192,6 +236,9 @@ export default function App() {
         {/* Barra Utilitaria Superior (48-56px) */}
         <TopUtilityBar
           dimensionPath={dimensionPath}
+          onNavigatePath={(index) => index === 0 ? handleNavigate('world') : index === 1 ? handleNavigate('businesses') : selectedBusiness && handleNavigate('business', selectedBusiness)}
+          onRefresh={() => setRefreshToken(value => value + 1)}
+          refreshing={loading}
           onBack={handleBack}
           canGoBack={dimensionPath.length > 1}
           theme={theme}
@@ -215,10 +262,12 @@ export default function App() {
               description="Conectando con Supabase y recuperando estado vivo del organismo..."
             />
           ) : (
-            <>
+            <React.Suspense key={refreshToken} fallback={<EmptyState type="loading" title="Cargando mesa" />}>
+              {loadError ? <EmptyState type="error" title="No pudimos cargar LINK" description={loadError} actionLabel="Reintentar" onAction={() => setRefreshToken(value => value + 1)} /> : null}
               {/* Dimensión 0: LINK World / Territorio */}
               {(currentDimension === 'world' || currentDimension === 'businesses') && (
                 <WorldCanvas
+                  showAll={currentDimension === 'businesses'}
                   businesses={businesses}
                   attentionItems={attentionItems}
                   onSelectBusiness={handleSelectBusiness}
@@ -250,7 +299,7 @@ export default function App() {
                 <FinWorkspace
                   businesses={businesses}
                   selectedBusiness={selectedBusiness}
-                  onSelectBusiness={setSelectedBusiness}
+                  onSelectBusiness={(business) => handleNavigate(currentDimension, business)}
                   onNavigate={handleNavigate}
                   onOpenAuth={() => setAuthModalOpen(true)}
                 />
@@ -261,7 +310,7 @@ export default function App() {
                 <OperationsWorkspace
                   businesses={businesses}
                   selectedBusiness={selectedBusiness}
-                  onSelectBusiness={setSelectedBusiness}
+                  onSelectBusiness={(business) => handleNavigate(currentDimension, business)}
                   onNavigate={handleNavigate}
                 />
               )}
@@ -294,7 +343,7 @@ export default function App() {
                   />
                 </div>
               )}
-            </>
+            </React.Suspense>
           )}
         </main>
       </div>
@@ -302,12 +351,13 @@ export default function App() {
       {/* Modal de Sesión de Miembro LINK */}
       {authModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div 
+          <div ref={authModalRef} role="dialog" aria-modal="true" aria-labelledby="auth-title"
             className="p-6 max-w-sm w-full space-y-4 shadow-2xl relative rounded-xs"
             style={{ background: 'var(--canvas)', border: '1px solid var(--border-subtle)' }}
           >
             <button
-              onClick={() => setAuthModalOpen(false)}
+              aria-label="Cerrar acceso"
+              onClick={() => { setAuthModalOpen(false); setAuthPassword(''); }}
               className="absolute right-4 top-4 hover:opacity-70"
               style={{ color: 'var(--ink)' }}
             >
@@ -318,7 +368,7 @@ export default function App() {
               <span className="text-[10px] font-mono uppercase tracking-wider block" style={{ color: 'var(--ink-faint)' }}>
                 SEGURIDAD Y RLS
               </span>
-              <h2 className="text-lg font-bold font-display" style={{ color: 'var(--ink)' }}>
+              <h2 id="auth-title" className="text-lg font-bold font-display" style={{ color: 'var(--ink)' }}>
                 Sesión Miembro LINK
               </h2>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
@@ -335,8 +385,9 @@ export default function App() {
 
             <form onSubmit={handleSignIn} className="space-y-3 text-xs font-mono">
               <div>
-                <label className="block mb-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>CORREO ELECTRÓNICO</label>
+                <label htmlFor="auth-email" className="block mb-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>CORREO ELECTRÓNICO</label>
                 <input
+                  id="auth-email" autoComplete="username"
                   type="email"
                   required
                   value={authEmail}
@@ -348,8 +399,9 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block mb-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>CONTRASEÑA</label>
+                <label htmlFor="auth-password" className="block mb-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>CONTRASEÑA</label>
                 <input
+                  id="auth-password" autoComplete="current-password"
                   type="password"
                   required
                   value={authPassword}

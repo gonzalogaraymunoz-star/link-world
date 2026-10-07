@@ -45,23 +45,23 @@ export const VerticalLedger: React.FC<VerticalLedgerProps> = ({
     {
       title: 'OPERACIÓN',
       items: [
-        { id: 'mar', label: 'MAR', icon: Radio, implemented: true },
-        { id: 'sales', label: 'Ventas', icon: RefreshCw, implemented: true },
-        { id: 'closing', label: 'Cierre', icon: Lock, implemented: true },
-        { id: 'boarding', label: 'Boarding', icon: ClipboardList, implemented: true },
+        { id: 'mar', label: 'MAR', icon: Radio, implemented: false },
+        { id: 'sales', label: 'Ventas', icon: RefreshCw, implemented: false },
+        { id: 'closing', label: 'Cierre', icon: Lock, implemented: false },
+        { id: 'boarding', label: 'Boarding', icon: ClipboardList, implemented: false },
         { id: 'operations', label: 'Opera', icon: Layers, implemented: true },
-        { id: 'postventa', label: 'Postventa', icon: ArrowUpRight, implemented: true },
+        { id: 'postventa', label: 'Postventa', icon: ArrowUpRight, implemented: false },
       ],
     },
     {
       title: 'CAPACIDADES',
       items: [
         { id: 'fin', label: 'FIN', icon: BarChart3, implemented: true },
-        { id: 'rrss', label: 'RRSS', icon: Share2, implemented: true },
+        { id: 'rrss', label: 'RRSS', icon: Share2, implemented: false },
         { id: 'personas', label: 'Personas', icon: Users, implemented: false },
         { id: 'evidencias', label: 'Evidencias', icon: FileCheck, implemented: false },
         { id: 'artefactos', label: 'Artefactos', icon: Box, implemented: false },
-        { id: 'evolution', label: 'Evolución', icon: TrendingUp, implemented: true },
+        { id: 'evolution', label: 'Evolución', icon: TrendingUp, implemented: false },
       ],
     },
     {
@@ -123,6 +123,7 @@ export const VerticalLedger: React.FC<VerticalLedgerProps> = ({
             </button>
 
             <button 
+              aria-label="Cerrar navegación"
               onClick={onCloseMobile}
               className="p-1 md:hidden"
               style={{ color: 'var(--ink-muted)' }}
@@ -152,6 +153,8 @@ export const VerticalLedger: React.FC<VerticalLedgerProps> = ({
                       <button
                         key={item.id}
                         onClick={() => handleSelect(item.id)}
+                        aria-current={isActive ? 'page' : undefined}
+                        title={item.implemented ? item.label : `${item.label} · En preparación`}
                         className={`w-full text-left px-2.5 py-1.5 rounded-sm text-[13px] flex items-center justify-between transition-all ${
                           isActive 
                             ? 'font-bold shadow-xs' 
@@ -169,6 +172,7 @@ export const VerticalLedger: React.FC<VerticalLedgerProps> = ({
                             style={{ color: isActive ? 'var(--ink)' : 'var(--ink-muted)' }} 
                           />
                           <span className="truncate">{item.label}</span>
+                          {!item.implemented && <span className="text-[9px] opacity-40" aria-label="En preparación">○</span>}
                         </div>
                       </button>
                     );

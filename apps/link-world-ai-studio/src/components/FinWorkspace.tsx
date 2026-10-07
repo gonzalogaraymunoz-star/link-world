@@ -32,21 +32,14 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
     { id: 'home', label: 'Inicio', icon: '⌂' },
     { id: 'evolution', label: 'Evolución', icon: '↗' },
     { id: 'movements', label: 'Movimientos', icon: '≋' },
-    { id: 'billing', label: 'Facturación', icon: '▤' },
-    { id: 'collections', label: 'Cobros', icon: '↘' },
-    { id: 'outflows', label: 'Egresos', icon: '↗' },
-    { id: 'transfers', label: 'Transferencias', icon: '⇄' },
-    { id: 'collaborators', label: 'Colaboradores', icon: '◎' },
-    { id: 'taxes', label: 'Impuestos', icon: '%' },
-    { id: 'reconciliation', label: 'Conciliación', icon: '✓' },
-    { id: 'documents', label: 'Comprobantes', icon: '□' },
-    { id: 'connections', label: 'Conexiones', icon: '⌁' },
-    { id: 'activity', label: 'Actividad', icon: '◌' },
   ];
+  const loadVersion = React.useRef(0);
 
   async function loadData() {
+    const version = ++loadVersion.current;
     setLoading(true);
     const data = await linkContext.getFinances(selectedBusiness ? selectedBusiness.id : undefined);
+    if (version !== loadVersion.current) return;
     setSummaryState(data.summary);
     setMovementsState(data.movements);
     setLifecycleState(data.lifecycle);
@@ -54,7 +47,8 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
   }
 
   useEffect(() => {
-    loadData();
+    void loadData();
+    return () => { loadVersion.current += 1; };
   }, [selectedBusiness?.id]);
 
   const money = (n: number = 0, currency: string = 'CLP') => {
@@ -68,7 +62,14 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
   const day = (v?: string) => v ? new Date(v).toLocaleDateString('es-CL') : '—';
 
   // Si no hay acceso autorizado a FIN
-  const isUnauthorized = summaryState?.status === 'unauthorized' || movementsState?.status === 'unauthorized';
+  const isUnauthorized = summaryState?.status === 'unauthorized' || movementsState?.status === 'unauthorized' || lifecycleState?.status === 'unauthorized';
+  const failed = [summaryState, movementsState, lifecycleState].find(state => state?.status === 'error');
+  const movements = (movementsState?.data || []).filter((movement: any) => {
+    const matchesSearch = [movement.concept, movement.business_name, movement.status].join(' ').toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase());
+    const days = period === 'all' ? null : Number(period.replace('d', ''));
+    return matchesSearch && (!days || new Date(movement.occurred_at).getTime() >= Date.now() - days * 86400000);
+  });
+  const lifecycleRows = Array.isArray(lifecycleState?.data) ? lifecycleState.data : lifecycleState?.data ? [lifecycleState.data] : [];
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-4 animate-fadeIn">
@@ -145,17 +146,18 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
       </section>
 
       {/* Si la consulta requiere autenticación de miembro LINK */}
-      {isUnauthorized ? (
+      {loading ? <EmptyState type="loading" title="Cargando FIN" /> : failed ? <EmptyState type="error" title="No se pudo cargar FIN" description="Intenta actualizar los datos financieros." technicalDetails={failed.errorMessage} actionLabel="Reintentar" onAction={loadData} /> : isUnauthorized ? (
         <EmptyState
           type="unauthorized"
-          title="Mesa FIN Protegida por Seguridad RLS"
-          description="Las vistas link_fin_real_summary_v y link_fin_real_movements_v contienen datos bancarios y tributarios reales de LINK CONTROL CENTRAL. Para visualizarlos se requiere una sesión activa con membresía autorizada."
+          title="Ingresa para consultar FIN"
+          description="Esta mesa contiene información financiera del ecosistema. Ingresa con tu cuenta de miembro LINK para consultarla."
           actionLabel="Iniciar Sesión de Miembro LINK"
           onAction={onOpenAuth}
-          technicalDetails="Error Supabase: permission denied for view link_fin_real_summary_v (Row Level Security)"
         />
       ) : (
         <>
+          {section === 'home' && <>
+          <p className="text-xs" style={{color: 'var(--ink-muted)'}}>Resumen histórico completo · CLP · fuente canónica FIN</p>
           {/* KPIs de Caja */}
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
             <div className="p-4 rounded-xs" style={{ background: 'var(--surface-low)' }}>
@@ -199,7 +201,7 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
                 NETO REAL
               </span>
               <strong className="text-xl font-bold font-display block mt-1" style={{ color: 'var(--ink)' }}>
-                {money(summaryState?.data?.net_real || summaryState?.data?.income_collected || 0)}
+                {money(summaryState?.data?.net_real ?? 0)}
               </strong>
               <small className="text-[10px] font-mono" style={{ color: 'var(--ink-muted)' }}>
                 Solo caja comprobada
@@ -207,13 +209,31 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
             </div>
           </section>
 
+          </>}
+          {section === 'evolution' && <section className="space-y-4">
+            <h2 className="font-bold">Ciclo de vida económico</h2>
+            {lifecycleRows.length ? lifecycleRows.map((row: any) => <div key={row.business_id} className="p-4 space-y-3" style={{background: 'var(--surface-low)'}}>
+              <h3 className="font-bold">{row.business_name}</h3>
+              <p className="text-sm">{row.current_stage_label || 'Sin etapa certificada'}</p>
+              <p className="text-xs" style={{color: 'var(--ink-muted)'}}>{row.current_stage_rule}</p>
+              <span className="text-xs font-mono">{row.verified_milestones ?? 0} hitos verificados</span>
+            </div>) : <EmptyState type="empty" title="Sin hitos económicos disponibles" />}
+          </section>}
+          {section !== 'evolution' && <>
           {/* Lista de movimientos */}
+          <div className="flex flex-wrap gap-3">
+            <input aria-label="Buscar movimientos" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Buscar concepto o negocio" className="p-2 text-xs rounded-xs border" style={{background: 'var(--surface)',borderColor: 'var(--border-subtle)'}} />
+            <select aria-label="Periodo de movimientos" value={period} onChange={event => setPeriod(event.target.value as typeof period)} className="p-2 text-xs" style={{background: 'var(--surface)'}}>
+              <option value="all">Todos los periodos</option><option value="7d">Últimos 7 días</option><option value="30d">Últimos 30 días</option><option value="90d">Últimos 90 días</option>
+            </select>
+          </div>
+          <p className="text-[11px]" style={{color: 'var(--ink-muted)'}}>Últimos 50 movimientos. El periodo filtra esta lista; el resumen superior abarca todo el historial.</p>
           <section className="space-y-3">
             <h2 className="text-xs font-mono uppercase tracking-wider font-bold" style={{ color: 'var(--ink-faint)' }}>
-              Movimientos Financieros ({movementsState?.data?.length || 0})
+              Movimientos Financieros ({movements.length})
             </h2>
 
-            {movementsState?.status === 'empty' ? (
+            {!movements.length ? (
               <EmptyState
                 type="empty"
                 title="Sin movimientos registrados"
@@ -232,7 +252,7 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                    {movementsState?.data?.map((m: any) => (
+                    {movements.map((m: any) => (
                       <tr key={m.id} className="hover:opacity-80 transition-opacity">
                         <td className="p-3 font-mono" style={{ color: 'var(--ink-muted)' }}>{day(m.occurred_at)}</td>
                         <td className="p-3 font-medium" style={{ color: 'var(--ink)' }}>{m.concept || m.transaction_type}</td>
@@ -260,6 +280,7 @@ export const FinWorkspace: React.FC<FinWorkspaceProps> = ({
               </div>
             )}
           </section>
+          </>}
         </>
       )}
     </div>

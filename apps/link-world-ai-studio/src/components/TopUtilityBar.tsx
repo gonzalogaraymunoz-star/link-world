@@ -1,12 +1,9 @@
-import React from 'react';
-import { 
-  Menu, Search, ChevronRight, ChevronDown, Sun, Moon, 
-  CheckCircle2, LogIn, LogOut 
-} from 'lucide-react';
-import { ASSETS } from '../assets/images.ts';
+import React, { useEffect, useRef } from 'react';
+import { Menu, Search, ChevronRight, Sun, Moon, ArrowLeft, RefreshCw, LogOut, LogIn } from 'lucide-react';
 
 interface TopUtilityBarProps {
   dimensionPath: string[];
+  onNavigatePath: (index: number) => void;
   onBack?: () => void;
   canGoBack?: boolean;
   theme: 'day' | 'night' | 'gray';
@@ -19,127 +16,48 @@ interface TopUtilityBarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenMobileLedger: () => void;
+  onRefresh: () => void;
+  refreshing: boolean;
 }
 
-export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
-  dimensionPath,
-  theme,
-  onThemeChange,
-  supabaseConnected,
-  isMember,
-  userEmail,
-  onOpenAuth,
-  onSignOut,
-  searchQuery,
-  onSearchChange,
-  onOpenMobileLedger,
-}) => {
+export const TopUtilityBar: React.FC<TopUtilityBarProps> = (props) => {
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault(); searchRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', shortcut);
+    return () => document.removeEventListener('keydown', shortcut);
+  }, []);
   return (
-    <header 
-      className="sticky top-0 z-30 h-14 flex items-center justify-between px-6 transition-colors border-b"
-      style={{ 
-        backgroundColor: 'var(--canvas)',
-        borderColor: 'var(--border-subtle)',
-      }}
-    >
-      {/* Botón Mobile + Breadcrumb */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onOpenMobileLedger}
-          className="p-1 mr-1 md:hidden"
-          style={{ color: 'var(--ink)' }}
-        >
-          <Menu className="w-4 h-4" />
-        </button>
-
-        <nav aria-label="Ruta dimensional" className="flex items-center gap-1.5 text-xs font-mono font-medium">
-          {dimensionPath.map((item, idx) => {
-            const isLast = idx === dimensionPath.length - 1;
-            return (
-              <React.Fragment key={idx}>
-                {idx > 0 && (
-                  <ChevronRight className="w-3 h-3 text-neutral-400" />
-                )}
-                <span 
-                  className={isLast ? 'font-bold' : 'hover:underline cursor-pointer'}
-                  style={{ color: isLast ? 'var(--ink)' : 'var(--ink-muted)' }}
-                >
-                  {item}
-                </span>
-              </React.Fragment>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Buscador Universal Central con shortcut ⌘ K */}
-      <div className="flex-1 max-w-md mx-6 hidden sm:block">
-        <div 
-          className="relative flex items-center px-3 py-1.5 rounded-md text-xs border transition-all"
-          style={{ 
-            backgroundColor: 'var(--surface)', 
-            borderColor: 'var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)'
-          }}
-        >
-          <Search className="w-3.5 h-3.5 mr-2 shrink-0 text-neutral-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Buscar células, operaciones, personas..."
-            className="w-full bg-transparent border-0 outline-none text-xs"
-            style={{ color: 'var(--ink)' }}
-          />
-          <kbd 
-            className="text-[10px] font-mono px-1.5 py-0.5 rounded border ml-2 text-neutral-400 select-none shrink-0"
-            style={{ backgroundColor: 'var(--canvas)', borderColor: 'var(--border-subtle)' }}
-          >
-            ⌘ K
-          </kbd>
+    <header className="sticky top-0 z-30 border-b" style={{background: 'var(--canvas)', borderColor: 'var(--border-subtle)'}}>
+      <div className="flex items-center justify-between gap-2 h-14 px-3 sm:px-6">
+        <div className="flex items-center gap-2 min-w-0">
+          <button aria-label="Abrir navegación" onClick={props.onOpenMobileLedger} className="p-2 md:hidden"><Menu size={18}/></button>
+          {props.canGoBack && <button aria-label="Volver" title="Volver" onClick={props.onBack} className="p-2"><ArrowLeft size={16}/></button>}
+          <nav aria-label="Ruta dimensional" className="flex gap-1 items-center text-xs font-mono min-w-0 overflow-hidden">
+            {props.dimensionPath.map((item, index) => <React.Fragment key={`${index}-${item}`}>
+              {index > 0 && <ChevronRight size={12} className="shrink-0 opacity-40"/>}
+              {index === props.dimensionPath.length - 1 ? <span aria-current="page" className="truncate font-bold">{item}</span> : <button className="shrink-0 hover:underline" onClick={() => props.onNavigatePath(index)}>{item}</button>}
+            </React.Fragment>)}
+          </nav>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="hidden lg:inline text-[11px] mr-3" role="status" style={{color: 'var(--ink-muted)'}}>{props.supabaseConnected ? 'Supabase conectado' : 'Sin conexión a Supabase'}</span>
+          <button aria-label="Actualizar datos" title="Actualizar datos" onClick={props.onRefresh} disabled={props.refreshing} className="p-2 disabled:opacity-50"><RefreshCw size={16} className={props.refreshing ? 'animate-spin' : ''}/></button>
+          <button aria-label={props.theme === 'day' ? 'Modo noche' : 'Modo día'} title={props.theme === 'day' ? 'Modo noche' : 'Modo día'} onClick={() => props.onThemeChange(props.theme === 'day' ? 'night' : 'day')} className="p-2">{props.theme === 'day' ? <Moon size={16}/> : <Sun size={16}/>}</button>
+          <button aria-label={props.userEmail ? 'Cerrar sesión' : 'Iniciar sesión'} title={props.userEmail || 'Iniciar sesión'} onClick={props.userEmail ? props.onSignOut : props.onOpenAuth} className="flex items-center gap-2 p-2 text-xs">
+            {props.userEmail ? <LogOut size={16}/> : <LogIn size={16}/>}
+            <span className="hidden sm:inline">{props.userEmail ? (props.isMember ? 'Miembro LINK' : 'Sesión activa') : 'Ingresar'}</span>
+          </button>
         </div>
       </div>
-
-      {/* Utilidades del lado derecho */}
-      <div className="flex items-center gap-4 text-xs font-medium">
-        {/* Indicador: Sistema operativo online */}
-        <div className="hidden lg:flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
-          <span 
-            className="w-2 h-2 rounded-full inline-block animate-pulse"
-            style={{ background: supabaseConnected ? 'var(--link-fluor-strong)' : '#E5484D' }}
-          />
-          <span style={{ color: 'var(--ink)' }}>Sistema operativo online</span>
-          <ChevronDown className="w-3 h-3 text-neutral-400" />
-        </div>
-
-        {/* Toggle Modo Día / Noche */}
-        <button
-          onClick={() => onThemeChange(theme === 'day' ? 'night' : 'day')}
-          title={theme === 'day' ? 'Modo noche' : 'Modo día'}
-          className="p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-colors"
-          style={{ color: 'var(--ink)' }}
-        >
-          {theme === 'day' ? (
-            <Sun className="w-4 h-4" />
-          ) : (
-            <Moon className="w-4 h-4" />
-          )}
-        </button>
-
-        {/* Avatar + Sesión LINK */}
-        <div className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity" onClick={isMember ? onSignOut : onOpenAuth}>
-          <div className="w-7 h-7 rounded-full overflow-hidden border border-neutral-300 dark:border-neutral-700 shrink-0">
-            <img 
-              src={ASSETS.avatarProfile} 
-              alt="Avatar" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="hidden md:inline font-medium" style={{ color: 'var(--ink)' }}>
-            {isMember ? (userEmail?.split('@')[0] || 'Sesión LINK') : 'Sesión LINK'}
-          </span>
-          <ChevronDown className="w-3 h-3 text-neutral-400 hidden md:inline" />
-        </div>
+      <div className="flex items-center gap-2 px-4 sm:px-6 pb-3">
+        <Search size={14} className="opacity-50"/>
+        <input ref={searchRef} aria-label="Buscar células" type="search" value={props.searchQuery} onChange={event => props.onSearchChange(event.target.value)} placeholder="Buscar células por nombre, sector o ciudad" className="w-full max-w-lg bg-transparent text-xs outline-none"/>
+        <kbd className="text-[10px] opacity-40 hidden sm:inline">⌘ K</kbd>
       </div>
     </header>
   );

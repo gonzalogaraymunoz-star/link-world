@@ -15,16 +15,20 @@ export const DirectorWorkspace: React.FC<DirectorWorkspaceProps> = ({
   businesses,
   onNavigate,
 }) => {
+  const [copyError, setCopyError] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Derivar exclusivamente misiones y atención real desde los datos canónicos
   const realAttention = linkContext.deriveRealAttention(businesses);
 
-  const handleCopyPrompt = (item: AttentionItem) => {
+  const handleCopyPrompt = async (item: AttentionItem) => {
     const prompt = `[LINK DIRECTOR CONTEXT]\nMisión / Atención: ${item.title} (${item.id})\nCélula: ${item.businessName} (${item.businessSlug})\nDimensión: ${item.dimension}\nCausa: ${item.reason}\nRegla: Bounded-Auto bajo LINK_SYSTEM_CORE.md y MAPA_MAESTRO.`;
-    navigator.clipboard.writeText(prompt);
-    setCopiedId(item.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopyError('');
+      setCopiedId(item.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch { setCopyError('No se pudo copiar. Permite el acceso al portapapeles y vuelve a intentarlo.'); }
   };
 
   return (
@@ -67,6 +71,7 @@ export const DirectorWorkspace: React.FC<DirectorWorkspaceProps> = ({
         </div>
       </section>
 
+      {copyError && <p role="alert" className="text-xs">{copyError}</p>}
       {/* Misiones Reales Verificadas */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -144,7 +149,7 @@ export const DirectorWorkspace: React.FC<DirectorWorkspaceProps> = ({
           <EmptyState
             type="empty"
             title="Sin misiones críticas pendientes"
-            description="Las células activas en Supabase no presentan bloqueos ni gates pendientes de resolución en este momento."
+            description="No se encontraron señales de misión en las fichas disponibles para esta sesión."
           />
         )}
       </section>
