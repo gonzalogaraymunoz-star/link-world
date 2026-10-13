@@ -8,6 +8,10 @@ La experiencia principal ya no carga misiones, células ni relaciones de demostr
 [Protocolo ChatGPT ↔ app](docs/LINK_WORLD_BRIDGE_PROTOCOL.md) ·
 [Protocolo de proveedores IA](docs/LINK_DIRECTOR_PROVIDER_PROTOCOL.md)
 
+## Filosofía fundacional
+
+**[LINK · Filosofía relacional y económica](docs/FILOSOFIA_LINK_WORLD.md)** — inspiración en Humberto Maturana: conversaciones, confianza y coordinación entre personas; y una regla empresarial irrenunciable: **la venta, la entrega, el documento y el dinero deben estar comprobados**. El margen neto requiere conocer los costos. *Si no da dinero, es un hobby* como criterio de validación económica, no como juicio sobre el valor humano de una relación.
+
 ## Tres espacios
 
 **Negocios** — pantalla inicial. Muestra únicamente fichas, solicitudes y
@@ -68,6 +72,7 @@ No se requiere instalar Node en el equipo antiguo para abrir la web.
 
 ## Documentación
 
+- [Filosofía fundacional y regla económica](docs/FILOSOFIA_LINK_WORLD.md)
 - [LINK WORLD / habilidad principal](.agents/skills/link-world/SKILL.md)\n- [LINK GENESIS / ADN transversal](.agents/skills/link-genesis/SKILL.md)\n- [Arquitectura LINK GENESIS](docs/LINK_GENESIS_ARCHITECTURE.md)
 - [Protocolo del puente](docs/LINK_WORLD_BRIDGE_PROTOCOL.md)
 - [Director IA](docs/LINK_DIRECTOR_MANUAL.md)
