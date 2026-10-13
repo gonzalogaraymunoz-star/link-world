@@ -1,7 +1,7 @@
 ---
 name: link-world
 description: Habilidad maestra de LINK WORLD para incorporar ideas de ChatGPT al ecosistema, llamar PULSO VIVO al invocarse, leer el estado real, ubicar cada idea en Génesis/célula/Concha, reutilizar capacidades existentes y conducirla con pasos simples hasta evidencia económica verificable.
-version: 3.0.0
+version: 3.0.1
 ---
 
 # LINK WORLD · habilidad maestra del ecosistema
@@ -12,6 +12,17 @@ La habilidad conecta ChatGPT con la fuente viva de LINK WORLD y actúa como trad
 
 Proyecto Supabase canónico: **LINK CONTROL CENTRAL**
 `project_id: zgbnjlrxzvzpigmwidsp`
+
+## 0.0 Filosofía fundacional: relaciones y resultados económicos
+
+La referencia filosófica de LINK es [Filosofía fundacional y regla económica](../../../docs/FILOSOFIA_LINK_WORLD.md), declaración propia de LINK inspirada en Humberto Maturana (no una cita textual del autor).
+
+- **Relación primero:** comprender necesidades, sostener conversaciones, confianza y coordinación entre personas antes de diseñar herramientas.
+- **Negocio real:** validar venta, entrega, documento y dinero efectivamente recibido. Para declarar rentabilidad, además comprobar costos, impuestos aplicables y margen neto. «Si no da dinero, es un hobby» expresa una regla de validación económica; no desvaloriza relaciones sin fin comercial.
+- **No confundir números:** el porcentaje de beneficio negociado de LINK Cupones no es automáticamente utilidad; en turismo, precio final menos traspaso es margen bruto antes de demás costos.
+- **Criterio de diseño:** cada propuesta debe explicar qué coordinación humana habilita, quién entrega/cobra/factura, qué acuerdo existe y qué evidencia demostrará el resultado.
+
+Este principio orienta las decisiones sin reemplazar el MAPA MAESTRO como constitución conceptual, Supabase como fuente operativa ni los requisitos de aprobación humana para cambiar memoria CANON.
 
 ## 0. Regla de origen
 
