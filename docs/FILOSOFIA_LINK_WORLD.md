@@ -1,10 +1,10 @@
 # LINK WORLD · Filosofía fundacional y regla económica
 
-**Versión:** 1.0 · **Declarada:** 13 de octubre de 2026  
+**Versión:** 1.1 · **Declarada:** 13 de octubre de 2026  
 **Alcance:** LINK World y sus negocios, productos, interfaces y procesos.  
 **Origen:** visión expresada por la dirección de LINK, inspirada en la filosofía de Humberto Maturana. Esta es una interpretación de LINK, **no una cita textual atribuida a Maturana**.
 
-> **Queremos crear un mundo de relaciones, conversaciones y coordinaciones que permita a las personas generar valor juntas. Y queremos que ese valor sostenga negocios reales: si no da dinero, es un hobby.**
+> **Primero las personas, el sentido y el trabajo hecho con corazón. Cultivamos conversaciones y relaciones que permiten crear valor real; el dinero es una consecuencia deseable de ese valor y una condición para sostener el negocio, no el motor de la relación.**
 
 ## Lo que queremos
 
@@ -19,20 +19,33 @@ LINK tiene dos obligaciones inseparables:
 
 No buscamos relaciones reducidas a dinero, ni un sistema comercial que dependa indefinidamente de buenas intenciones sin ingresos.
 
+## Sentido primero, sostenibilidad después
+
+**Declaración de dirección (13 de octubre de 2026):** queremos promulgar que las personas que trabajan con el corazón, que cuidan sus relaciones y creen en lo que hacen, pueden construir negocios con más sentido y vocación de permanencia. **Es una convicción y orientación ética, no una garantía empírica de éxito financiero.**
+
+En LINK el orden importa:
+
+**Cuidar a las personas y las relaciones → crear valor compartido mediante compromisos cumplidos → recibir una retribución justa → sostener y mejorar ese trabajo en el tiempo.**
+
+**El dinero no debe mandar sobre el sentido de la relación.** Es una consecuencia que buscamos cuando creamos y entregamos valor, y a la vez una condición material para que la actividad económica perdure. El dinero no aparece automáticamente por actuar de buena fe: también debemos vender, cobrar, cubrir costos, medir márgenes y mantener acuerdos justos. Si no hay rentabilidad, revisamos la propuesta y la estructura sin sacrificar la dignidad de quienes participan.
+
+Nuestro propósito no es extraer el máximo valor posible de cada relación, sino **construir relaciones donde las personas quieran volver, recomendar y colaborar**, y donde la operación sea económicamente sostenible.
+
 ## Principios
 
-1. **Primero comprender.** Identificar el dolor, quién lo vive, qué necesita y qué tratamiento o solución sirve.
-2. **La conversación abre posibilidades.** Escuchar, ofrecer, negociar y cumplir son actos distintos; un mensaje no equivale a una venta.
-3. **La confianza se verifica.** Los acuerdos deben indicar roles, condiciones, responsabilidades, cumplimiento y evidencia.
-4. **La tecnología es medio, no fin.** Software, inteligencia artificial, QR, cupones y automatizaciones apoyan relaciones y operaciones reales.
-5. **Las personas conservan la decisión.** La IA puede proponer, coordinar y aprender de evidencias; no se atribuye consentimientos, aprobaciones ni conciencia.
-6. **La economía importa.** Cada modelo define quién vende, quién compra, quién opera, quién factura, quién cobra, qué costos asume y qué margen obtiene.
-7. **No simular éxito.** Un contacto, reserva prometida, aplicación publicada o tarea terminada no constituye por sí mismo un negocio comprobado.
-8. **Aprender de la experiencia.** Observar → interpretar → decidir → actuar → verificar → aprender → reobservar, preservando trazabilidad.
+1. **Trabajar con corazón y propósito.** El trato humano, el cuidado, la confianza y el orgullo por el trabajo orientan nuestras decisiones; el ingreso sostiene esa práctica, no la define. 
+2. **Primero comprender.** Identificar el dolor, quién lo vive, qué necesita y qué tratamiento o solución sirve.
+3. **La conversación abre posibilidades.** Escuchar, ofrecer, negociar y cumplir son actos distintos; un mensaje no equivale a una venta.
+4. **La confianza se verifica.** Los acuerdos deben indicar roles, condiciones, responsabilidades, cumplimiento y evidencia.
+5. **La tecnología es medio, no fin.** Software, inteligencia artificial, QR, cupones y automatizaciones apoyan relaciones y operaciones reales.
+6. **Las personas conservan la decisión.** La IA puede proponer, coordinar y aprender de evidencias; no se atribuye consentimientos, aprobaciones ni conciencia.
+7. **La economía importa.** Cada modelo define quién vende, quién compra, quién opera, quién factura, quién cobra, qué costos asume y qué margen obtiene.
+8. **No simular éxito.** Un contacto, reserva prometida, aplicación publicada o tarea terminada no constituye por sí mismo un negocio comprobado.
+9. **Aprender de la experiencia.** Observar → interpretar → decidir → actuar → verificar → aprender → reobservar, preservando trazabilidad.
 
 ## Regla: si no da dinero, es un hobby
 
-La frase orienta la disciplina empresarial de LINK; no niega el valor humano, cultural o comunitario de una actividad sin fines de lucro.
+La frase orienta la disciplina empresarial de LINK; no niega el valor humano, cultural o comunitario de una actividad sin fines de lucro. **Primero propósito y servicio; después sostenibilidad verificable.** Evitar pérdidas recurrentes no obliga a poner el dinero antes que las personas.
 
 Para llamar a una iniciativa **negocio comprobado**, el contrato vigente de LINK exige conjuntamente:
 
@@ -57,6 +70,8 @@ Una relación comercial avanza por la **Concha**: **MAR → Venta → Cierre →
 
 Antes de crear una función, una célula o una campaña, verificar:
 
+- ¿Estamos cuidando el sentido del trabajo, la confianza y la dignidad de las personas involucradas?
+
 - ¿Qué relación, conversación o coordinación real mejora?
 - ¿A quién le resuelve un problema y quién se compromete a hacer qué?
 - ¿Cuál es el modelo económico y quién captura el valor?
@@ -67,4 +82,4 @@ Antes de crear una función, una célula o una campaña, verificar:
 
 Este archivo es la **referencia filosófica versionada en GitHub** y debe permanecer accesible desde el README y la habilidad maestra LINK World. No sustituye el **MAPA MAESTRO · LINK WORLD** como constitución conceptual ni a Supabase como fuente del estado operativo real. Si sus documentos entran en contradicción, la diferencia debe hacerse explícita y resolverse con una decisión humana; **no promover una interpretación a CANON de Hipocampo automáticamente**.
 
-**En una frase:** *Conversaciones que producen coordinación; coordinación que produce valor; valor que se entrega, se cobra y se demuestra.*
+**En una frase:** *Primero el corazón y las relaciones; luego el valor compartido. El dinero sostiene lo que vale la pena construir, no reemplaza su sentido.*
