@@ -10,7 +10,7 @@ La experiencia principal ya no carga misiones, células ni relaciones de demostr
 
 ## Filosofía fundacional
 
-**[LINK · Filosofía relacional y económica](docs/FILOSOFIA_LINK_WORLD.md)** — inspiración en Humberto Maturana: conversaciones, confianza y coordinación entre personas; y una regla empresarial irrenunciable: **la venta, la entrega, el documento y el dinero deben estar comprobados**. El margen neto requiere conocer los costos. *Si no da dinero, es un hobby* como criterio de validación económica, no como juicio sobre el valor humano de una relación.
+**[LINK · Filosofía relacional y económica](docs/FILOSOFIA_LINK_WORLD.md)** — inspiración en Humberto Maturana y una definición propia: **primero las personas, el trabajo hecho con corazón y las relaciones de confianza; el dinero como consecuencia del valor creado y como condición para sostenerlo, no como motor de la relación.** Sin perder disciplina económica: venta, entrega, documento y dinero comprobados; rentabilidad solo tras verificar costos. *Si no da dinero, es un hobby* describe el estado de validación comercial, nunca el valor humano de la actividad.
 
 ## Tres espacios
 
