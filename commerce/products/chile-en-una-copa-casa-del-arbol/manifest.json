@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "product_name": "Chile en Una Copa · Versión Casa del Árbol",
+  "offer": "Taller experiencial de coctelería de Pisco Sour & cata de vinos",
+  "site_url": "https://chile-en-una-copa-casa-del-arbol.gonzalogaraymunoz.workers.dev/",
+  "worker_name": "chile-en-una-copa-casa-del-arbol",
+  "source_path": "commerce/products/chile-en-una-copa-casa-del-arbol/index.mjs",
+  "source_utf16_length": 127405,
+  "source_checksum_fnv1a32": 399057974,
+  "date": "2026-10-23",
+  "meeting_time": "19:30",
+  "start_time": "20:00",
+  "end_time": "22:00",
+  "venue": "Casa del Árbol, San Pedro de Atacama",
+  "currency": "CLP",
+  "public_price_per_person": 35000,
+  "hosts": [
+    {
+      "name": "Rodrigo Muñoz",
+      "role": "Bartender profesional y formador",
+      "activity": "Taller de coctelería Pisco Sour"
+    },
+    {
+      "name": "Camilo Chávez",
+      "role": "Especialista en vinos y comunicador",
+      "activity": "Cata de vinos chilenos"
+    }
+  ],
+  "offer_has_food_courses": false,
+  "offer_specifies_number_of_wines": false,
+  "previous_product": "Chile en Una Copa · Edición Caracol",
+  "previous_site_intact": "https://chile-en-una-copa-camilo.gonzalogaraymunoz.workers.dev/",
+  "media_source": "https://drive.google.com/drive/folders/1jyyNxqFdt23p2yqKctrg6hDWFxoSaKra",
+  "selected_public_clips": [
+    "sour-01.mp4",
+    "sour-05.mp4",
+    "sour-12.mp4",
+    "sour-15.mp4"
+  ],
+  "source_media_access": "Copies of selected video files committed to repository and served from raw GitHub; other Drive assets unchanged",
+  "og_image": "https://chile-en-una-copa-casa-del-arbol.gonzalogaraymunoz.workers.dev/og-casa-del-arbol.jpg",
+  "commerce": {
+    "project": "LINK CONTROL CENTRAL",
+    "account": "LINK Cupones",
+    "site_id": "f768b137-0701-4ce8-b0a9-c70563fa7257",
+    "kind": "acquisition",
+    "status": "registered",
+    "registered_website_only": true,
+    "canonical_product_record": "not-created; pending client and economic-contract attribution",
+    "old_product_id": "3ace274d-5e27-4762-b96a-4958dfe83427"
+  },
+  "features": [
+    "Three languages ES EN PT",
+    "Day/gray/night modes",
+    "Responsive for mobile/tablet/desktop",
+    "Autoplay muted loops only while visible",
+    "Video source included",
+    "Native Open Graph preview with hero screenshot",
+    "WhatsApp enquiry CTA",
+    "Reduced-motion support"
+  ],
+  "pending": [
+    "Confirm which WhatsApp number/account should receive bookings for this Casa del Árbol edition",
+    "Define canonical product client and economics before creating product registry record",
+    "Replace generic visual for Rodrigo with approved photograph if available",
+    "Confirm availability and whether the event includes any additional drink/food details"
+  ]
+}
