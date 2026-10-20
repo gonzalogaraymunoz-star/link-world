@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "template_id": "link-commerce-wine-experience-editorial-v1",
+  "name": "Chile en Una Copa · Edición Caracol",
+  "status": "archived_reference",
+  "source": {
+    "original_url": "https://chile-en-una-copa-camilo.gonzalogaraymunoz.workers.dev/",
+    "cloudflare_worker": "chile-en-una-copa-camilo",
+    "repository": "gonzalogaraymunoz-star/link-world",
+    "file": "commerce/templates/chile-en-una-copa-caracol/index.mjs",
+    "source_length_utf16": 107727,
+    "checksum_fnv1a32": 329448702,
+    "original_unchanged": true,
+    "external_assets": true
+  },
+  "commerce": {
+    "app_url": "https://link-commerce.gonzalogaraymunoz.workers.dev/",
+    "business_id": "f8d050ec-d844-4b09-a270-2d328cb8d68b",
+    "business_name": "LINK Cupones",
+    "site_id": "f6f2e993-480b-4696-a97a-c0e91a1ff7f2",
+    "canonical_product_id": "3ace274d-5e27-4762-b96a-4958dfe83427",
+    "product_code": "CEC-ALMAS",
+    "website_kind": "reference",
+    "acquisition_not_verified": true
+  },
+  "historical_edition": {
+    "host": "Caracol Restobar",
+    "presenter": "Camilo Chávez",
+    "event_date": "2026-10-20",
+    "page_price_clp": 92000,
+    "canonical_product_historical_price_clp": 85000,
+    "wines": 5,
+    "gastronomy_courses": 3,
+    "runtime_minutes": 90,
+    "reuse_historical_terms": false
+  },
+  "reusable": [
+    "Responsive editorial layout",
+    "Brand header, LINK signature, style system",
+    "ES/EN/PT languages and day/gray/night modes",
+    "Interactive wines, descriptions and hover/tap timeline",
+    "Three gastronomic courses and original-image components",
+    "WhatsApp CTA, metadata for link previews",
+    "Video archive section"
+  ],
+  "parameterize_for_new_product": [
+    "Name, host, brand, logos, color palette",
+    "Products, photos and texts",
+    "Dates, time, location, capacity, program",
+    "Pricing, costs and commissions after new approval",
+    "WhatsApp/contact and reservations",
+    "Image previews, video rights, translations",
+    "Legal copy and publishing status"
+  ],
+  "next_steps": [
+    "Copy the source into a different Cloudflare Worker; never overwrite original",
+    "Replace all historic data with the new product definition",
+    "Verify images, language, accessibility, responsive layout and links",
+    "Register distinct site in LINK Commerce and link it to canonical product"
+  ],
+  "caution": "This is a preserved source snapshot, not yet a one-click visual template creator. The live site links to external images. The prior commercial distribution is not inherited by new products."
+}
