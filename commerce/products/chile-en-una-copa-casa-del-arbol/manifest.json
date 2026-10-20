@@ -38,7 +38,7 @@
     "sour-15.mp4"
   ],
   "source_media_access": "Copies of selected video files committed to repository and served from raw GitHub; other Drive assets unchanged",
-  "og_image": "https://chile-en-una-copa-casa-del-arbol.gonzalogaraymunoz.workers.dev/og-casa-del-arbol.jpg",
+  "og_image": "https://wsrv.nl/?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgonzalogaraymunoz-star%2Flink-world%2Fmain%2Fcommerce%2Fproducts%2Fchile-en-una-copa-casa-del-arbol%2Fmedia%2FDSC_0572.jpg&w=1200&h=630&fit=cover&output=jpg&q=86",
   "commerce": {
     "project": "LINK CONTROL CENTRAL",
     "account": "LINK Cupones",
@@ -57,12 +57,52 @@
     "Video source included",
     "Native Open Graph preview with hero screenshot",
     "WhatsApp enquiry CTA",
-    "Reduced-motion support"
+    "Reduced-motion support",
+    "Official authentic photographic portraits of both hosts",
+    "Curated original professional RAW photographs throughout sections"
   ],
   "pending": [
     "Confirm which WhatsApp number/account should receive bookings for this Casa del Árbol edition",
     "Define canonical product client and economics before creating product registry record",
     "Replace generic visual for Rodrigo with approved photograph if available",
     "Confirm availability and whether the event includes any additional drink/food details"
-  ]
+  ],
+  "photography": {
+    "source_folder": "https://drive.google.com/drive/u/0/folders/1n3SQc8AH6ZvA5UDN7yZ7IfKNHWknIto1",
+    "source_format": "Nikon NEF camera RAW",
+    "publication_format": "optimized JPEG previews extracted from originals, no changes to originals",
+    "selections": {
+      "hero": "DSC_0572.jpg · two hosts in authentic venue",
+      "intro": [
+        "DSC_0582.jpg · cocktail preparation",
+        "DSC_0575.jpg · group atmosphere"
+      ],
+      "experience": [
+        "DSC_0538.jpg · hands-on cocktail workshop",
+        "DSC_0552.jpg · guests tasting"
+      ],
+      "hosts": [
+        "retrato-rodrigo.jpg · Rodrigo portrait from DSC_0569.NEF",
+        "retrato-camilo.jpg · Camilo portrait from DSC_0569.NEF"
+      ],
+      "gallery": [
+        "DSC_0575.jpg · the encounter",
+        "DSC_0538.jpg · the technique",
+        "DSC_0522.jpg · shared tasting",
+        "sour-15.mp4 · event video"
+      ],
+      "social_preview": "DSC_0572.jpg optimized to 1200x630 via wsrv.nl"
+    },
+    "assets_repository": "commerce/products/chile-en-una-copa-casa-del-arbol/media/",
+    "selected_originals": [
+      "DSC_0572.NEF",
+      "DSC_0569.NEF",
+      "DSC_0582.NEF",
+      "DSC_0575.NEF",
+      "DSC_0538.NEF",
+      "DSC_0552.NEF",
+      "DSC_0522.NEF"
+    ],
+    "access": "originals remain in the Drive folder; optimized web media are stored in repo"
+  }
 }
