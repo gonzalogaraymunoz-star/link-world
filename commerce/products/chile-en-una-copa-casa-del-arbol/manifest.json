@@ -5,9 +5,9 @@
   "site_url": "https://chile-en-una-copa-casa-del-arbol.gonzalogaraymunoz.workers.dev/",
   "worker_name": "chile-en-una-copa-casa-del-arbol",
   "source_path": "commerce/products/chile-en-una-copa-casa-del-arbol/index.mjs",
-  "source_utf16_length": 127405,
-  "source_checksum_fnv1a32": 399057974,
-  "date": "2026-10-23",
+  "source_utf16_length": 141331,
+  "source_checksum_fnv1a32": 2836758652,
+  "date": "2026-10-22 / 2026-10-23",
   "meeting_time": "19:30",
   "start_time": "20:00",
   "end_time": "22:00",
@@ -78,8 +78,8 @@
         "DSC_0575.jpg · group atmosphere"
       ],
       "experience": [
-        "DSC_0538.jpg · hands-on cocktail workshop",
-        "DSC_0552.jpg · guests tasting"
+        "DSC_0488_Rodrigo_con_coctelera.jpg · bartender shaking cocktail",
+        "Camilo official website sommelier photo · wine experience"
       ],
       "hosts": [
         "retrato-rodrigo.jpg · Rodrigo portrait from DSC_0569.NEF",
@@ -104,5 +104,21 @@
       "DSC_0522.NEF"
     ],
     "access": "originals remain in the Drive folder; optimized web media are stored in repo"
-  }
+  },
+  "event_dates": [
+    "2026-10-22",
+    "2026-10-23"
+  ],
+  "host_brand": {
+    "name": "La Casa del Árbol",
+    "assets_folder": "https://drive.google.com/drive/u/0/folders/1ueTwG37FfzkYa3ASYa37IEHySfgha0B2",
+    "public_files": [
+      "casa-arbol-logo-original.jpg",
+      "casa-arbol-exterior-noche.jpg",
+      "casa-arbol-mesa.jpg",
+      "casa-arbol-exterior-estrellas.jpg"
+    ]
+  },
+  "booking_whatsapp": "https://wa.me/qr/4MEEMR4W6SIZK1",
+  "bookings_note": "Both Thursday Oct 22 and Friday Oct 23 are promoted; confirmed place/time/price unchanged; availability to be confirmed per date"
 }
