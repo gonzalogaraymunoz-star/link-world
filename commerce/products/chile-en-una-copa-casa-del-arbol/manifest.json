@@ -5,8 +5,8 @@
   "site_url": "https://chile-en-una-copa-casa-del-arbol.gonzalogaraymunoz.workers.dev/",
   "worker_name": "chile-en-una-copa-casa-del-arbol",
   "source_path": "commerce/products/chile-en-una-copa-casa-del-arbol/index.mjs",
-  "source_utf16_length": 141331,
-  "source_checksum_fnv1a32": 2836758652,
+  "source_utf16_length": 143366,
+  "source_checksum_fnv1a32": 173392325,
   "date": "2026-10-22 / 2026-10-23",
   "meeting_time": "19:30",
   "start_time": "20:00",
@@ -117,7 +117,11 @@
       "casa-arbol-exterior-noche.jpg",
       "casa-arbol-mesa.jpg",
       "casa-arbol-exterior-estrellas.jpg"
-    ]
+    ],
+    "transparent_logo": "commerce/products/chile-en-una-copa-casa-del-arbol/media/casa-arbol-logo-transparente.png",
+    "original_logo": "commerce/products/chile-en-una-copa-casa-del-arbol/media/casa-arbol-logo-original.jpg",
+    "presentation": "Transparent gold artwork on dark hero background; no sticker-like white badge; mobile-responsive placement",
+    "alpha_checked": true
   },
   "booking_whatsapp": "https://wa.me/qr/4MEEMR4W6SIZK1",
   "bookings_note": "Both Thursday Oct 22 and Friday Oct 23 are promoted; confirmed place/time/price unchanged; availability to be confirmed per date"
