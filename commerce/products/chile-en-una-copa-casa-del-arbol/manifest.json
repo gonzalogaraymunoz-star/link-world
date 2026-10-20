@@ -5,7 +5,7 @@
   "site_url": "https://chile-en-una-copa-casa-del-arbol.gonzalogaraymunoz.workers.dev/",
   "worker_name": "chile-en-una-copa-casa-del-arbol",
   "source_path": "commerce/products/chile-en-una-copa-casa-del-arbol/index.mjs",
-  "source_utf16_length": 143366,
+  "source_utf16_length": 144921,
   "source_checksum_fnv1a32": 173392325,
   "date": "2026-10-22 / 2026-10-23",
   "meeting_time": "19:30",
@@ -118,10 +118,13 @@
       "casa-arbol-mesa.jpg",
       "casa-arbol-exterior-estrellas.jpg"
     ],
-    "transparent_logo": "commerce/products/chile-en-una-copa-casa-del-arbol/media/casa-arbol-logo-transparente.png",
+    "transparent_logo": "commerce/products/chile-en-una-copa-casa-del-arbol/media/casa-arbol-logo-completo-transparente-v3.svg",
     "original_logo": "commerce/products/chile-en-una-copa-casa-del-arbol/media/casa-arbol-logo-original.jpg",
     "presentation": "Transparent gold artwork on dark hero background; no sticker-like white badge; mobile-responsive placement",
-    "alpha_checked": true
+    "alpha_checked": true,
+    "logo_source": "PHOTO-2026-01-19-18-20-58.jpg",
+    "logo_notes": "Complete authentic tree, house, handwritten name and tagline. Vector wrapper with gold alpha-based filter and embedded official photographic artwork, verified non-opaque in browser. Used in hero and host section.",
+    "transparent_logo_version": 3
   },
   "booking_whatsapp": "https://wa.me/qr/4MEEMR4W6SIZK1",
   "bookings_note": "Both Thursday Oct 22 and Friday Oct 23 are promoted; confirmed place/time/price unchanged; availability to be confirmed per date"
